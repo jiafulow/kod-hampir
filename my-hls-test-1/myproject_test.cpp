@@ -38,9 +38,10 @@ liability.
 THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS PART OF THIS FILE AT 
 ALL TIMES.
 *******************************************************************************/
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "fir.h"
+#include "firmware/myproject.h"
 
 int main () {
   const int    SAMPLES=600;
@@ -53,7 +54,7 @@ int main () {
   signal = 0;
   ramp_up = 1;
   
-  fp=fopen("out.dat","w");
+  fp=fopen("tb_data/out.dat","w");
   for (i=0;i<=SAMPLES;i++) {
   	if (ramp_up == 1) 
   		signal = signal + 1;
@@ -61,7 +62,7 @@ int main () {
   		signal = signal - 1;
 
 	// Execute the function with latest input
-    fir(&output,taps,signal);
+    myproject(&output,taps,signal);
     
     if ((ramp_up == 1) && (signal >= 75))
     	ramp_up = 0;
@@ -74,7 +75,7 @@ int main () {
   fclose(fp);
   
   printf ("Comparing against output data \n");
-  if (system("diff -w out.dat out.gold.dat")) {
+  if (system("diff -w tb_data/out.dat tb_data/out.gold.dat")) {
 
 	fprintf(stdout, "*******************************************\n");
 	fprintf(stdout, "FAIL: Output DOES NOT match the golden output\n");

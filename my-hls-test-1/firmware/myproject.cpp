@@ -38,9 +38,9 @@ liability.
 THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS PART OF THIS FILE AT 
 ALL TIMES.
 *******************************************************************************/
-#include "fir.h"
+#include "myproject.h"
 
-void fir (
+void myproject (
   data_t *y,
   coef_t c[N],
   data_t x
