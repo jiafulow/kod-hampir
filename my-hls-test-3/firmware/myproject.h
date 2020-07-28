@@ -56,6 +56,6 @@ typedef int dacc_t;
 #define SAMPLES  4
 #define N CHANNELS * SAMPLES
 
-void array_io (dout_t d_o[N], din_t d_i[N]);
+void myproject (dout_t d_o[N], din_t d_i[N]);
 
 #endif

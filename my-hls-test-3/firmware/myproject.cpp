@@ -43,7 +43,7 @@ THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS PART OF THIS FILE AT
 ALL TIMES.
 
 *******************************************************************************/
-#include "array_io.h"
+#include "myproject.h"
 
 // The data comes in organized in a single array.
 // - The first sample for the first channel (CHAN)
@@ -54,7 +54,7 @@ ALL TIMES.
 // Sample Order:  A0 B0 C0 D0 E0 F0 G0 H0 A1    B1    C2    etc. A2       etc...
 // Output Order:  A0 B0 C0 D0 E0 F0 G0 H0 A0+A1 B0+B1 C0+C2 etc. A0+A1+A2 etc...
 
-void array_io (dout_t d_o[N], din_t d_i[N]) {
+void myproject (dout_t d_o[N], din_t d_i[N]) {
 	int i, rem;
 	
 	// Store accumulated data

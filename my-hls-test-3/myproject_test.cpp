@@ -43,7 +43,8 @@ THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS PART OF THIS FILE AT
 ALL TIMES.
 
 *******************************************************************************/
-#include "array_io.h"
+#include "stdlib.h"
+#include "firmware/myproject.h"
  
 int main () {
 
@@ -59,10 +60,10 @@ int main () {
 
 
 	// Call the function to operate on the data
-  array_io(d_o,d_i);
+  myproject(d_o,d_i);
 
 	// Save the results to a file
-	fp=fopen("result.dat","w");
+	fp=fopen("tb_data/result.dat","w");
 	fprintf(fp, "Din Dout\n");
 
 	for (i=0;i<N;i++) {
@@ -71,7 +72,7 @@ int main () {
 	fclose(fp);
 
 	// Compare the results file with the golden results
-	retval = system("diff --brief -w result.dat result.golden.dat");
+	retval = system("diff --brief -w tb_data/result.dat tb_data/result.golden.dat");
 	if (retval != 0) {
 		printf("Test failed  !!!\n"); 
 		retval=1;
