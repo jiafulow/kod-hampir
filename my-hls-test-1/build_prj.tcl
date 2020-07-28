@@ -27,15 +27,15 @@ create_clock -period 4.16667 -name default
 puts "***** C SIMULATION *****"
 csim_design
 
-puts "***** C/RTL SYNTHESIS *****"
+puts "***** C SYNTHESIS *****"
 csynth_design
 puts "See report: myproject_prj/solution1/syn/report/myproject_csynth.rpt"
 
-#puts "***** C/RTL SIMULATION *****"
+#puts "***** C/RTL COSIMULATION *****"
 #cosim_design -trace_level all
 #puts "See report: myproject_prj/solution1/sim/report/myproject_cosim.rpt"
 
-#puts "***** EXPORT IP *****"
+#puts "***** EXPORT RTL *****"
 #export_design -format ip_catalog
 
 exit
