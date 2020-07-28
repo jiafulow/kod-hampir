@@ -68,8 +68,12 @@ ALL TIMES.
 // scaled integer, which may be interpreted as a signed fixed point format,
 // with WIN_COEFF_FRACBITS bits after the binary point.
 
-typedef int16_t		in_data_t;
-typedef int32_t		out_data_t;
+//typedef int16_t		in_data_t;
+//typedef int32_t		out_data_t;
+
+#include "ap_int.h"
+typedef ap_int<16>            in_data_t;
+typedef ap_int<32>            out_data_t;
 
 void myproject(out_data_t outdata[], in_data_t indata[]);
 
