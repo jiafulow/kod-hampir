@@ -71,6 +71,6 @@ ALL TIMES.
 typedef int16_t		in_data_t;
 typedef int32_t		out_data_t;
 
-void hamming_window(out_data_t outdata[], in_data_t indata[]);
+void myproject(out_data_t outdata[], in_data_t indata[]);
 
 #endif // HAMMING_WINDOW_H_ not defined

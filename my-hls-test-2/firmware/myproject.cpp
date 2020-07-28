@@ -37,13 +37,13 @@ liability.
 THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS PART OF THIS FILE AT 
 ALL TIMES.
 *******************************************************************************/
-#include "hamming_window.h" // Provides default WINDOW_LEN if not user defined
+#include "myproject.h" // Provides default WINDOW_LEN if not user defined
 
 // Translation module function prototypes:
 static void hamming_rom_init(in_data_t rom_array[]);
 
 // Function definitions:
-void hamming_window(out_data_t outdata[WINDOW_LEN], in_data_t indata[WINDOW_LEN])
+void myproject(out_data_t outdata[WINDOW_LEN], in_data_t indata[WINDOW_LEN])
 {
    static in_data_t window_coeff[WINDOW_LEN];
    unsigned i;

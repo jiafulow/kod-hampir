@@ -44,7 +44,7 @@ ALL TIMES.
 *******************************************************************************/
 #include <stdio.h>
 
-#include "hamming_window.h"
+#include "firmware/myproject.h"
 
 int main(int argc, char *argv[])
 {
@@ -67,11 +67,11 @@ int main(int argc, char *argv[])
 
    // Call the DUT
    printf("Running DUT...");
-   hamming_window(hw_result, test_data);
+   myproject(hw_result, test_data);
    printf("done.\n");
 
    // Check the results returned by DUT against expected values
-   fp=fopen("result.dat","w");
+   fp=fopen("tb_data/result.dat","w");
    printf("Testing DUT results");
    for (i = 0; i < WINDOW_LEN; i++) {
 	  fprintf(fp, "%d %d \n", hw_result[i],sw_result[i]);
