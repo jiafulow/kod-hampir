@@ -53,12 +53,14 @@ void myproject (
 #pragma HLS RESOURCE variable=c core=RAM_1P_BRAM
 
   static data_t shift_reg[N];
+#pragma HLS array_partition variable=shift_reg complete dim=1
   acc_t acc;
   data_t data;
   int i;
 
   acc=0;
   Shift_Accum_Loop: for (i=N-1;i>=0;i--) {
+#pragma HLS unroll
     if (i==0) {
       shift_reg[0]=x;
       data = x;
