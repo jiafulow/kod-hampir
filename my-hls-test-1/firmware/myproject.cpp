@@ -45,6 +45,12 @@ void myproject (
   coef_t c[N],
   data_t x
   ) {
+// Port X must have an input data valid signal.
+// Port Y must have an output data valid signal.
+// Port C must have a single port RAM access.
+#pragma HLS INTERFACE ap_vld port=y
+#pragma HLS INTERFACE ap_vld port=x
+#pragma HLS RESOURCE variable=c core=RAM_1P_BRAM
 
   static data_t shift_reg[N];
   acc_t acc;
