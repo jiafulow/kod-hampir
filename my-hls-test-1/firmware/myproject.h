@@ -40,11 +40,11 @@ ALL TIMES.
 *******************************************************************************/
 #ifndef FIR_H_
 #define FIR_H_
-#define N	11
+#define N 11
 
-typedef int	coef_t;
-typedef int	data_t;
-typedef int	acc_t;
+typedef int coef_t;
+typedef int data_t;
+typedef int acc_t;
 
 void myproject (
   data_t *y,
