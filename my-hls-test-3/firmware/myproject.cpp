@@ -55,6 +55,9 @@ ALL TIMES.
 // Output Order:  A0 B0 C0 D0 E0 F0 G0 H0 A0+A1 B0+B1 C0+C2 etc. A0+A1+A2 etc...
 
 void myproject (dout_t d_o[N], din_t d_i[N]) {
+#pragma HLS interface ap_fifo port=d_o
+#pragma HLS resource variable=d_i core=RAM_2P_BRAM
+
 	int i, rem;
 	
 	// Store accumulated data
@@ -63,6 +66,7 @@ void myproject (dout_t d_o[N], din_t d_i[N]) {
 
 	// Accumulate each channel
 	For_Loop: for (i=0;i<N;i++) {
+#pragma HLS unroll
 		rem=i%CHANNELS;
 		temp = acc[rem] + d_i[i];
 		acc[rem] = temp;
