@@ -43,9 +43,9 @@ THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS PART OF THIS FILE AT
 ALL TIMES.
 
 *******************************************************************************/
-#include "matrixmul.h"
+#include "myproject.h"
 
-void matrixmul(
+void myproject(
       mat_a_t a[MAT_A_ROWS][MAT_A_COLS],
       mat_b_t b[MAT_B_ROWS][MAT_B_COLS],
       result_t res[MAT_A_ROWS][MAT_B_COLS])

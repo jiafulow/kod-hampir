@@ -20,8 +20,10 @@ if {$please_reset} {
 } else {
   open_solution "solution1"
 }
-set_part {xc7vx690tffg1927-2}
-create_clock -period 4.16667 -name default
+#set_part {xc7vx690tffg1927-2}
+#create_clock -period 4.16667 -name default
+set_part {xc7k160tfbg484-1}
+create_clock -period "75MHz"
 
 # Do stuff
 puts "***** C SIMULATION *****"

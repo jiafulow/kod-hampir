@@ -44,7 +44,7 @@ ALL TIMES.
 
 *******************************************************************************/
 #include <iostream>
-#include "matrixmul.h"
+#include "firmware/myproject.h"
 
 using namespace std;
 
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
 
 #ifdef HW_COSIM
    // Run the AutoESL matrix multiply block
-   matrixmul(in_mat_a, in_mat_b, hw_result);
+   myproject(in_mat_a, in_mat_b, hw_result);
 #endif
 
    // Print result matrix
