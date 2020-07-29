@@ -58,6 +58,6 @@ typedef float win_fn_out_t;
 typedef float win_fn_coef_t;
 
 // Top level function prototype - wraps all object, method and functions for HLS
-void window_fn_top(win_fn_out_t outdata[WIN_LEN], win_fn_in_t indata[WIN_LEN]);
+void myproject(win_fn_out_t outdata[WIN_LEN], win_fn_in_t indata[WIN_LEN]);
 
 #endif // WINDOW_FN_TOP_H_

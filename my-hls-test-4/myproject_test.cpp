@@ -46,7 +46,7 @@ ALL TIMES.
 #include <iomanip>
 using namespace std;
 
-#include "window_fn_top.h"
+#include "firmware/myproject.h"
 
 #ifdef FLOAT_DATA
 #define ABS_ERR_THRESH 0.0
@@ -73,7 +73,7 @@ int main(void)
    }
 
    // Run the DUT
-   window_fn_top(hw_result, testdata);
+   myproject(hw_result, testdata);
 
    // Check results
    cout << "Checking results against a tolerance of " << ABS_ERR_THRESH << endl;

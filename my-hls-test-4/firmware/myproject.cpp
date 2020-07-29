@@ -42,7 +42,7 @@ THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS PART OF THIS FILE AT
 ALL TIMES.
 
 *******************************************************************************/
-#include "window_fn_top.h" // Provides typedefs and params
+#include "myproject.h" // Provides typedefs and params
 
 // Include the entire xhls_window_fn namespace so that scope resolution --
 // i.e. prepending xhls_window_fn:: to everything -- is not necessary
@@ -51,7 +51,7 @@ using namespace xhls_window_fn;
 //Vivado HLS requires a top-level function definition that wraps all object
 // instantiations and method calls to be synthesized as well as mapping
 // the top-level I/O (function arguments) into/out of the methods/functions.
-void window_fn_top(
+void myproject(
       win_fn_out_t outdata[WIN_LEN],
       win_fn_in_t indata[WIN_LEN])
 {
