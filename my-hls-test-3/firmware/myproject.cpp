@@ -55,11 +55,10 @@ ALL TIMES.
 // Output Order:  A0 B0 C0 D0 E0 F0 G0 H0 A0+A1 B0+B1 C0+C2 etc. A0+A1+A2 etc...
 
 void myproject (dout_t d_o[N], din_t d_i[N]) {
-#pragma HLS array_partition variable=d_o block factor=4 dim=1
+#pragma HLS array_partition variable=d_o complete dim=1
 #pragma HLS interface ap_fifo port=d_o
 
-#pragma HLS array_partition variable=d_i block factor=2 dim=1
-#pragma HLS resource variable=d_i core=RAM_2P_BRAM
+#pragma HLS array_partition variable=d_i complete dim=1
 
 	int i, rem;
 	
