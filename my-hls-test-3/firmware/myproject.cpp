@@ -55,23 +55,26 @@ ALL TIMES.
 // Output Order:  A0 B0 C0 D0 E0 F0 G0 H0 A0+A1 B0+B1 C0+C2 etc. A0+A1+A2 etc...
 
 void myproject (dout_t d_o[N], din_t d_i[N]) {
-#pragma HLS array_partition variable=d_o complete dim=1
-#pragma HLS interface ap_fifo port=d_o
+#pragma HLS interface s_axilite port=return
 
-#pragma HLS array_partition variable=d_i complete dim=1
+#pragma HLS array_partition variable=d_o cyclic factor=8 dim=1
+#pragma HLS interface axis port=d_o
+
+#pragma HLS array_partition variable=d_i cyclic factor=8 dim=1
+#pragma HLS interface axis port=d_i
 
 	int i, rem;
 	
 	// Store accumulated data
 	static dacc_t acc[CHANNELS];
-	dacc_t temp;
 
 	// Accumulate each channel
 	For_Loop: for (i=0;i<N;i++) {
-#pragma HLS unroll
+#pragma HLS unroll factor=8
+#pragma HLS pipeline rewind
+
 		rem=i%CHANNELS;
-		temp = acc[rem] + d_i[i];
-		acc[rem] = temp;
+		acc[rem] = acc[rem] + d_i[i];
 		d_o[i] = acc[rem];
 	}
 }
