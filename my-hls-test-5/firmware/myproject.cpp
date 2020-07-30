@@ -50,6 +50,9 @@ void myproject(
       mat_b_t b[MAT_B_ROWS][MAT_B_COLS],
       result_t res[MAT_A_ROWS][MAT_B_COLS])
 {
+#pragma HLS array_reshape variable=a complete dim=2
+#pragma HLS array_reshape variable=b complete dim=1
+
   // Iterate over the rows of the A matrix
    Row: for(int i = 0; i < MAT_A_ROWS; i++) {
       // Iterate over the columns of the B matrix
