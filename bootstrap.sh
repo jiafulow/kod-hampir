@@ -1,6 +1,8 @@
+#!/bin/bash
+
 DEST="$1"
 
-ORIG="my-hls-test-1"
+ORIG="my-hls-test-11"
 
 mkdir -p $DEST
 mkdir -p $DEST/firmware
@@ -13,3 +15,7 @@ cp $ORIG/build_prj.tcl $DEST
 > $DEST/firmware/weights/.gitkeep
 > $DEST/myproject_test.cpp
 > $DEST/tb_data/.gitkeep
+
+pushd $DEST/firmware
+ln -s ../../external/hls/2019.08-bcolbf/include/ ap_types
+popd
