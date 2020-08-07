@@ -9,8 +9,8 @@ if {$please_reset} {
   open_project myproject_prj
 }
 set_top myproject
-add_files firmware/myproject.cpp -cflags "-std=c++0x -fno-builtin"
-add_files -tb myproject_test.cpp -cflags "-std=c++0x -fno-builtin"
+add_files firmware/myproject.cpp -cflags "-std=c++0x -fno-builtin" -csimflags "-Wall -Wno-unused-label"
+add_files -tb myproject_test.cpp -cflags "-std=c++0x -fno-builtin" -csimflags "-Wall -Wno-unused-label"
 add_files -tb firmware/weights
 add_files -tb tb_data
 
