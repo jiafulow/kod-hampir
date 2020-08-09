@@ -25,23 +25,24 @@ struct default_pooling_config {
   static const unsigned output_shape_w = 1;
 };
 
-// Get the window params (low, center, high) of the specified row from the pattern.
+template <class INPUT_T, class OUTPUT_T, int ROWS, int COLS, class window_t, class pixel_t>
+void pooling_kernel(
+    const INPUT_T inputs[COLS],
+    OUTPUT_T outputs[COLS],
+    const window_t windows_low[ROWS],
+    const window_t windows_hi[ROWS],
+    pixel_t buf[ROWS]
+) {
+#pragma HLS INLINE
 
-template <typename CONFIG_T>
-int_triple get_window_params(unsigned row) {
-  assert(row < CONFIG_T::patt_constants_nrows);
-  unsigned index0 = row * CONFIG_T::patt_constants_nparams + 0;
-  unsigned index1 = row * CONFIG_T::patt_constants_nparams + 1;
-  unsigned index2 = row * CONFIG_T::patt_constants_nparams + 2;
-  int_triple params(
-      CONFIG_T::patt_constants[index0],
-      CONFIG_T::patt_constants[index1],
-      CONFIG_T::patt_constants[index2]
-  );
-  return params;
+  pooling_row_loop : for (unsigned row = 0; row < ROWS; row++) {
+
+  }
+
+
 }
 
-// Perform pooling - pool from the (low, high)-range for each row in the input image.
+// Perform pooling - pool from the (low, hi)-range for each row in the input image.
 
 template <class INPUT_T, class OUTPUT_T, typename CONFIG_T>
 void pooling_module(
@@ -51,19 +52,44 @@ void pooling_module(
   // Make sure types are correct
   static_assert(std::is_same<INPUT_T, ap_uint<CONFIG_T::input_shape_h> >::value);
   static_assert(std::is_same<OUTPUT_T, ap_uint<CONFIG_T::output_shape_h> >::value);
+  static_assert(CONFIG_T::input_shape_h == CONFIG_T::output_shape_h);  // only supports same image size currently
+  static_assert(CONFIG_T::input_shape_w == CONFIG_T::output_shape_w);  // only supports same image size currently
 
   // Make sure the pattern is valid
-  static_assert(CONFIG_T::patt_constants_nparams == 3);
+  static_assert(CONFIG_T::patt_constants_nrows == 8);  // 8 rows
+  static_assert(CONFIG_T::patt_constants_nparams == 3);  // (low, med, hi) in each row
   static_assert(CONFIG_T::patt_constants_len == CONFIG_T::patt_constants_nrows * CONFIG_T::patt_constants_nparams);
   static_assert(get_array_length(CONFIG_T::patt_constants) == CONFIG_T::patt_constants_len);
 
-  for (unsigned row = 0; row < CONFIG_T::input_shape_h; row++) {
-    int_triple window_params = get_window_params<CONFIG_T>(row);
-    unsigned window_size = window_params.third - window_params.first + 1;
-    std::cout << row << " " << window_params.first << " " << window_params.second << " " << window_params.third << std::endl;
-    assert(0 < window_size && window_size < CONFIG_T::patt_window_max_size);
+  // Deduce template arguments
+  constexpr int ROWS = CONFIG_T::input_shape_h;
+  constexpr int COLS = CONFIG_T::input_shape_w;
+  static_assert(CONFIG_T::patt_constants_nrows == ROWS);  // input type should be 8-bit, each bit represents a row.
+
+  // Get the window params (low, med, hi)
+  typedef ap_uint<emtf::ceillog2(COLS)> window_t;
+  window_t windows_low[ROWS], windows_med[ROWS], windows_hi[ROWS];
+
+  for (unsigned row = 0; row < ROWS; row++) {
+    const unsigned low = CONFIG_T::patt_constants[row * 3 + 0];
+    const unsigned med = CONFIG_T::patt_constants[row * 3 + 1];
+    const unsigned hi = CONFIG_T::patt_constants[row * 3 + 2];
+    assert((hi > low) && (hi - low) < CONFIG_T::patt_window_max_size);
+    assert((hi > med) && (hi - med) < CONFIG_T::patt_window_max_size);
+    assert((med > low) && (med - low) < CONFIG_T::patt_window_max_size);
+    std::cout << row << " " << low << " " << med << " " << hi << std::endl;
+
+    windows_low[row] = low;
+    windows_med[row] = med;
+    windows_hi[row] = hi;
   }
 
+  // Create buffer
+  typedef ap_uint<1> pixel_t;  // 1-bit pixel
+  pixel_t buf[ROWS];
+
+  // Do work
+  pooling_kernel<INPUT_T, OUTPUT_T, ROWS, COLS, window_t, pixel_t>(inputs, outputs, windows_low, windows_hi, buf);
 }
 
 }  // namespace emtf
