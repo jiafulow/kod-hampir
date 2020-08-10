@@ -21,39 +21,59 @@ struct default_pooling_config {
   static const unsigned patt = 0;
 };
 
-template <class INPUT_T, class OUTPUT_T, int ROWS, int COLS, int WIN_SIZE, class window_t, class pixel_t>
+template <class INPUT_T, class OUTPUT_T, int ROWS, int COLS, int WIN_SIZE, class window_t>
 void pooling_kernel(
     const INPUT_T inputs[COLS],
     OUTPUT_T outputs[COLS],
     const window_t windows_low[ROWS],
     const window_t windows_hi[ROWS],
-    const window_t window_col_offset,
-    pixel_t buf[ROWS]
+    const window_t window_col_offset
 ) {
 #pragma HLS INLINE
+
+  // Local buffers
+  typedef ap_uint<1> pixel_t;
+  pixel_t inputs_copy[COLS][ROWS];
+  pixel_t outputs_copy[COLS][ROWS];
+
+#pragma HLS ARRAY_PARTITION variable=inputs_copy complete dim=2
+#pragma HLS ARRAY_PARTITION variable=outputs_copy complete dim=2
+
+  inputs_copy_loop : for (unsigned col = 0; col < COLS; col++) {
+#pragma HLS PIPELINE II=1
+    for (unsigned row = 0; row < ROWS; row++) {
+      inputs_copy[col][row] = inputs[col][(ROWS - 1) - row];  // XXX bit order from the test bench is flipped
+      outputs_copy[col][row] = 0;
+    }
+  }
 
   const unsigned col_offset = window_col_offset;
 
   pooling_col_loop : for (unsigned col = 0; col < COLS; col++) {
+#pragma HLS UNROLL factor=2
     pooling_row_loop : for (unsigned row = 0; row < ROWS; row++) {
+#pragma HLS UNROLL
       unsigned start = col + windows_low[row];
       unsigned stop = col + windows_hi[row] + 1;
       start = (start < window_col_offset) ? 0 : (start - col_offset);
       stop = (stop < window_col_offset) ? 0 : (stop - col_offset);
       stop = (stop < COLS) ? stop : COLS;
 
-      pixel_t result = 0;
-
       pooling_win_loop : for (; start != stop; start++) {
 #pragma HLS LOOP_TRIPCOUNT min=WIN_SIZE max=WIN_SIZE
 #pragma HLS PIPELINE II=1
-        buf[row] = inputs[start][(ROWS - 1) - row];  // XXX bit order from the test bench is flipped
-        result = (result | buf[row]);  // or_reduce
+        if (inputs_copy[start][row])
+          outputs_copy[col][row] = 1;
       }  // end of pooling_win_loop
-
-      outputs[col][(ROWS - 1) - row] = result;  // XXX bit order from the test bench is flipped
     }  // end of pooling_row_loop
   }  // end of pooling_col_loop
+
+  outputs_copy_loop : for (unsigned col = 0; col < COLS; col++) {
+#pragma HLS PIPELINE II=1
+    for (unsigned row = 0; row < ROWS; row++) {
+      outputs[col][(ROWS - 1) - row] = outputs_copy[col][row];  // XXX bit order from the test bench is flipped
+    }
+  }
 }
 
 // Perform pooling - pool from the (low, hi)-range for each row in the input image.
@@ -98,12 +118,8 @@ void pooling_module(
     windows_hi[row] = hi;
   }
 
-  // Create buffer
-  typedef ap_uint<1> pixel_t;  // 1-bit pixel
-  pixel_t buf[ROWS];
-
   // Do work
-  pooling_kernel<INPUT_T, OUTPUT_T, ROWS, COLS, WIN_SIZE, window_t, pixel_t>(inputs, outputs, windows_low, windows_hi, window_col_offset, buf);
+  pooling_kernel<INPUT_T, OUTPUT_T, ROWS, COLS, WIN_SIZE, window_t>(inputs, outputs, windows_low, windows_hi, window_col_offset);
 }
 
 }  // namespace emtf
