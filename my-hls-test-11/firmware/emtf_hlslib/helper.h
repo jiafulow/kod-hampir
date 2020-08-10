@@ -1,6 +1,16 @@
 #ifndef __EMTF_HLSLIB_HELPERS_H__
 #define __EMTF_HLSLIB_HELPERS_H__
 
+#include <cassert>
+#include <cstdint>
+#include <cstdlib>
+
+#ifndef __SYNTHESIS__
+#define emtf_assert(expr) (assert(expr))
+#else
+#define emtf_assert(expr) ((void)(expr))
+#endif
+
 namespace emtf {
 
 // Get max (for template programming)
