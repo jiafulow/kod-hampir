@@ -3,7 +3,7 @@
 
 // Define data lengths
 #define N_TOP_FN_IN 288
-#define N_TOP_FN_OUT 288
+#define N_TOP_FN_OUT (288 * 7)
 
 // Define data widths
 #define W_TOP_FN_IN 8
