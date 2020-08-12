@@ -25,7 +25,8 @@ namespace emtf {
 
   // EMTF
   constexpr int num_sectors = 12;
-  constexpr int num_zones = 3;
+  constexpr int num_zones = 3;     // per sector
+  constexpr int num_patterns = 7;  // per zone
 
 }  // namespace emtf
 

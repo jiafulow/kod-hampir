@@ -8,78 +8,90 @@
 
 namespace emtf {
 
-// Configuration
-
-struct default_pooling_config {
-  static const unsigned patt_constants_nrows = 8;
-  static const unsigned patt_constants_nparams = 3;  // per row
-  static const unsigned patt_constants_len = patt_constants_nrows * patt_constants_nparams;
-  static const unsigned patt_constants[patt_constants_len];
-  static const unsigned patt_window_max_size = 40;  // 10.667 deg
-  static const unsigned patt_window_col_offset = 55;  // (111-1)/2 = 55
-  static const unsigned zone = 0;
-  static const unsigned patt = 0;
+// Definition of a pattern.
+// 8 rows, 3 params per row. The params are (low, med, hi) of the pattern window.
+template <int ZONE, int PATT>
+struct Pattern {
+  static constexpr int zone = ZONE;
+  static constexpr int patt = PATT;
+  static constexpr int col_offset = 55;  // offset used to encode the pattern window
+  static constexpr int rows = 8;
+  static constexpr int params = 3;  // per row
+  static constexpr int size = rows * params;
+  static const int data[size];  // need to be initialized before use
+  static const int win_size;  // max pattern window size - need to be initialized before use
 };
 
-template <class INPUT_T, class OUTPUT_T, int ROWS, int COLS, int WIN_SIZE, class window_t>
-void pooling_kernel(
-    const INPUT_T inputs[COLS],
-    OUTPUT_T outputs[COLS],
-    const window_t windows_low[ROWS],
-    const window_t windows_hi[ROWS],
-    const window_t window_col_offset
+// Hardcoded pattern definitions
+template <>
+const int Pattern<0, 3>::data[size] =  {
+  51, 55, 59, 51, 55, 59, 52, 55, 58, 54, 55, 56, 54, 55, 56, 54, 55, 56,
+  54, 55, 56, 54, 55, 56
+};
+
+template <>
+const int Pattern<0, 3>::win_size = 9;
+
+typedef Pattern<0, 3> pattern_z0p3;
+
+
+// _________________________________________________________________________________________________
+// Perform ROI pooling - pool from the (low, hi)-range of each row in the input image.
+
+template <int ROWS, int COLS>
+void roi_pooling(
+    const ap_uint<ROWS> inputs[COLS],
+    ap_uint<ROWS> outputs[COLS]
 ) {
 #pragma HLS INLINE
 
-  // Local buffers
-  typedef ap_uint<1> pixel_t;
-  pixel_t inputs_copy[COLS][ROWS];
-  pixel_t outputs_copy[COLS][ROWS];
+  constexpr int cols = COLS;
+  constexpr int rows = ROWS;
+  constexpr int win_size = pattern_z0p3::win_size;
+  constexpr int padding = (win_size / 2);  // win_size: 3,4,5,6,7,... -> padding: 1,2,2,3,3,...
+  constexpr int cols_w_padding = cols + (padding * 2);  // add padding on both sides
 
-#pragma HLS ARRAY_PARTITION variable=inputs_copy complete dim=2
-#pragma HLS ARRAY_PARTITION variable=outputs_copy complete dim=2
+  // Create local buffer
+  ap_uint<cols_w_padding> buf[ROWS];
+#pragma HLS ARRAY_PARTITION variable=buf complete dim=0
 
-  inputs_copy_loop : for (unsigned col = 0; col < COLS; col++) {
+  // Initialize buffer
+  buf_init_loop : for (int row = 0; row < rows; row++) {
 #pragma HLS PIPELINE II=1
-    for (unsigned row = 0; row < ROWS; row++) {
-      inputs_copy[col][row] = inputs[col][(ROWS - 1) - row];  // XXX bit order from the test bench is flipped
-      outputs_copy[col][row] = 0;
+
+    buf_init_loop_inner : for (int ip_col = 0; ip_col < cols_w_padding; ip_col++) {
+      int col = (ip_col - padding);
+      if (0 <= col && col < cols) {
+        buf[row][ip_col] = inputs[col][(rows - 1) - row];  // CUIDADO: bit order from the test bench is flipped
+      } else {
+        buf[row][ip_col] = 0;
+      }
     }
   }
 
-  const unsigned col_offset = window_col_offset;
-
-  pooling_col_loop : for (unsigned col = 0; col < COLS; col++) {
-#pragma HLS UNROLL factor=2
-    pooling_row_loop : for (unsigned row = 0; row < ROWS; row++) {
-#pragma HLS UNROLL
-      unsigned start = col + windows_low[row];
-      unsigned stop = col + windows_hi[row] + 1;
-      start = (start < window_col_offset) ? 0 : (start - col_offset);
-      stop = (stop < window_col_offset) ? 0 : (stop - col_offset);
-      stop = (stop < COLS) ? stop : COLS;
-
-      pooling_win_loop : for (; start != stop; start++) {
-#pragma HLS LOOP_TRIPCOUNT min=WIN_SIZE max=WIN_SIZE
+  // Do pooling
+  pool_loop : for (int row = 0; row < rows; row++) {
 #pragma HLS PIPELINE II=1
-        if (inputs_copy[start][row])
-          outputs_copy[col][row] = 1;
-      }  // end of pooling_win_loop
-    }  // end of pooling_row_loop
-  }  // end of pooling_col_loop
 
-  outputs_copy_loop : for (unsigned col = 0; col < COLS; col++) {
-#pragma HLS PIPELINE II=1
-    for (unsigned row = 0; row < ROWS; row++) {
-      outputs[col][(ROWS - 1) - row] = outputs_copy[col][row];  // XXX bit order from the test bench is flipped
+    const int offset = pattern_z0p3::col_offset;
+    const int low = pattern_z0p3::data[row * 3 + 0];
+    const int high = pattern_z0p3::data[row * 3 + 2];
+
+    pool_loop_inner : for (int col = 0; col < cols; col++) {
+      int ip_col = (col + padding);
+      int start = ip_col + (low - offset);
+      int stop = ip_col + (high - offset);
+      outputs[col][(rows - 1) - row] = buf[row](stop, start);  // CUIDADO: bit order from the test bench is flipped
     }
   }
+  return;
 }
 
-// Perform pooling - pool from the (low, hi)-range for each row in the input image.
+// _________________________________________________________________________________________________
+// Module
 
-template <class INPUT_T, class OUTPUT_T, typename CONFIG_T>
-void pooling_module(
+template <typename INPUT_T, typename OUTPUT_T, typename CONFIG_T>
+void roi_pooling_module(
     const INPUT_T inputs[N_TOP_FN_IN],
     OUTPUT_T outputs[N_TOP_FN_OUT]
 ) {
@@ -87,39 +99,12 @@ void pooling_module(
   static_assert(INPUT_T::width == OUTPUT_T::width, "inputs and outputs must have the same data width");
   static_assert(N_TOP_FN_IN == N_TOP_FN_OUT, "inputs and outputs must have the same array size");
 
-  // Make sure the pattern is valid
-  static_assert(CONFIG_T::patt_constants_nrows == 8, "pattern has invalid num of rows");  // 8 rows
-  static_assert(CONFIG_T::patt_constants_nparams == 3, "pattern has invalid num of params");  // (low, med, hi) in each row
-  static_assert(CONFIG_T::patt_constants_len == CONFIG_T::patt_constants_nrows * CONFIG_T::patt_constants_nparams, "pattern has invalid array size");
-  static_assert(get_array_length(CONFIG_T::patt_constants) == CONFIG_T::patt_constants_len, "pattern has invalid array size");
-  static_assert(CONFIG_T::patt_constants_nrows == INPUT_T::width, "pattern num of rows different from input data width");
-
   // Deduce template arguments
   constexpr int ROWS = INPUT_T::width;
   constexpr int COLS = N_TOP_FN_IN;
-  constexpr int WIN_SIZE = CONFIG_T::patt_window_max_size;
 
-  // Get the window params (low, med, hi)
-  typedef ap_uint<emtf::ceillog2(COLS)> window_t;
-  window_t windows_low[ROWS], windows_med[ROWS], windows_hi[ROWS];
-  const window_t window_col_offset = CONFIG_T::patt_window_col_offset;
-
-  for (unsigned row = 0; row < ROWS; row++) {
-    const unsigned low = CONFIG_T::patt_constants[row * 3 + 0];
-    const unsigned med = CONFIG_T::patt_constants[row * 3 + 1];
-    const unsigned hi = CONFIG_T::patt_constants[row * 3 + 2];
-    emtf_assert((hi > low) && (hi - low) < CONFIG_T::patt_window_max_size);
-    emtf_assert((hi > med) && (hi - med) < CONFIG_T::patt_window_max_size);
-    emtf_assert((med > low) && (med - low) < CONFIG_T::patt_window_max_size);
-    //std::cout << row << " " << low << " " << med << " " << hi << std::endl;
-
-    windows_low[row] = low;
-    windows_med[row] = med;
-    windows_hi[row] = hi;
-  }
-
-  // Do work
-  pooling_kernel<INPUT_T, OUTPUT_T, ROWS, COLS, WIN_SIZE, window_t>(inputs, outputs, windows_low, windows_hi, window_col_offset);
+  // Do pooling
+  roi_pooling<ROWS, COLS>(inputs, outputs);
 }
 
 }  // namespace emtf

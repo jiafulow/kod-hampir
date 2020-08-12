@@ -27,6 +27,13 @@ void run_sector_processor(
   constexpr int sector = I;
   static_assert((0 <= sector && sector < emtf::num_sectors), "sector must be an integer [0-11]");
 
-  // Pattern recognition
-  emtf::pooling_module<top_fn_in_t, top_fn_out_t, pooling_config_z0_p3>(inputs, outputs);
+
+#pragma HLS ARRAY_RESHAPE variable=inputs complete dim=0
+#pragma HLS ARRAY_RESHAPE variable=outputs complete dim=0
+#pragma HLS INTERFACE ap_vld port=inputs,outputs
+#pragma HLS PIPELINE II=1
+
+  // Pattern recognition (via ROI pooling)
+  emtf::roi_pooling_module<top_fn_in_t, top_fn_out_t, default_pooling_config>(inputs, outputs);
+
 }
