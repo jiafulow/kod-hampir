@@ -74,14 +74,19 @@ namespace emtf {
     static constexpr int rows = ROWS;
     static constexpr int cols = COLS;
     static constexpr int size = rows * cols;
-    static const T data[size];  // need to be initialized before use
+    T data[size];  // elements
 
     // Element access
     const T& operator ()(int row, int col) const;
+    T& operator ()(int row, int col);
 
     // 1D element access
     const T& operator ()(int i) const;
-    const T& operator [](int i) const;  // unsafe
+    T& operator ()(int i);
+
+    // Unsafe 1D element access
+    const T& operator [](int i) const;
+    T& operator [](int i);
   };
 
   // Vec is Mat reduced to 1D-vector, such as a row or a column of a 2D matrix.
@@ -90,11 +95,15 @@ namespace emtf {
   public:
     typedef T value_type;
     static constexpr int size = N;
-    static const T data[size];  // need to be initialized before use
+    T data[size];  // elements
 
     // Element access
     const T& operator ()(int i) const;
-    const T& operator [](int i) const;  // unsafe
+    T& operator ()(int i);
+
+    // Unsafe element access
+    const T& operator [](int i) const;
+    T& operator [](int i);
   };
 
   // Til is Mat promoted to 3D-tensor, such as tiles (or submatrices) of a 2D matrix.
@@ -106,14 +115,19 @@ namespace emtf {
     static constexpr int rows = ROWS;
     static constexpr int cols = COLS;
     static constexpr int size = tiles * rows * cols;
-    static const T data[size];  // need to be initialized before use
+    T data[size];  // need to be initialized before use
 
     // Element access
     const T& operator ()(int tile, int row, int col) const;
+    T& operator ()(int tile, int row, int col);
 
     // 1D element access
     const T& operator ()(int i) const;
-    const T& operator [](int i) const;  // unsafe
+    T& operator ()(int i);
+
+    // Unsafe 1D element access
+    const T& operator [](int i) const;
+    T& operator [](int i);
   };
 
   // ___________________________________________________________________________
@@ -121,52 +135,103 @@ namespace emtf {
 
   template <typename T, int ROWS, int COLS>
   inline const T& Mat<T, ROWS, COLS>::operator ()(int row, int col) const {
-    emtf_assert(static_cast<unsigned>(row) < static_cast<unsigned>(rows));
-    emtf_assert(static_cast<unsigned>(col) < static_cast<unsigned>(cols));
+    emtf_assert(static_cast<size_t>(row) < static_cast<size_t>(rows));
+    emtf_assert(static_cast<size_t>(col) < static_cast<size_t>(cols));
+    return data[(row * cols) + col];
+  }
+
+  template <typename T, int ROWS, int COLS>
+  inline T& Mat<T, ROWS, COLS>::operator ()(int row, int col) {
+    emtf_assert(static_cast<size_t>(row) < static_cast<size_t>(rows));
+    emtf_assert(static_cast<size_t>(col) < static_cast<size_t>(cols));
     return data[(row * cols) + col];
   }
 
   template <typename T, int ROWS, int COLS>
   inline const T& Mat<T, ROWS, COLS>::operator ()(int i) const {
-    emtf_assert(static_cast<unsigned>(i) < static_cast<unsigned>(size));
+    emtf_assert(static_cast<size_t>(i) < static_cast<size_t>(size));
+    return data[i];
+  }
+
+  template <typename T, int ROWS, int COLS>
+  inline T& Mat<T, ROWS, COLS>::operator ()(int i) {
+    emtf_assert(static_cast<size_t>(i) < static_cast<size_t>(size));
     return data[i];
   }
 
   template <typename T, int ROWS, int COLS>
   inline const T& Mat<T, ROWS, COLS>::operator [](int i) const {
-    //emtf_assert(static_cast<unsigned>(i) < static_cast<unsigned>(size));
+    //emtf_assert(static_cast<size_t>(i) < static_cast<size_t>(size));
+    return data[i];
+  }
+
+  template <typename T, int ROWS, int COLS>
+  inline T& Mat<T, ROWS, COLS>::operator [](int i) {
+    //emtf_assert(static_cast<size_t>(i) < static_cast<size_t>(size));
     return data[i];
   }
 
   template <typename T, int N>
   inline const T& Vec<T, N>::operator ()(int i) const {
-    emtf_assert(static_cast<unsigned>(i) < static_cast<unsigned>(size));
+    emtf_assert(static_cast<size_t>(i) < static_cast<size_t>(size));
+    return data[i];
+  }
+
+  template <typename T, int N>
+  inline T& Vec<T, N>::operator ()(int i) {
+    emtf_assert(static_cast<size_t>(i) < static_cast<size_t>(size));
     return data[i];
   }
 
   template <typename T, int N>
   inline const T& Vec<T, N>::operator [](int i) const {
-    //emtf_assert(static_cast<unsigned>(i) < static_cast<unsigned>(size));
+    //emtf_assert(static_cast<size_t>(i) < static_cast<size_t>(size));
+    return data[i];
+  }
+
+  template <typename T, int N>
+  inline T& Vec<T, N>::operator [](int i) {
+    //emtf_assert(static_cast<size_t>(i) < static_cast<size_t>(size));
     return data[i];
   }
 
   template <typename T, int TILES, int ROWS, int COLS>
   inline const T& Til<T, TILES, ROWS, COLS>::operator ()(int tile, int row, int col) const {
-    emtf_assert(static_cast<unsigned>(tile) < static_cast<unsigned>(tiles));
-    emtf_assert(static_cast<unsigned>(row) < static_cast<unsigned>(rows));
-    emtf_assert(static_cast<unsigned>(col) < static_cast<unsigned>(cols));
+    emtf_assert(static_cast<size_t>(tile) < static_cast<size_t>(tiles));
+    emtf_assert(static_cast<size_t>(row) < static_cast<size_t>(rows));
+    emtf_assert(static_cast<size_t>(col) < static_cast<size_t>(cols));
+    return data[(tile * rows * cols) + (row * cols) + col];
+  }
+
+  template <typename T, int TILES, int ROWS, int COLS>
+  inline T& Til<T, TILES, ROWS, COLS>::operator ()(int tile, int row, int col) {
+    emtf_assert(static_cast<size_t>(tile) < static_cast<size_t>(tiles));
+    emtf_assert(static_cast<size_t>(row) < static_cast<size_t>(rows));
+    emtf_assert(static_cast<size_t>(col) < static_cast<size_t>(cols));
     return data[(tile * rows * cols) + (row * cols) + col];
   }
 
   template <typename T, int TILES, int ROWS, int COLS>
   inline const T& Til<T, TILES, ROWS, COLS>::operator ()(int i) const {
-    emtf_assert(static_cast<unsigned>(i) < static_cast<unsigned>(size));
+    emtf_assert(static_cast<size_t>(i) < static_cast<size_t>(size));
+    return data[i];
+  }
+
+  template <typename T, int TILES, int ROWS, int COLS>
+  inline T& Til<T, TILES, ROWS, COLS>::operator ()(int i) {
+    emtf_assert(static_cast<size_t>(i) < static_cast<size_t>(size));
     return data[i];
   }
 
   template <typename T, int TILES, int ROWS, int COLS>
   inline const T& Til<T, TILES, ROWS, COLS>::operator [](int i) const {
-    //emtf_assert(static_cast<unsigned>(i) < static_cast<unsigned>(size));
+    //emtf_assert(static_cast<size_t>(i) < static_cast<size_t>(size));
+    return data[i];
+  }
+
+  template <typename T, int TILES, int ROWS, int COLS>
+  inline T& Til<T, TILES, ROWS, COLS>::operator [](int i) {
+    //emtf_assert(static_cast<size_t>(i) < static_cast<size_t>(size));
     return data[i];
   }
 
