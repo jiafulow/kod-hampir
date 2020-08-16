@@ -25,37 +25,37 @@ struct Pattern {
 
 // Hardcoded pattern definitions
 template <>
-const int Pattern<0, 0>::data[size] =  {
+constexpr const int Pattern<0, 0>::data[size] =  {
   21, 36, 46, 23, 35, 43, 29, 41, 49, 52, 54, 55, 54, 55, 56, 52, 57, 62,
   50, 57, 63, 46, 57, 65
 };
 template <>
-const int Pattern<0, 1>::data[size] =  {
+constexpr const int Pattern<0, 1>::data[size] =  {
   35, 44, 50, 35, 44, 48, 39, 47, 51, 53, 54, 55, 54, 55, 56, 54, 56, 59,
   54, 57, 60, 53, 57, 61
 };
 template <>
-const int Pattern<0, 2>::data[size] =  {
+constexpr const int Pattern<0, 2>::data[size] =  {
   43, 51, 53, 43, 51, 53, 46, 52, 54, 53, 55, 56, 54, 55, 56, 55, 56, 57,
   55, 56, 57, 55, 56, 57
 };
 template <>
-const int Pattern<0, 3>::data[size] =  {
+constexpr const int Pattern<0, 3>::data[size] =  {
   51, 55, 59, 51, 55, 59, 52, 55, 58, 54, 55, 56, 54, 55, 56, 54, 55, 56,
   54, 55, 56, 54, 55, 56
 };
 template <>
-const int Pattern<0, 4>::data[size] =  {
+constexpr const int Pattern<0, 4>::data[size] =  {
   57, 59, 67, 57, 59, 67, 56, 58, 64, 54, 55, 57, 54, 55, 56, 53, 54, 55,
   53, 54, 55, 53, 54, 55
 };
 template <>
-const int Pattern<0, 5>::data[size] =  {
+constexpr const int Pattern<0, 5>::data[size] =  {
   60, 66, 75, 62, 66, 75, 59, 63, 71, 55, 56, 57, 54, 55, 56, 51, 54, 56,
   50, 53, 56, 49, 53, 57
 };
 template <>
-const int Pattern<0, 6>::data[size] =  {
+constexpr const int Pattern<0, 6>::data[size] =  {
   64, 74, 89, 67, 75, 87, 61, 69, 81, 55, 56, 58, 54, 55, 56, 48, 53, 58,
   47, 53, 60, 45, 53, 64
 };
@@ -96,36 +96,80 @@ const int Pattern<0, 6>::straightness = 1;
 // _________________________________________________________________________________________________
 // Perform ROI pooling - pool from the (low, hi)-range of each row in the input image.
 
-template <int ROWS, int COLS, int ZONE, int PATT>
-void roi_pooling_by_pattern(
+template <int ROWS, int COLS, int ZONE, int PATT, int ROW>
+void roi_pooling_per_row(
     const ap_uint<COLS>& input,
     ap_uint<ROWS>& output,
-    const int row,
     const int col
 ) {
 #pragma HLS INLINE
 
   typedef Pattern<ZONE, PATT> pattern_t;
-  constexpr int PADDING = pattern_t::padding;
-  constexpr int COLS_W_PADDING = COLS + (PADDING * 2);  // add padding on both sides
+  constexpr int START = pattern_t::data[ROW * 3 + 0] - pattern_t::col_offset;
+  constexpr int STOP = pattern_t::data[ROW * 3 + 2] - pattern_t::col_offset;
+  constexpr int PAD_START = START < 0 ? -START : 1;
+  constexpr int PAD_STOP = STOP > 0 ? STOP : 1;
+  constexpr int COLS_W_PADDING = COLS + PAD_START + PAD_STOP;
 
   // Check assumptions
-  static_assert(pattern_t::rows == ROWS, "pattern must have rows equal to num_rows");
-  static_assert(pattern_t::size == ROWS * 3, "pattern data array size must be num_rows * 3");
-  static_assert(PADDING > 0, "padding must be more than 0");
-  static_assert(PATT < num_patterns, "pattern number must be less than num_patterns");
+  static_assert(STOP > START, "pattern window must be non zero");
+  static_assert(PAD_START > 0 && PAD_STOP > 0, "padding must be non negative");
 
-  // Find (low, hi)-range of each row, and check the boundary conditions
-  const int offset = pattern_t::col_offset;
-  const int low = pattern_t::data[row * 3 + 0];
-  const int high = pattern_t::data[row * 3 + 2];
-  const int col_w_padding = col + PADDING;
-  const int start = col_w_padding + (low - offset);
-  const int stop = col_w_padding + (high - offset);
-  emtf_assert(start >= 0 && stop >= 0 && start < COLS_W_PADDING && stop < COLS_W_PADDING && stop > start);
+  const int start = col + PAD_START + START;
+  const int stop = col + PAD_START + STOP;
+  emtf_assert(start >= 0 && stop >= 0 && start < COLS_W_PADDING && stop < COLS_W_PADDING);
 
-  ap_uint<COLS_W_PADDING> tmp_input = (ap_uint<PADDING>(0), input, ap_uint<PADDING>(0));
-  output[(ROWS - 1) - row] = tmp_input.range(stop, start);  // CUIDADO: bit order from the test bench is flipped
+  ap_uint<COLS_W_PADDING> tmp_input = (ap_uint<PAD_STOP>(0), input, ap_uint<PAD_START>(0));  // add padding to input
+  output[(ROWS - 1) - ROW] = tmp_input.range(stop, start);  // CUIDADO: bit order from the test bench is flipped
+  return;
+}
+
+template <int ROWS, int COLS, int ZONE, int PATT>
+void roi_pooling_all_rows(
+    const ap_uint<COLS> buf[ROWS],
+    ap_uint<ROWS>& output,
+    const int col
+) {
+#pragma HLS INLINE
+
+  typedef Pattern<ZONE, PATT> pattern_t;
+
+  // Check assumptions
+  static_assert(ROWS == 8, "num_rows must be 8");
+  static_assert(pattern_t::rows == ROWS, "pattern data must have rows equal to num_rows");
+  static_assert(pattern_t::size == ROWS * 3, "pattern data must have size equal to num_rows * 3");
+
+  // Loop through the rows (unrolled)
+  roi_pooling_per_row<ROWS, COLS, ZONE, PATT, 0>(buf[0], output, col);
+  roi_pooling_per_row<ROWS, COLS, ZONE, PATT, 1>(buf[1], output, col);
+  roi_pooling_per_row<ROWS, COLS, ZONE, PATT, 2>(buf[2], output, col);
+  roi_pooling_per_row<ROWS, COLS, ZONE, PATT, 3>(buf[3], output, col);
+  roi_pooling_per_row<ROWS, COLS, ZONE, PATT, 4>(buf[4], output, col);
+  roi_pooling_per_row<ROWS, COLS, ZONE, PATT, 5>(buf[5], output, col);
+  roi_pooling_per_row<ROWS, COLS, ZONE, PATT, 6>(buf[6], output, col);
+  roi_pooling_per_row<ROWS, COLS, ZONE, PATT, 7>(buf[7], output, col);
+  return;
+}
+
+template <int ROWS, int COLS, int PATTERNS, int ZONE>
+void roi_pooling_all_patterns(
+  const ap_uint<COLS> buf[ROWS],
+  ap_uint<ROWS> outputs[COLS * PATTERNS],
+  const int col
+) {
+#pragma HLS INLINE
+
+  // Check assumptions
+  static_assert(PATTERNS == 7, "num_patterns must be 7");
+
+  // Loop through the patterns (unrolled)
+  roi_pooling_all_rows<ROWS, COLS, ZONE, 0>(buf, outputs[col * PATTERNS + 0], col);
+  roi_pooling_all_rows<ROWS, COLS, ZONE, 1>(buf, outputs[col * PATTERNS + 1], col);
+  roi_pooling_all_rows<ROWS, COLS, ZONE, 2>(buf, outputs[col * PATTERNS + 2], col);
+  roi_pooling_all_rows<ROWS, COLS, ZONE, 3>(buf, outputs[col * PATTERNS + 3], col);
+  roi_pooling_all_rows<ROWS, COLS, ZONE, 4>(buf, outputs[col * PATTERNS + 4], col);
+  roi_pooling_all_rows<ROWS, COLS, ZONE, 5>(buf, outputs[col * PATTERNS + 5], col);
+  roi_pooling_all_rows<ROWS, COLS, ZONE, 6>(buf, outputs[col * PATTERNS + 6], col);
   return;
 }
 
@@ -134,10 +178,8 @@ void roi_pooling(
     const ap_uint<ROWS> inputs[COLS],
     ap_uint<ROWS> outputs[COLS * PATTERNS]
 ) {
-#pragma HLS INLINE
-
-  // Check assumptions
-  static_assert(PATTERNS == 7, "num_patterns must be 7");
+//#pragma HLS INLINE
+#pragma HLS PIPELINE II=1
 
   // Create local buffer
   typedef ap_uint<COLS> buffer_t;
@@ -146,8 +188,6 @@ void roi_pooling(
 
   // Initialize local buffer
   pool_buf_loop : for (int row = 0; row < ROWS; row++) {
-#pragma HLS PIPELINE II=1
-
     pool_buf_loop_inner : for (int col = 0; col < COLS; col++) {
       buf[row][col] = inputs[col][(ROWS - 1) - row];  // CUIDADO: bit order from the test bench is flipped
     }
@@ -155,19 +195,7 @@ void roi_pooling(
 
   // Do pooling
   pool_loop : for (int col = 0; col < COLS; col++) {
-#pragma HLS PIPELINE II=1
-
-    pool_loop_inner : for (int row = 0; row < ROWS; row++) {
-
-      // Loop through the patterns (unrolled)
-      roi_pooling_by_pattern<ROWS, COLS, ZONE, 0>(buf[row], outputs[col * PATTERNS + 0], row, col);
-      roi_pooling_by_pattern<ROWS, COLS, ZONE, 1>(buf[row], outputs[col * PATTERNS + 1], row, col);
-      roi_pooling_by_pattern<ROWS, COLS, ZONE, 2>(buf[row], outputs[col * PATTERNS + 2], row, col);
-      roi_pooling_by_pattern<ROWS, COLS, ZONE, 3>(buf[row], outputs[col * PATTERNS + 3], row, col);
-      roi_pooling_by_pattern<ROWS, COLS, ZONE, 4>(buf[row], outputs[col * PATTERNS + 4], row, col);
-      roi_pooling_by_pattern<ROWS, COLS, ZONE, 5>(buf[row], outputs[col * PATTERNS + 5], row, col);
-      roi_pooling_by_pattern<ROWS, COLS, ZONE, 6>(buf[row], outputs[col * PATTERNS + 6], row, col);
-    }
+    roi_pooling_all_patterns<ROWS, COLS, PATTERNS, ZONE>(buf, outputs, col);
   }
   return;
 }
@@ -252,7 +280,7 @@ void nonmax_suppression(
     }
   };
 
-  straightness_t stght[PATTERNS] = {
+  constexpr straightness_t stght[PATTERNS] = {
     Pattern<ZONE, 0>::straightness,
     Pattern<ZONE, 1>::straightness,
     Pattern<ZONE, 2>::straightness,
@@ -318,6 +346,8 @@ void roi_pooling_module(
     const INPUT_T inputs[N_TOP_FN_IN],
     OUTPUT_T outputs[N_TOP_FN_OUT]
 ) {
+#pragma HLS INLINE off
+
   // Make sure types are correct
   //static_assert(INPUT_T::width == OUTPUT_T::width, "inputs and outputs must have the same data width");
   static_assert(N_TOP_FN_OUT == N_TOP_FN_IN * num_patterns, "outputs array size must be inputs array size * num_patterns");
