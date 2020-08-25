@@ -1,0 +1,5 @@
+myproject_prj/
+*~
+*.out
+*.log
+*.rpt
