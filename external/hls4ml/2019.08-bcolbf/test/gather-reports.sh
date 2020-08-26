@@ -1,7 +1,7 @@
 #!/bin/bash
 
 failed=0
-basedir=vivado_prj
+basedir=${PWD}
 full=0
 brief=0
 
@@ -50,7 +50,7 @@ fi
 
 cd "${basedir}"
 
-for dir in */ ; do
+for dir in "${basedir}" ; do
    cd ${dir}
    prjdir="myproject_prj"
    prjname="myproject"

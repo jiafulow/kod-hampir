@@ -39,7 +39,7 @@ if [[ ! ${#report_files[@]} -eq 2 ]]; then
    exit 1
 fi
 
-if [[ "${latency}" -eq 0 ]] && [[ "${util}" -eq 0 ]]; then
+if [[ "${latency}" -eq 0 ]] && [[ "${utilization}" -eq 0 ]]; then
    echo "Argument -l or -u must be provided."
    exit 1
 fi
@@ -71,6 +71,11 @@ while IFS='' read -r line || [[ -n "${line}" ]]; do
     report+="${line}"$'\n'
 done < "${new}"
 
+rptname_orig+=("${original}")
+rptname_new+=("${new}")
+reports_orig+=("${original}")
+reports_new+=("${new}")
+
 for idx_orig in "${!rptname_orig[@]}"; do
    rptname="${rptname_orig[$idx_orig]}"
    idx_new="${idx_orig}"
@@ -84,8 +89,8 @@ for idx_orig in "${!rptname_orig[@]}"; do
    report_new="${reports_new[$idx_new]}"
    
    if [ "${latency}" -eq 1 ]; then
-      latency_orig=$(grep -A7 "+ Latency" <<< "${report_orig}")
-      latency_new=$(grep -A7 "+ Latency" <<< "${report_new}")
+      latency_orig=$(grep -A7 "+ Latency" "${report_orig}")
+      latency_new=$(grep -A7 "+ Latency" "${report_new}")
       if [[ "${latency_orig}" != "${latency_new}" ]]; then
          failed=1
          echo "${rptname} has changed"
@@ -102,8 +107,8 @@ for idx_orig in "${!rptname_orig[@]}"; do
    fi
    
    if [ "${utilization}" -eq 1 ]; then
-      utilization_orig=$(grep -B3 -A13 "|DSP" <<< "${report_orig}")
-      utilization_new=$(grep -B3 -A13 "|DSP" <<< "${report_new}")
+      utilization_orig=$(grep -B3 -A13 "|DSP" "${report_orig}")
+      utilization_new=$(grep -B3 -A13 "|DSP" "${report_new}")
       if [[ "${utilization_orig}" != "${utilization_new}" ]]; then
          failed=1
          echo "${rptname} has changed"
