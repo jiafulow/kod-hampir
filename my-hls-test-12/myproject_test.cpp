@@ -15,7 +15,7 @@
 
 namespace {
 
-// Hits contains 12 integer values.
+// 'Hits' contains 12 integer values.
 // [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 struct HitsType {
   typedef int T;
@@ -23,33 +23,33 @@ struct HitsType {
 };
 typedef std::array<HitsType::T, HitsType::N> Hits;
 
-// Event contains a list of Hits objects.
+// 'Event' contains a list of Hits objects.
 // [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 //  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 //  ...
 //  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 typedef std::vector<Hits> Event;
 
-// FPGAEvent contains the full list of chambers.
+// 'FPGAEvent' contains the full list of chambers.
 // Currently, it assumes 115 chambers, max 8 segments per chamber,
 // 10 variables per segment.
 // Therefore, the data shape is (None, 115, 8, 10).
 struct FPGAEvent {
-  static const unsigned int CHAMBERS  = num_emtf_chambers;
-  static const unsigned int SEGMENTS  = num_emtf_segments;
-  static const unsigned int VARIABLES = num_emtf_variables;
+  static const unsigned int CHAMBERS  = emtf::num_chambers;
+  static const unsigned int SEGMENTS  = emtf::num_segments;
+  static const unsigned int VARIABLES = emtf::num_variables;
   static const unsigned int LENGTH    = CHAMBERS * SEGMENTS;
 
-  emtf_phi_t   emtf_phi[LENGTH];
-  emtf_bend_t  emtf_bend[LENGTH];
-  emtf_theta_t emtf_theta[LENGTH];
-  emtf_theta_t emtf_theta_alt[LENGTH];
-  emtf_qual_t  emtf_qual[LENGTH];
-  emtf_time_t  emtf_time[LENGTH];
-  zones_t      zones[LENGTH];
-  timezones_t  timezones[LENGTH];
-  bx_t         bx[LENGTH];
-  valid_t      valid[LENGTH];
+  emtf::emtf_phi_t    emtf_phi[LENGTH];
+  emtf::emtf_bend_t   emtf_bend[LENGTH];
+  emtf::emtf_theta1_t emtf_theta1[LENGTH];
+  emtf::emtf_theta2_t emtf_theta2[LENGTH];
+  emtf::emtf_qual_t   emtf_qual[LENGTH];
+  emtf::emtf_time_t   emtf_time[LENGTH];
+  emtf::zones_t       zones[LENGTH];
+  emtf::timezones_t   timezones[LENGTH];
+  emtf::bx_t          bx[LENGTH];
+  emtf::valid_t       valid[LENGTH];
 
   explicit FPGAEvent(const Event& evt);  // constructor
 
@@ -72,51 +72,54 @@ FPGAEvent::FPGAEvent(const Event& evt) {
 
   // Initialize
   for (unsigned i = 0; i < LENGTH; i++) {
-    emtf_phi[i]       = 0;
-    emtf_bend[i]      = 0;
-    emtf_theta[i]     = 0;
-    emtf_theta_alt[i] = 0;
-    emtf_qual[i]      = 0;
-    emtf_time[i]      = 0;
-    zones[i]          = 0;
-    timezones[i]      = 0;
-    bx[i]             = 0;
-    valid[i]          = 0;
+    emtf_phi[i]    = 0;
+    emtf_bend[i]   = 0;
+    emtf_theta1[i] = 0;
+    emtf_theta2[i] = 0;
+    emtf_qual[i]   = 0;
+    emtf_time[i]   = 0;
+    zones[i]       = 0;
+    timezones[i]   = 0;
+    bx[i]          = 0;
+    valid[i]       = 0;
   }
 
   // Fill values
   auto index_fn = ArrayIndex();
 
   for (unsigned ievt = 0; ievt < evt.size(); ievt++) {
-    int emtf_chamber = evt[ievt][0];
-    int emtf_segment = evt[ievt][1];
-    int i = index_fn(emtf_chamber, emtf_segment);
+    const int emtf_chamber = evt[ievt][0];
+    const int emtf_segment = evt[ievt][1];
+    const int i = index_fn(emtf_chamber, emtf_segment);
 
-    emtf_phi[i]       = evt[ievt][2];
-    emtf_bend[i]      = evt[ievt][3];
-    emtf_theta[i]     = evt[ievt][4];
-    emtf_theta_alt[i] = evt[ievt][5];
-    emtf_qual[i]      = evt[ievt][6];
-    emtf_time[i]      = evt[ievt][7];
-    zones[i]          = evt[ievt][8];
-    timezones[i]      = evt[ievt][9];
-    bx[i]             = evt[ievt][10];
-    valid[i]          = evt[ievt][11];
+    emtf_phi[i]    = evt[ievt][2];
+    emtf_bend[i]   = evt[ievt][3];
+    emtf_theta1[i] = evt[ievt][4];
+    emtf_theta2[i] = evt[ievt][5];
+    emtf_qual[i]   = evt[ievt][6];
+    emtf_time[i]   = evt[ievt][7];
+    zones[i]       = evt[ievt][8];
+    timezones[i]   = evt[ievt][9];
+    bx[i]          = evt[ievt][10];
+    valid[i]       = evt[ievt][11];
   }
   return;
 }
 
+// 'FPGAResult' contains the output, which is going to be sent to the NN.
+// Assume 4 muon candidates and each muon candidate has 36 variables.
 struct FPGAResult {
-  static const unsigned int TRACKS = num_emtf_out_tracks;
-  static const unsigned int VARIABLES = num_emtf_out_variables;
+  static const unsigned int TRACKS = emtf::num_out_tracks;
+  static const unsigned int VARIABLES = emtf::num_out_variables;
   static const unsigned int LENGTH = TRACKS * VARIABLES;
 
-  model_default_t data[LENGTH];  // IMPORTANT: signed
+  emtf::model_default_t data[LENGTH];
 
   FPGAResult();  // constructor
 };
 
 FPGAResult::FPGAResult() {
+  //FIXME - implement this
   for (unsigned i = 0; i < LENGTH; i++) {
     data[i] = 0;
   }
@@ -195,14 +198,14 @@ int main(int argc, char **argv)
   // Create FPGAEvent
   const FPGAEvent fw_event_0(event_0);
   FPGAResult fw_result_0;
-  FPGAResult fw_gold_0;
+  FPGAResult fw_gold_0;  //FIXME - not yet implemented
 
-  // Run
+  // Call the top function
   myproject(
       fw_event_0.emtf_phi,
       fw_event_0.emtf_bend,
-      fw_event_0.emtf_theta,
-      fw_event_0.emtf_theta_alt,
+      fw_event_0.emtf_theta1,
+      fw_event_0.emtf_theta2,
       fw_event_0.emtf_qual,
       fw_event_0.emtf_time,
       fw_event_0.zones,
@@ -231,5 +234,5 @@ int main(int argc, char **argv)
     print_array(fw_gold_0.data);
     std::cout << std::endl;
   }
-  return 0;  //FIXME
+  return 0;  //FIXME - always success
 }
