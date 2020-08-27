@@ -23,61 +23,87 @@ enum variable_type {
   VI_ZONES        = 6,
   VI_TIMEZONES    = 7,
   VI_BX           = 8,
-  VI_VALID        = 9
+  VI_VALID        = 9,
+  NUM_VARIABLES   = 10
 };
 
 // Bit width
 template <int T> struct variable_bw_traits {};
-template <> struct variable_bw_traits<VI_EMTF_PHI>    { static const int bw = 13; };
-template <> struct variable_bw_traits<VI_EMTF_BEND>   { static const int bw = 10; };
-template <> struct variable_bw_traits<VI_EMTF_THETA1> { static const int bw = 8; };
-template <> struct variable_bw_traits<VI_EMTF_THETA2> { static const int bw = 8; };
-template <> struct variable_bw_traits<VI_EMTF_QUAL>   { static const int bw = 6; };
-template <> struct variable_bw_traits<VI_EMTF_TIME>   { static const int bw = 6; };
-template <> struct variable_bw_traits<VI_ZONES>       { static const int bw = 3; };
-template <> struct variable_bw_traits<VI_TIMEZONES>   { static const int bw = 3; };
-template <> struct variable_bw_traits<VI_BX>          { static const int bw = 2; };
-template <> struct variable_bw_traits<VI_VALID>       { static const int bw = 1; };
+template <> struct variable_bw_traits<VI_EMTF_PHI>    { static const int value = 13; };
+template <> struct variable_bw_traits<VI_EMTF_BEND>   { static const int value = 10; };
+template <> struct variable_bw_traits<VI_EMTF_THETA1> { static const int value = 8; };
+template <> struct variable_bw_traits<VI_EMTF_THETA2> { static const int value = 8; };
+template <> struct variable_bw_traits<VI_EMTF_QUAL>   { static const int value = 6; };
+template <> struct variable_bw_traits<VI_EMTF_TIME>   { static const int value = 6; };
+template <> struct variable_bw_traits<VI_ZONES>       { static const int value = 3; };
+template <> struct variable_bw_traits<VI_TIMEZONES>   { static const int value = 3; };
+template <> struct variable_bw_traits<VI_BX>          { static const int value = 2; };
+template <> struct variable_bw_traits<VI_VALID>       { static const int value = 1; };
 
 // Is signed
-template <int T> struct variable_sg_traits {};
-template <> struct variable_sg_traits<VI_EMTF_PHI>    { static const bool sg = 0; };
-template <> struct variable_sg_traits<VI_EMTF_BEND>   { static const bool sg = 1; };
-template <> struct variable_sg_traits<VI_EMTF_THETA1> { static const bool sg = 0; };
-template <> struct variable_sg_traits<VI_EMTF_THETA2> { static const bool sg = 0; };
-template <> struct variable_sg_traits<VI_EMTF_QUAL>   { static const bool sg = 1; };
-template <> struct variable_sg_traits<VI_EMTF_TIME>   { static const bool sg = 1; };
-template <> struct variable_sg_traits<VI_ZONES>       { static const bool sg = 0; };
-template <> struct variable_sg_traits<VI_TIMEZONES>   { static const bool sg = 0; };
-template <> struct variable_sg_traits<VI_BX>          { static const bool sg = 1; };
-template <> struct variable_sg_traits<VI_VALID>       { static const bool sg = 0; };
+template <int T> struct variable_sign_traits {};
+template <> struct variable_sign_traits<VI_EMTF_PHI>    { static const bool value = 0; };
+template <> struct variable_sign_traits<VI_EMTF_BEND>   { static const bool value = 1; };
+template <> struct variable_sign_traits<VI_EMTF_THETA1> { static const bool value = 0; };
+template <> struct variable_sign_traits<VI_EMTF_THETA2> { static const bool value = 0; };
+template <> struct variable_sign_traits<VI_EMTF_QUAL>   { static const bool value = 1; };
+template <> struct variable_sign_traits<VI_EMTF_TIME>   { static const bool value = 1; };
+template <> struct variable_sign_traits<VI_ZONES>       { static const bool value = 0; };
+template <> struct variable_sign_traits<VI_TIMEZONES>   { static const bool value = 0; };
+template <> struct variable_sign_traits<VI_BX>          { static const bool value = 1; };
+template <> struct variable_sign_traits<VI_VALID>       { static const bool value = 0; };
 
 // Datatype - ap_int<N> or ap_uint<N>
 template <int N, bool S> struct select_ap_int_type {};
-template <int N> struct select_ap_int_type<N, true>  { typedef ap_int<N>  datatype; };  // signed
-template <int N> struct select_ap_int_type<N, false> { typedef ap_uint<N> datatype; };  // unsigned
+template <int N> struct select_ap_int_type<N, true>  { typedef ap_int<N>  type; };  // signed
+template <int N> struct select_ap_int_type<N, false> { typedef ap_uint<N> type; };  // unsigned
 
 // Get 'bw' and 'sg', then get the datatype
-// For example, enum VI_EMTF_PHI has bw = 13, sg = 0, so the datatype is ap_uint<13>.
+// For example, enum VI_EMTF_PHI has bw = 13, sign = 0, so the datatype is ap_uint<13>.
 template <int T> struct variable_datatype {
   typedef typename select_ap_int_type<
-      variable_bw_traits<T>::bw, variable_sg_traits<T>::sg>::datatype datatype;
+      variable_bw_traits<T>::value, variable_sign_traits<T>::value>::type type;
 };
 
 // Typedefs
-typedef variable_datatype<VI_EMTF_PHI>::datatype     emtf_phi_t;
-typedef variable_datatype<VI_EMTF_BEND>::datatype    emtf_bend_t;
-typedef variable_datatype<VI_EMTF_THETA1>::datatype  emtf_theta1_t;
-typedef variable_datatype<VI_EMTF_THETA2>::datatype  emtf_theta2_t;
-typedef variable_datatype<VI_EMTF_QUAL>::datatype    emtf_qual_t;
-typedef variable_datatype<VI_EMTF_TIME>::datatype    emtf_time_t;
-typedef variable_datatype<VI_ZONES>::datatype        zones_t;
-typedef variable_datatype<VI_TIMEZONES>::datatype    timezones_t;
-typedef variable_datatype<VI_BX>::datatype           bx_t;
-typedef variable_datatype<VI_VALID>::datatype        valid_t;
+typedef variable_datatype<VI_EMTF_PHI>::type     emtf_phi_t;
+typedef variable_datatype<VI_EMTF_BEND>::type    emtf_bend_t;
+typedef variable_datatype<VI_EMTF_THETA1>::type  emtf_theta1_t;
+typedef variable_datatype<VI_EMTF_THETA2>::type  emtf_theta2_t;
+typedef variable_datatype<VI_EMTF_QUAL>::type    emtf_qual_t;
+typedef variable_datatype<VI_EMTF_TIME>::type    emtf_time_t;
+typedef variable_datatype<VI_ZONES>::type        zones_t;
+typedef variable_datatype<VI_TIMEZONES>::type    timezones_t;
+typedef variable_datatype<VI_BX>::type           bx_t;
+typedef variable_datatype<VI_VALID>::type        valid_t;
 
-// Additional typedefs
-typedef ap_int<13> model_default_t;
+// Model inputs and outputs
+enum length_type {
+  N_MODEL_INPUT = emtf::num_chambers * emtf::num_segments,
+  N_MODEL_OUTPUT = emtf::num_out_tracks * emtf::num_out_variables
+};
+
+// Model typedefs
+
+// Count total number of bits.
+// Should be equal to 60 bits, but subject to change.
+struct count_model_input_bw {
+  static const int value = emtf_phi_t::width     + \
+                           emtf_bend_t::width    + \
+                           emtf_theta1_t::width  + \
+                           emtf_theta2_t::width  + \
+                           emtf_qual_t::width    + \
+                           emtf_time_t::width    + \
+                           zones_t::width        + \
+                           timezones_t::width    + \
+                           bx_t::width           + \
+                           valid_t::width;
+};
+
+// model_output_t is also subject to change
+typedef ap_uint<13>                          model_default_t;
+typedef ap_uint<count_model_input_bw::value> model_input_t;
+typedef model_default_t                      model_output_t;
 
 }  // namespace emtf
 

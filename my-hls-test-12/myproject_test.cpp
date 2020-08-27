@@ -1,224 +1,48 @@
-#include <cassert>
-#include <cstdint>
-#include <array>
-#include <map>
-#include <vector>
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <iterator>
-#include <algorithm>
-
+// Top function
 #include "firmware/myproject.h"
 
+// Test bench (C++)
+#include "software/testbench.h"
 
-namespace {
-
-// 'Hits' contains 12 integer values.
-// [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-struct HitsType {
-  typedef int T;
-  static const unsigned int N = 12;
-};
-typedef std::array<HitsType::T, HitsType::N> Hits;
-
-// 'Event' contains a list of Hits objects.
-// [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-//  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-//  ...
-//  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
-typedef std::vector<Hits> Event;
-
-// 'FPGAEvent' contains the full list of chambers.
-// Currently, it assumes 115 chambers, max 8 segments per chamber,
-// 10 variables per segment.
-// Therefore, the data shape is (None, 115, 8, 10).
-struct FPGAEvent {
-  static const unsigned int CHAMBERS  = emtf::num_chambers;
-  static const unsigned int SEGMENTS  = emtf::num_segments;
-  static const unsigned int VARIABLES = emtf::num_variables;
-  static const unsigned int LENGTH    = CHAMBERS * SEGMENTS;
-
-  emtf::emtf_phi_t    emtf_phi[LENGTH];
-  emtf::emtf_bend_t   emtf_bend[LENGTH];
-  emtf::emtf_theta1_t emtf_theta1[LENGTH];
-  emtf::emtf_theta2_t emtf_theta2[LENGTH];
-  emtf::emtf_qual_t   emtf_qual[LENGTH];
-  emtf::emtf_time_t   emtf_time[LENGTH];
-  emtf::zones_t       zones[LENGTH];
-  emtf::timezones_t   timezones[LENGTH];
-  emtf::bx_t          bx[LENGTH];
-  emtf::valid_t       valid[LENGTH];
-
-  explicit FPGAEvent(const Event& evt);  // constructor
-
-  struct ArrayIndex {
-    inline unsigned operator ()(unsigned emtf_chamber, unsigned emtf_segment) const {
-      assert(emtf_chamber < CHAMBERS);
-      assert(emtf_segment < SEGMENTS);
-      return (emtf_chamber * SEGMENTS) + emtf_segment;
-    }
-    inline int operator ()(int emtf_chamber, int emtf_segment) const {
-      assert(static_cast<unsigned>(emtf_chamber) < CHAMBERS);
-      assert(static_cast<unsigned>(emtf_segment) < SEGMENTS);
-      return (emtf_chamber * SEGMENTS) + emtf_segment;
-    }
-  };
-};
-
-FPGAEvent::FPGAEvent(const Event& evt) {
-  static_assert(VARIABLES + 2 == HitsType::N, "Num of variables + 2 != num of elements in Hits");
-
-  // Initialize
-  for (unsigned i = 0; i < LENGTH; i++) {
-    emtf_phi[i]    = 0;
-    emtf_bend[i]   = 0;
-    emtf_theta1[i] = 0;
-    emtf_theta2[i] = 0;
-    emtf_qual[i]   = 0;
-    emtf_time[i]   = 0;
-    zones[i]       = 0;
-    timezones[i]   = 0;
-    bx[i]          = 0;
-    valid[i]       = 0;
-  }
-
-  // Fill values
-  auto index_fn = ArrayIndex();
-
-  for (unsigned ievt = 0; ievt < evt.size(); ievt++) {
-    const int emtf_chamber = evt[ievt][0];
-    const int emtf_segment = evt[ievt][1];
-    const int i = index_fn(emtf_chamber, emtf_segment);
-
-    emtf_phi[i]    = evt[ievt][2];
-    emtf_bend[i]   = evt[ievt][3];
-    emtf_theta1[i] = evt[ievt][4];
-    emtf_theta2[i] = evt[ievt][5];
-    emtf_qual[i]   = evt[ievt][6];
-    emtf_time[i]   = evt[ievt][7];
-    zones[i]       = evt[ievt][8];
-    timezones[i]   = evt[ievt][9];
-    bx[i]          = evt[ievt][10];
-    valid[i]       = evt[ievt][11];
-  }
-  return;
+void sanity_check() {
+  static_assert(emtf::NUM_VARIABLES == emtf::num_variables, "Inconsistent emtf::NUM_VARIABLES");
+  static_assert(emtf::model_input_t::width == 60, "Inconsistent model_input_t::width");
+  static_assert(emtf::model_output_t::width == 13, "Inconsistent model_output_t::width");
+  static_assert(HitsType::N == emtf::num_variables + 2, "Inconsistent HitsType::N");
+  static_assert(FPGAEvent::LENGTH == N_MODEL_INPUT);
+  static_assert(FPGAResult::LENGTH == N_MODEL_OUTPUT);
 }
 
-// 'FPGAResult' contains the output, which is going to be sent to the NN.
-// Assume 4 muon candidates and each muon candidate has 36 variables.
-struct FPGAResult {
-  static const unsigned int TRACKS = emtf::num_out_tracks;
-  static const unsigned int VARIABLES = emtf::num_out_variables;
-  static const unsigned int LENGTH = TRACKS * VARIABLES;
-
-  emtf::model_default_t data[LENGTH];
-
-  FPGAResult();  // constructor
-};
-
-FPGAResult::FPGAResult() {
-  //FIXME - implement this
-  for (unsigned i = 0; i < LENGTH; i++) {
-    data[i] = 0;
-  }
-}
-
-
-// Read test bench event file
-int read_tb_event(const std::string filename, Event& evt) {
-  std::array<HitsType::T, HitsType::N> line_buf;
-
-  std::string line;  // line in file
-  char c;  // delimiter in line
-  bool first_line = true;
-  bool debug = false;
-
-  std::ifstream infile(filename);
-
-  if (infile.is_open()) {
-    while (std::getline(infile, line)) {  // split by line break
-      // This is how an input line looks like
-      // [   2,    0, 2548,    5,   18,   17,   -6,    0,    4,    3,    0,    1],
-      std::istringstream ss(line);
-
-      // Parsing the line
-      if (first_line) {
-        ss >> c;  // get rid of '['
-        first_line = false;
-      }
-      ss >> c;  // get rid of '['
-      for (unsigned i = 0; i < line_buf.size(); ++i)  // extract int, then get rid of ','
-        ss >> line_buf[i] >> c;
-      ss >> c;  // get rid of ']'
-      ss >> c;  // get rid of ','
-
-      // Append
-      evt.emplace_back(line_buf);
-
-      // Debug
-      if (debug) {
-        std::cout << "Line: " << line << std::endl;
-        std::cout << "Parsed line: ";
-        for (unsigned i = 0; i < line_buf.size(); ++i)
-          std::cout << line_buf[i] << " ";
-        std::cout << std::endl;
-      }
-    }
-  } else {
-    std::cerr << "Failed to open file: " << filename << std::endl;
-  }
-  infile.close();
-  return 0;
-}
-
-template <typename T, size_t N>
-void print_array(T const (&arr)[N]) {
-  std::copy(arr, arr + N, std::ostream_iterator<T>(std::cout, ", "));
-}
-
-template <typename T>
-void print_std_array(T const& arr) {
-  std::copy(std::begin(arr), std::end(arr), std::ostream_iterator<typename T::value_type>(std::cout, ", "));
-}
-
-}  // anonymous namespace
-
-
-// _____________________________________________________________________________
-// Main
-
+// Main driver
 int main(int argc, char **argv)
 {
+  // Perform sanity check
+  sanity_check();
+
   // Create Event
-  Event event_0;
-  read_tb_event("tb_data/event_0.txt", event_0);
+  Event evt;
+  read_tb_event("tb_data/event_0.txt", evt);  // read from text file
 
   // Create FPGAEvent
-  const FPGAEvent fw_event_0(event_0);
-  FPGAResult fw_result_0;
-  FPGAResult fw_gold_0;  //FIXME - not yet implemented
+  const FPGAEvent fw_evt(evt);  // get data from evt
+  const FPGAResult fw_gold;  //FIXME - not yet implemented
 
-  // Call the top function
-  myproject(
-      fw_event_0.emtf_phi,
-      fw_event_0.emtf_bend,
-      fw_event_0.emtf_theta1,
-      fw_event_0.emtf_theta2,
-      fw_event_0.emtf_qual,
-      fw_event_0.emtf_time,
-      fw_event_0.zones,
-      fw_event_0.timezones,
-      fw_event_0.bx,
-      fw_event_0.valid,
-      fw_result_0.data
-  );
+  // Prepare input and output
+  emtf::model_input_t in0[N_MODEL_INPUT];
+  emtf::model_output_t out[N_MODEL_OUTPUT];
+  init_array_as_zeros(in0);
+  init_array_as_zeros(out);
+
+  fw_evt.serialize_into(in0);  // get data from fw_evt
+
+  // Call the top function !!
+  myproject(in0, out);
+
 
   // Check for mismatches
   int err = 0;  // error code
-  for (unsigned i = 0; i < N_TOP_FN_OUT; i++) {
-    if (fw_result_0.data[i] != fw_gold_0.data[i])
+  for (unsigned i = 0; i < N_MODEL_OUTPUT; i++) {
+    if (out[i] != fw_gold.data[i])
       err++;
   }
 
@@ -228,10 +52,10 @@ int main(int argc, char **argv)
     std::string clr_reset = "\033[0m";     // reset
     std::cout << clr_error << "FAILED!" << clr_reset << std::endl;
     std::cout << "Got:" << std::endl;
-    print_array(fw_result_0.data);
+    print_array(out);
     std::cout << std::endl;
     std::cout << "Expected:" << std::endl;
-    print_array(fw_gold_0.data);
+    print_array(fw_gold.data);
     std::cout << std::endl;
   }
   return 0;  //FIXME - always success
