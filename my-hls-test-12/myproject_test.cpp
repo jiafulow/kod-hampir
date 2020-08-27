@@ -19,6 +19,12 @@ int main(int argc, char **argv)
   // Perform sanity check
   sanity_check();
 
+#ifndef __SYNTHESIS__
+  std::cout << "INFO: In standard C++ mode" << std::endl;
+#else
+  std::cout << "INFO: In synthesis mode" << std::endl;
+#endif
+
   // Create Event
   Event evt;
   read_tb_event("tb_data/event_0.txt", evt);  // read from text file

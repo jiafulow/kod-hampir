@@ -72,7 +72,7 @@ struct FPGAEvent {
 
   explicit FPGAEvent(const Event& evt);  // constructor
 
-  void serialize_into(emtf::model_input_t in0[N_MODEL_INPUT]) const;  // serialize data into the array
+  void serialize_into(emtf::model_input_t in0[N_MODEL_INPUT]) const;  // serialize data into a single array
 };
 
 FPGAEvent::FPGAEvent(const Event& evt) {
@@ -91,6 +91,7 @@ FPGAEvent::FPGAEvent(const Event& evt) {
   }
 
   // Fill values
+  // This is basically converting sparsified data into unsparsified
   auto index_fn = ArrayIndex();
 
   for (unsigned ihit = 0; ihit < evt.size(); ihit++) {
@@ -111,21 +112,21 @@ FPGAEvent::FPGAEvent(const Event& evt) {
   }
 }
 
-// Serialize FPGAEvent
+// Serialize data into a single array
 void FPGAEvent::serialize_into(emtf::model_input_t in0[N_MODEL_INPUT]) const {
-  for (unsigned iseg = 0; iseg < LENGTH; iseg++) {
-    int i = 0;
-    i = emtf::copy_bits(in0[iseg], emtf_phi[iseg]   , emtf::emtf_phi_t::width   , i);
-    i = emtf::copy_bits(in0[iseg], emtf_bend[iseg]  , emtf::emtf_bend_t::width  , i);
-    i = emtf::copy_bits(in0[iseg], emtf_theta1[iseg], emtf::emtf_theta1_t::width, i);
-    i = emtf::copy_bits(in0[iseg], emtf_theta2[iseg], emtf::emtf_theta2_t::width, i);
-    i = emtf::copy_bits(in0[iseg], emtf_qual[iseg]  , emtf::emtf_qual_t::width  , i);
-    i = emtf::copy_bits(in0[iseg], emtf_time[iseg]  , emtf::emtf_time_t::width  , i);
-    i = emtf::copy_bits(in0[iseg], zones[iseg]      , emtf::zones_t::width      , i);
-    i = emtf::copy_bits(in0[iseg], timezones[iseg]  , emtf::timezones_t::width  , i);
-    i = emtf::copy_bits(in0[iseg], bx[iseg]         , emtf::bx_t::width         , i);
-    i = emtf::copy_bits(in0[iseg], valid[iseg]      , emtf::valid_t::width      , i);
-    assert(i == emtf::model_input_t::width);
+  for (unsigned iseg = 0; iseg < N_MODEL_INPUT; iseg++) {
+    auto&& in0_tmp = in0[iseg];
+
+    in0_tmp.range(emtf::emtf_phi_bits_hi   , emtf::emtf_phi_bits_lo)    = emtf_phi[iseg];
+    in0_tmp.range(emtf::emtf_bend_bits_hi  , emtf::emtf_bend_bits_lo)   = emtf_bend[iseg];
+    in0_tmp.range(emtf::emtf_theta1_bits_hi, emtf::emtf_theta1_bits_lo) = emtf_theta1[iseg];
+    in0_tmp.range(emtf::emtf_theta2_bits_hi, emtf::emtf_theta2_bits_lo) = emtf_theta2[iseg];
+    in0_tmp.range(emtf::emtf_qual_bits_hi  , emtf::emtf_qual_bits_lo)   = emtf_qual[iseg];
+    in0_tmp.range(emtf::emtf_time_bits_hi  , emtf::emtf_time_bits_lo)   = emtf_time[iseg];
+    in0_tmp.range(emtf::zones_bits_hi      , emtf::zones_bits_lo)       = zones[iseg];
+    in0_tmp.range(emtf::timezones_bits_hi  , emtf::timezones_bits_lo)   = timezones[iseg];
+    in0_tmp.range(emtf::bx_bits_hi         , emtf::bx_bits_lo)          = bx[iseg];
+    in0_tmp.range(emtf::valid_bits_hi      , emtf::valid_bits_lo)       = valid[iseg];
   }
 }
 

@@ -23,7 +23,7 @@ enum variable_type {
   VI_ZONES        = 6,
   VI_TIMEZONES    = 7,
   VI_BX           = 8,
-  VI_VALID        = 9,
+  VI_VALID        = 9,  // try to keep 'valid' as the last
   NUM_VARIABLES   = 10
 };
 
@@ -53,57 +53,84 @@ template <> struct variable_sign_traits<VI_TIMEZONES>   { static const bool valu
 template <> struct variable_sign_traits<VI_BX>          { static const bool value = 1; };
 template <> struct variable_sign_traits<VI_VALID>       { static const bool value = 0; };
 
-// Datatype - ap_int<N> or ap_uint<N>
-template <int N, bool S> struct select_ap_int_type {};
-template <int N> struct select_ap_int_type<N, true>  { typedef ap_int<N>  type; };  // signed
+// Check for ap datatype
+struct true_type { static const bool value = true; };    // replicate std::true_type from <type_traits>
+struct false_type { static const bool value = false; };  // replicate std::false_type from <type_traits>
+
+template <typename T>
+struct is_ap_int_type : false_type {};
+
+template <int N> struct is_ap_int_type<ap_int<N> > : true_type {};   // toggle to true
+template <int N> struct is_ap_int_type<ap_uint<N> > : true_type {};  // toggle to true
+
+// Select ap datatype - ap_int<N> or ap_uint<N>
+template <int N, bool S>
+struct select_ap_int_type {};
+
+template <int N> struct select_ap_int_type<N, true> { typedef ap_int<N> type; };    // signed
 template <int N> struct select_ap_int_type<N, false> { typedef ap_uint<N> type; };  // unsigned
 
-// Get 'bw' and 'sg', then get the datatype
+// Get bw and sign, then find the ap datatype
 // For example, enum VI_EMTF_PHI has bw = 13, sign = 0, so the datatype is ap_uint<13>.
-template <int T> struct variable_datatype {
+template <int T> struct find_variable_datatype {
   typedef typename select_ap_int_type<
       variable_bw_traits<T>::value, variable_sign_traits<T>::value>::type type;
 };
 
-// Typedefs
-typedef variable_datatype<VI_EMTF_PHI>::type     emtf_phi_t;
-typedef variable_datatype<VI_EMTF_BEND>::type    emtf_bend_t;
-typedef variable_datatype<VI_EMTF_THETA1>::type  emtf_theta1_t;
-typedef variable_datatype<VI_EMTF_THETA2>::type  emtf_theta2_t;
-typedef variable_datatype<VI_EMTF_QUAL>::type    emtf_qual_t;
-typedef variable_datatype<VI_EMTF_TIME>::type    emtf_time_t;
-typedef variable_datatype<VI_ZONES>::type        zones_t;
-typedef variable_datatype<VI_TIMEZONES>::type    timezones_t;
-typedef variable_datatype<VI_BX>::type           bx_t;
-typedef variable_datatype<VI_VALID>::type        valid_t;
+// Find the range of bits when the variables are serialized
+template <int T>
+struct find_variable_range_of_bits {
+  static const int begin = find_variable_range_of_bits<T - 1>::end;
+  static const int end = begin + variable_bw_traits<T>::value;
+};
 
-// Model inputs and outputs
+template <>
+struct find_variable_range_of_bits<0> {  // specialize when T=0
+  static const int begin = 0;
+  static const int end = begin + variable_bw_traits<0>::value;
+};
+
+// Translate enums into nicer names by using text replacement macros ("token pasting")
+// For example, take enum VI_EMTF_PHI and define emtf_phi_t, emtf_phi_bits_lo, emtf_phi_bits_hi:
+//     typedef find_variable_datatype<VI_EMTF_PHI>::type emtf_phi_t;
+//     constexpr int emtf_phi_bits_lo = find_variable_range_of_bits<VI_EMTF_PHI>::begin;
+//     constexpr int emtf_phi_bits_hi = find_variable_range_of_bits<VI_EMTF_PHI>::end - 1;
+#define DEFINE_NICE_NAMES(T, name) \
+    typedef find_variable_datatype<T>::type name##_t; \
+    constexpr int name##_bits_lo = find_variable_range_of_bits<T>::begin; \
+    constexpr int name##_bits_hi = find_variable_range_of_bits<T>::end - 1;
+
+// Map from enum to nicer names
+DEFINE_NICE_NAMES(VI_EMTF_PHI, emtf_phi)
+DEFINE_NICE_NAMES(VI_EMTF_BEND, emtf_bend)
+DEFINE_NICE_NAMES(VI_EMTF_THETA1, emtf_theta1)
+DEFINE_NICE_NAMES(VI_EMTF_THETA2, emtf_theta2)
+DEFINE_NICE_NAMES(VI_EMTF_QUAL, emtf_qual)
+DEFINE_NICE_NAMES(VI_EMTF_TIME, emtf_time)
+DEFINE_NICE_NAMES(VI_ZONES, zones)
+DEFINE_NICE_NAMES(VI_TIMEZONES, timezones)
+DEFINE_NICE_NAMES(VI_BX, bx)
+DEFINE_NICE_NAMES(VI_VALID, valid)
+#undef DEFINE_NICE_NAMES
+
+
+// Model input and output lengths
 enum length_type {
   N_MODEL_INPUT = emtf::num_chambers * emtf::num_segments,
   N_MODEL_OUTPUT = emtf::num_out_tracks * emtf::num_out_variables
 };
 
-// Model typedefs
-
-// Count total number of bits.
-// Should be equal to 60 bits, but subject to change.
-struct count_model_input_bw {
-  static const int value = emtf_phi_t::width     + \
-                           emtf_bend_t::width    + \
-                           emtf_theta1_t::width  + \
-                           emtf_theta2_t::width  + \
-                           emtf_qual_t::width    + \
-                           emtf_time_t::width    + \
-                           zones_t::width        + \
-                           timezones_t::width    + \
-                           bx_t::width           + \
-                           valid_t::width;
+// Bit width of model_input_t is the sum of the bit widths
+struct model_input_bw_traits {
+  static const int value = find_variable_range_of_bits<VI_VALID>::end;  // 'valid' should be the last variable
 };
 
-// model_output_t is also subject to change
-typedef ap_uint<13>                          model_default_t;
-typedef ap_uint<count_model_input_bw::value> model_input_t;
-typedef model_default_t                      model_output_t;
+// Model typedefs
+// model_input_t should have bw = 60, but it is subject to change.
+// model_output_t is also subject to change.
+typedef ap_uint<13>                           model_default_t;
+typedef ap_uint<model_input_bw_traits::value> model_input_t;
+typedef model_default_t                       model_output_t;
 
 }  // namespace emtf
 
