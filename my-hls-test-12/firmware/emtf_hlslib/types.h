@@ -115,23 +115,44 @@ DEFINE_NICE_NAMES(VI_VALID, valid)
 
 
 // Model input and output lengths
-enum length_type {
-  N_MODEL_INPUT = emtf::num_chambers * emtf::num_segments,
-  N_MODEL_OUTPUT = emtf::num_out_tracks * emtf::num_out_variables
+enum model_length_type {
+  N_MODEL_IN = emtf::num_chambers * emtf::num_segments,
+  N_MODEL_OUT = emtf::num_out_tracks * emtf::num_out_variables
 };
 
-// Bit width of model_input_t is the sum of the bit widths
-struct model_input_bw_traits {
+// Bit width of model_in_t is the sum of the bit widths
+struct model_in_bw_traits {
   static const int value = find_variable_range_of_bits<VI_VALID>::end;  // 'valid' should be the last variable
 };
 
 // Model typedefs
-// model_input_t should have bw = 60, but it is subject to change.
-// model_output_t is also subject to change.
-typedef ap_uint<13>                           model_default_t;
-typedef ap_uint<model_input_bw_traits::value> model_input_t;
-typedef model_default_t                       model_output_t;
+// model_in_t should have bw = 60, but it is subject to change.
+// model_out_t is also subject to change.
+typedef ap_uint<13>                        model_default_t;
+typedef ap_uint<model_in_bw_traits::value> model_in_t;
+typedef model_default_t                    model_out_t;
+
+// Layer output lengths
+enum layer_length_type {
+  N_ZONING_OUT = num_img_rows,
+  N_POOLING_OUT = num_img_cols
+};
+
+// Layer typedefs
+typedef ap_uint<num_img_cols> zoning_hitmap_t;
+typedef ap_uint<num_img_rows> pooling_hitmap_t;
+typedef ap_uint<6>            pooling_activation_t;
+
+typedef zoning_hitmap_t       zoning_out_t;
+typedef pooling_activation_t  pooling_out_t;
+
 
 }  // namespace emtf
+
+// The following are frequently used, so get rid of namespace
+using emtf::N_MODEL_IN;
+using emtf::N_MODEL_OUT;
+using emtf::N_ZONING_OUT;
+using emtf::N_POOLING_OUT;
 
 #endif  // __EMTF_HLSLIB_TYPES_H__ not defined

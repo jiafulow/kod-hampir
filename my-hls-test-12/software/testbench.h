@@ -16,9 +16,6 @@
 // EMTF HLS
 #include "../firmware/emtf_hlslib/all.h"
 
-using emtf::N_MODEL_INPUT;
-using emtf::N_MODEL_OUTPUT;
-
 namespace {
 
 // 'Hits' contains 12 integer values.
@@ -72,7 +69,7 @@ struct FPGAEvent {
 
   explicit FPGAEvent(const Event& evt);  // constructor
 
-  void serialize_into(emtf::model_input_t in0[N_MODEL_INPUT]) const;  // serialize data into a single array
+  void serialize_into(emtf::model_in_t in0[N_MODEL_IN]) const;  // serialize data into a single array
 };
 
 FPGAEvent::FPGAEvent(const Event& evt) {
@@ -113,8 +110,8 @@ FPGAEvent::FPGAEvent(const Event& evt) {
 }
 
 // Serialize data into a single array
-void FPGAEvent::serialize_into(emtf::model_input_t in0[N_MODEL_INPUT]) const {
-  for (unsigned iseg = 0; iseg < N_MODEL_INPUT; iseg++) {
+void FPGAEvent::serialize_into(emtf::model_in_t in0[N_MODEL_IN]) const {
+  for (unsigned iseg = 0; iseg < N_MODEL_IN; iseg++) {
     auto&& in0_tmp = in0[iseg];
 
     in0_tmp.range(emtf::emtf_phi_bits_hi   , emtf::emtf_phi_bits_lo)    = emtf_phi[iseg];
@@ -137,7 +134,7 @@ struct FPGAResult {
   static const unsigned int VARIABLES = emtf::num_out_variables;
   static const unsigned int LENGTH = TRACKS * VARIABLES;
 
-  emtf::model_output_t data[LENGTH];
+  emtf::model_out_t data[LENGTH];
 
   FPGAResult();  // constructor
 };

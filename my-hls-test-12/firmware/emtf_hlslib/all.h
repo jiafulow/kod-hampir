@@ -6,4 +6,7 @@
 #include "helper.h"
 #include "xilinx.h"
 
+#include "zoning.h"
+#include "pooling.h"
+
 #endif  // __EMTF_HLSLIB_ALL_H__ not defined

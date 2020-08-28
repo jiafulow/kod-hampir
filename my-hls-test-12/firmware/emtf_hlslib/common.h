@@ -34,6 +34,9 @@ namespace emtf {
   constexpr int num_out_tracks = 4;
   constexpr int num_out_variables = 36;
 
+  constexpr int num_img_rows = 8;
+  constexpr int num_img_cols = 288;
+
 }  // namespace emtf
 
 #endif  // __EMTF_HLSLIB_COMMON_H__ not defined

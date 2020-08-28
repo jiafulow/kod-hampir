@@ -2,8 +2,8 @@
 
 // Top-level function implementation
 void myproject(
-    const emtf::model_input_t in0[N_MODEL_INPUT],
-    emtf::model_output_t out[N_MODEL_OUTPUT]
+    const emtf::model_in_t in0[N_MODEL_IN],
+    emtf::model_out_t out[N_MODEL_OUT]
 ) {
 
 #pragma HLS PIPELINE II=1
@@ -16,16 +16,16 @@ void myproject(
 #pragma HLS ARRAY_PARTITION variable=out complete dim=0
 
   // Deserialize from in0
-  emtf::emtf_phi_t    emtf_phi[N_MODEL_INPUT];
-  emtf::emtf_bend_t   emtf_bend[N_MODEL_INPUT];
-  emtf::emtf_theta1_t emtf_theta1[N_MODEL_INPUT];
-  emtf::emtf_theta2_t emtf_theta2[N_MODEL_INPUT];
-  emtf::emtf_qual_t   emtf_qual[N_MODEL_INPUT];
-  emtf::emtf_time_t   emtf_time[N_MODEL_INPUT];
-  emtf::zones_t       zones[N_MODEL_INPUT];
-  emtf::timezones_t   timezones[N_MODEL_INPUT];
-  emtf::bx_t          bx[N_MODEL_INPUT];
-  emtf::valid_t       valid[N_MODEL_INPUT];
+  emtf::emtf_phi_t    emtf_phi[N_MODEL_IN];
+  emtf::emtf_bend_t   emtf_bend[N_MODEL_IN];
+  emtf::emtf_theta1_t emtf_theta1[N_MODEL_IN];
+  emtf::emtf_theta2_t emtf_theta2[N_MODEL_IN];
+  emtf::emtf_qual_t   emtf_qual[N_MODEL_IN];
+  emtf::emtf_time_t   emtf_time[N_MODEL_IN];
+  emtf::zones_t       zones[N_MODEL_IN];
+  emtf::timezones_t   timezones[N_MODEL_IN];
+  emtf::bx_t          bx[N_MODEL_IN];
+  emtf::valid_t       valid[N_MODEL_IN];
 
 #pragma HLS ARRAY_PARTITION variable=emtf_phi complete dim=0
 #pragma HLS ARRAY_PARTITION variable=emtf_bend complete dim=0
@@ -38,9 +38,9 @@ void myproject(
 #pragma HLS ARRAY_PARTITION variable=bx complete dim=0
 #pragma HLS ARRAY_PARTITION variable=valid complete dim=0
 
-  emtf::model_input_t in0_tmp = 0;
+  emtf::model_in_t in0_tmp = 0;
 
-  for (unsigned iseg = 0; iseg < N_MODEL_INPUT; iseg++) {
+  for (unsigned iseg = 0; iseg < N_MODEL_IN; iseg++) {
     in0_tmp = in0[iseg];  // read input
 
     emtf_phi[iseg]    = in0_tmp.range(emtf::emtf_phi_bits_hi   , emtf::emtf_phi_bits_lo);
@@ -58,10 +58,24 @@ void myproject(
   // This is a macro defined in emtf_hlslib/helper.h. To be removed in the final version.
   PRINT_TOP_FN_ARRAYS
 
+  // Layer 1 - zoning
+  emtf::zoning_out_t zoning_out[N_ZONING_OUT];
+#pragma HLS ARRAY_PARTITION variable=zoning_out complete dim=0
+
+  emtf::zoning_layer<0>(emtf_phi, zones, timezones, valid, zoning_out);
+
+  // Layer 2 - pooling
+  emtf::pooling_out_t pooling_out[N_POOLING_OUT];
+#pragma HLS ARRAY_PARTITION variable=pooling_out complete dim=0
+
+  emtf::pooling_layer<0>(zoning_out, pooling_out);
+
+
+
 
 
   //FIXME - dummy loop
-  for (unsigned i = 0; i < N_MODEL_OUTPUT; i++) {
+  for (unsigned i = 0; i < N_MODEL_OUT; i++) {
     out[i] = valid[i];
   }
 

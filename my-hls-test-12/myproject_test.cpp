@@ -6,11 +6,13 @@
 
 void sanity_check() {
   static_assert(emtf::NUM_VARIABLES == emtf::num_variables, "Inconsistent emtf::NUM_VARIABLES");
-  static_assert(emtf::model_input_t::width == 60, "Inconsistent model_input_t::width");
-  static_assert(emtf::model_output_t::width == 13, "Inconsistent model_output_t::width");
+  static_assert(emtf::model_in_t::width == 60, "Inconsistent model_in_t::width");
+  static_assert(emtf::model_out_t::width == 13, "Inconsistent model_out_t::width");
   static_assert(HitsType::N == emtf::num_variables + 2, "Inconsistent HitsType::N");
-  static_assert(FPGAEvent::LENGTH == N_MODEL_INPUT);
-  static_assert(FPGAResult::LENGTH == N_MODEL_OUTPUT);
+  static_assert(FPGAEvent::LENGTH == N_MODEL_IN, "Inconsistent FPGAEvent::LENGTH");
+  static_assert(FPGAResult::LENGTH == N_MODEL_OUT, "Inconsistent FPGAResult::LENGTH");
+  static_assert(N_MODEL_IN < 1024, "Too large N_MODEL_IN");
+  static_assert(N_MODEL_OUT < 1024, "Too large N_MODEL_OUT");
 }
 
 // Main driver
@@ -18,12 +20,6 @@ int main(int argc, char **argv)
 {
   // Perform sanity check
   sanity_check();
-
-#ifndef __SYNTHESIS__
-  std::cout << "INFO: In standard C++ mode" << std::endl;
-#else
-  std::cout << "INFO: In synthesis mode" << std::endl;
-#endif
 
   // Create Event
   Event evt;
@@ -34,8 +30,8 @@ int main(int argc, char **argv)
   const FPGAResult fw_gold;  //FIXME - not yet implemented
 
   // Prepare input and output
-  emtf::model_input_t in0[N_MODEL_INPUT];
-  emtf::model_output_t out[N_MODEL_OUTPUT];
+  emtf::model_in_t in0[N_MODEL_IN];
+  emtf::model_out_t out[N_MODEL_OUT];
   init_array_as_zeros(in0);
   init_array_as_zeros(out);
 
@@ -47,7 +43,7 @@ int main(int argc, char **argv)
 
   // Check for mismatches
   int err = 0;  // error code
-  for (unsigned i = 0; i < N_MODEL_OUTPUT; i++) {
+  for (unsigned i = 0; i < N_MODEL_OUT; i++) {
     if (out[i] != fw_gold.data[i])
       err++;
   }

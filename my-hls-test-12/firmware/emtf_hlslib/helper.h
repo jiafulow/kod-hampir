@@ -4,16 +4,11 @@
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>
-
-#ifndef __SYNTHESIS__
-#define emtf_assert(expr) (assert(expr))
-#else
-#define emtf_assert(expr) ((void)(expr))
-#endif
+#include <iostream>
 
 #if !defined(__SYNTHESIS__) && !defined(NDEBUG)
 #define PRINT_TOP_FN_ARRAYS \
-  for (unsigned iseg = 0; iseg < N_MODEL_INPUT; iseg++) { \
+  for (unsigned iseg = 0; iseg < N_MODEL_IN; iseg++) { \
     if (valid[iseg] == 1) { \
       std::cout << (iseg / emtf::num_segments) << " " \
                 << (iseg % emtf::num_segments) << " " \
