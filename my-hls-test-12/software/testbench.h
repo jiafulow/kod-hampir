@@ -13,9 +13,6 @@
 #include <iterator>
 #include <algorithm>
 
-// EMTF HLS
-#include "../firmware/emtf_hlslib/all.h"
-
 namespace {
 
 // 'Hits' contains 12 integer values.
@@ -49,8 +46,8 @@ struct FPGAEvent {
   emtf::emtf_theta2_t emtf_theta2[LENGTH];
   emtf::emtf_qual_t   emtf_qual[LENGTH];
   emtf::emtf_time_t   emtf_time[LENGTH];
-  emtf::zones_t       zones[LENGTH];
-  emtf::timezones_t   timezones[LENGTH];
+  emtf::flags_zone_t  flags_zone[LENGTH];
+  emtf::flags_tzone_t flags_tzone[LENGTH];
   emtf::bx_t          bx[LENGTH];
   emtf::valid_t       valid[LENGTH];
 
@@ -81,8 +78,8 @@ FPGAEvent::FPGAEvent(const Event& evt) {
     emtf_theta2[iseg] = 0;
     emtf_qual[iseg]   = 0;
     emtf_time[iseg]   = 0;
-    zones[iseg]       = 0;
-    timezones[iseg]   = 0;
+    flags_zone[iseg]  = 0;
+    flags_tzone[iseg] = 0;
     bx[iseg]          = 0;
     valid[iseg]       = 0;
   }
@@ -102,8 +99,8 @@ FPGAEvent::FPGAEvent(const Event& evt) {
     emtf_theta2[iseg] = evt[ihit][5];
     emtf_qual[iseg]   = evt[ihit][6];
     emtf_time[iseg]   = evt[ihit][7];
-    zones[iseg]       = evt[ihit][8];
-    timezones[iseg]   = evt[ihit][9];
+    flags_zone[iseg]  = evt[ihit][8];
+    flags_tzone[iseg] = evt[ihit][9];
     bx[iseg]          = evt[ihit][10];
     valid[iseg]       = evt[ihit][11];
   }
@@ -120,8 +117,8 @@ void FPGAEvent::serialize_into(emtf::model_in_t in0[N_MODEL_IN]) const {
     in0_tmp.range(emtf::emtf_theta2_bits_hi, emtf::emtf_theta2_bits_lo) = emtf_theta2[iseg];
     in0_tmp.range(emtf::emtf_qual_bits_hi  , emtf::emtf_qual_bits_lo)   = emtf_qual[iseg];
     in0_tmp.range(emtf::emtf_time_bits_hi  , emtf::emtf_time_bits_lo)   = emtf_time[iseg];
-    in0_tmp.range(emtf::zones_bits_hi      , emtf::zones_bits_lo)       = zones[iseg];
-    in0_tmp.range(emtf::timezones_bits_hi  , emtf::timezones_bits_lo)   = timezones[iseg];
+    in0_tmp.range(emtf::flags_zone_bits_hi , emtf::flags_zone_bits_lo)  = flags_zone[iseg];
+    in0_tmp.range(emtf::flags_tzone_bits_hi, emtf::flags_tzone_bits_lo) = flags_tzone[iseg];
     in0_tmp.range(emtf::bx_bits_hi         , emtf::bx_bits_lo)          = bx[iseg];
     in0_tmp.range(emtf::valid_bits_hi      , emtf::valid_bits_lo)       = valid[iseg];
   }

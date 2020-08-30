@@ -5,6 +5,9 @@
 #include "ap_int.h"
 #include "ap_fixed.h"
 
+// EMTF HLS
+#include "common.h"
+
 namespace emtf {
 
 // Enums
@@ -20,8 +23,8 @@ enum variable_type {
   VI_EMTF_THETA2  = 3,
   VI_EMTF_QUAL    = 4,
   VI_EMTF_TIME    = 5,
-  VI_ZONES        = 6,
-  VI_TIMEZONES    = 7,
+  VI_FLAGS_ZONE   = 6,
+  VI_FLAGS_TZONE  = 7,
   VI_BX           = 8,
   VI_VALID        = 9,  // try to keep 'valid' as the last
   NUM_VARIABLES   = 10
@@ -35,8 +38,8 @@ template <> struct variable_bw_traits<VI_EMTF_THETA1> { static const int value =
 template <> struct variable_bw_traits<VI_EMTF_THETA2> { static const int value = 8; };
 template <> struct variable_bw_traits<VI_EMTF_QUAL>   { static const int value = 6; };
 template <> struct variable_bw_traits<VI_EMTF_TIME>   { static const int value = 6; };
-template <> struct variable_bw_traits<VI_ZONES>       { static const int value = 3; };
-template <> struct variable_bw_traits<VI_TIMEZONES>   { static const int value = 3; };
+template <> struct variable_bw_traits<VI_FLAGS_ZONE>  { static const int value = 3; };
+template <> struct variable_bw_traits<VI_FLAGS_TZONE> { static const int value = 3; };
 template <> struct variable_bw_traits<VI_BX>          { static const int value = 2; };
 template <> struct variable_bw_traits<VI_VALID>       { static const int value = 1; };
 
@@ -48,8 +51,8 @@ template <> struct variable_sign_traits<VI_EMTF_THETA1> { static const bool valu
 template <> struct variable_sign_traits<VI_EMTF_THETA2> { static const bool value = 0; };
 template <> struct variable_sign_traits<VI_EMTF_QUAL>   { static const bool value = 1; };
 template <> struct variable_sign_traits<VI_EMTF_TIME>   { static const bool value = 1; };
-template <> struct variable_sign_traits<VI_ZONES>       { static const bool value = 0; };
-template <> struct variable_sign_traits<VI_TIMEZONES>   { static const bool value = 0; };
+template <> struct variable_sign_traits<VI_FLAGS_ZONE>  { static const bool value = 0; };
+template <> struct variable_sign_traits<VI_FLAGS_TZONE> { static const bool value = 0; };
 template <> struct variable_sign_traits<VI_BX>          { static const bool value = 1; };
 template <> struct variable_sign_traits<VI_VALID>       { static const bool value = 0; };
 
@@ -107,8 +110,8 @@ DEFINE_NICE_NAMES(VI_EMTF_THETA1, emtf_theta1)
 DEFINE_NICE_NAMES(VI_EMTF_THETA2, emtf_theta2)
 DEFINE_NICE_NAMES(VI_EMTF_QUAL, emtf_qual)
 DEFINE_NICE_NAMES(VI_EMTF_TIME, emtf_time)
-DEFINE_NICE_NAMES(VI_ZONES, zones)
-DEFINE_NICE_NAMES(VI_TIMEZONES, timezones)
+DEFINE_NICE_NAMES(VI_FLAGS_ZONE, flags_zone)
+DEFINE_NICE_NAMES(VI_FLAGS_TZONE, flags_tzone)
 DEFINE_NICE_NAMES(VI_BX, bx)
 DEFINE_NICE_NAMES(VI_VALID, valid)
 #undef DEFINE_NICE_NAMES

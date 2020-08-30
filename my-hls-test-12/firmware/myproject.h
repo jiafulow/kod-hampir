@@ -7,7 +7,7 @@
 //#include "hls_stream.h"
 
 // EMTF HLS
-#include "emtf_hlslib/all.h"
+#include "emtf_hlslib/types.h"
 
 // Top-level function prototype
 void myproject(

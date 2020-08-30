@@ -1,5 +1,8 @@
 #include "myproject.h"
 
+// EMTF HLS
+#include "emtf_hlslib/all.h"
+
 // Top-level function implementation
 void myproject(
     const emtf::model_in_t in0[N_MODEL_IN],
@@ -22,8 +25,8 @@ void myproject(
   emtf::emtf_theta2_t emtf_theta2[N_MODEL_IN];
   emtf::emtf_qual_t   emtf_qual[N_MODEL_IN];
   emtf::emtf_time_t   emtf_time[N_MODEL_IN];
-  emtf::zones_t       zones[N_MODEL_IN];
-  emtf::timezones_t   timezones[N_MODEL_IN];
+  emtf::flags_zone_t  flags_zone[N_MODEL_IN];
+  emtf::flags_tzone_t flags_tzone[N_MODEL_IN];
   emtf::bx_t          bx[N_MODEL_IN];
   emtf::valid_t       valid[N_MODEL_IN];
 
@@ -33,8 +36,8 @@ void myproject(
 #pragma HLS ARRAY_PARTITION variable=emtf_theta2 complete dim=0
 #pragma HLS ARRAY_PARTITION variable=emtf_qual complete dim=0
 #pragma HLS ARRAY_PARTITION variable=emtf_time complete dim=0
-#pragma HLS ARRAY_PARTITION variable=zones complete dim=0
-#pragma HLS ARRAY_PARTITION variable=timezones complete dim=0
+#pragma HLS ARRAY_PARTITION variable=flags_zone complete dim=0
+#pragma HLS ARRAY_PARTITION variable=flags_tzone complete dim=0
 #pragma HLS ARRAY_PARTITION variable=bx complete dim=0
 #pragma HLS ARRAY_PARTITION variable=valid complete dim=0
 
@@ -49,8 +52,8 @@ void myproject(
     emtf_theta2[iseg] = in0_tmp.range(emtf::emtf_theta2_bits_hi, emtf::emtf_theta2_bits_lo);
     emtf_qual[iseg]   = in0_tmp.range(emtf::emtf_qual_bits_hi  , emtf::emtf_qual_bits_lo);
     emtf_time[iseg]   = in0_tmp.range(emtf::emtf_time_bits_hi  , emtf::emtf_time_bits_lo);
-    zones[iseg]       = in0_tmp.range(emtf::zones_bits_hi      , emtf::zones_bits_lo);
-    timezones[iseg]   = in0_tmp.range(emtf::timezones_bits_hi  , emtf::timezones_bits_lo);
+    flags_zone[iseg]  = in0_tmp.range(emtf::flags_zone_bits_hi , emtf::flags_zone_bits_lo);
+    flags_tzone[iseg] = in0_tmp.range(emtf::flags_tzone_bits_hi, emtf::flags_tzone_bits_lo);
     bx[iseg]          = in0_tmp.range(emtf::bx_bits_hi         , emtf::bx_bits_lo);
     valid[iseg]       = in0_tmp.range(emtf::valid_bits_hi      , emtf::valid_bits_lo);
   }
@@ -62,7 +65,7 @@ void myproject(
   emtf::zoning_out_t zoning_out[N_ZONING_OUT];
 #pragma HLS ARRAY_PARTITION variable=zoning_out complete dim=0
 
-  emtf::zoning_layer<0>(emtf_phi, zones, timezones, valid, zoning_out);
+  emtf::zoning_layer<0>(emtf_phi, flags_zone, flags_tzone, valid, zoning_out);
 
   // Layer 2 - pooling
   emtf::pooling_out_t pooling_out[N_POOLING_OUT];
