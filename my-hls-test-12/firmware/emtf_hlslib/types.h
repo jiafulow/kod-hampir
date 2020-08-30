@@ -56,10 +56,20 @@ template <> struct variable_sign_traits<VI_FLAGS_TZONE> { static const bool valu
 template <> struct variable_sign_traits<VI_BX>          { static const bool value = 1; };
 template <> struct variable_sign_traits<VI_VALID>       { static const bool value = 0; };
 
-// Check for ap datatype
-struct true_type { static const bool value = true; };    // replicate std::true_type from <type_traits>
-struct false_type { static const bool value = false; };  // replicate std::false_type from <type_traits>
+// Import stuff from <type_traits>
+template <typename T, T v>
+struct integral_constant { static const T value = v; };
 
+typedef integral_constant<bool, true> true_type;
+typedef integral_constant<bool, false> false_type;
+
+template <bool B, class T = void>
+struct enable_if {};
+
+template <class T>
+struct enable_if<true, T> { typedef T type; };
+
+// Check for ap datatype
 template <typename T>
 struct is_ap_int_type : false_type {};
 
