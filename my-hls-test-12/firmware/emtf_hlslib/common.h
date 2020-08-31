@@ -29,7 +29,7 @@ namespace emtf {
   constexpr int num_patterns = 7;  // per zone
 
   constexpr int num_chambers = 115;
-  constexpr int num_segments = 8;
+  constexpr int num_segments = 2;  //FIXME - need to accommodate GEM and ME0
   constexpr int num_variables = 10;
   constexpr int num_out_tracks = 4;
   constexpr int num_out_variables = 36;

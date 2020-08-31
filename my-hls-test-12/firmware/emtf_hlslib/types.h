@@ -57,7 +57,7 @@ template <> struct variable_sign_traits<VI_BX>          { static const bool valu
 template <> struct variable_sign_traits<VI_VALID>       { static const bool value = 0; };
 
 // Import stuff from <type_traits>
-template <typename T, T v>
+template <class T, T v>
 struct integral_constant { static const T value = v; };
 
 typedef integral_constant<bool, true> true_type;
@@ -129,8 +129,8 @@ DEFINE_NICE_NAMES(VI_VALID, valid)
 
 // Model input and output lengths
 enum model_length_type {
-  N_MODEL_IN = emtf::num_chambers * emtf::num_segments,
-  N_MODEL_OUT = emtf::num_out_tracks * emtf::num_out_variables
+  N_MODEL_IN = num_chambers * num_segments,
+  N_MODEL_OUT = num_out_tracks * num_out_variables
 };
 
 // Bit width of model_in_t is the sum of the bit widths
@@ -147,17 +147,23 @@ typedef model_default_t                    model_out_t;
 
 // Layer output lengths
 enum layer_length_type {
+  // Out
   N_ZONING_OUT = num_img_rows,
-  N_POOLING_OUT = num_img_cols
+  N_POOLING_OUT = num_img_cols,
+  // In
+  N_POOLING_IN = N_ZONING_OUT
 };
 
 // Layer typedefs
-typedef ap_uint<num_img_cols> zoning_hitmap_t;
-typedef ap_uint<num_img_rows> pooling_hitmap_t;
-typedef ap_uint<6>            pooling_activation_t;
-
+typedef ap_uint<num_img_cols> zoning_hitmap_t;  // major axis: row, minor axis: col
+typedef ap_uint<num_patterns> pooling_preactivation_t;  // major axis: row, minor axis: patt
+typedef ap_uint<num_img_rows> pooling_preactivation_trans_t;  // major axis: patt, minor axis: row
+typedef ap_uint<6>            pooling_activation_t;  // major axis: col, minor axis: -
+// Out
 typedef zoning_hitmap_t       zoning_out_t;
 typedef pooling_activation_t  pooling_out_t;
+// In
+typedef zoning_out_t          pooling_in_t;
 
 
 }  // namespace emtf
@@ -167,5 +173,6 @@ using emtf::N_MODEL_IN;
 using emtf::N_MODEL_OUT;
 using emtf::N_ZONING_OUT;
 using emtf::N_POOLING_OUT;
+using emtf::N_POOLING_IN;
 
 #endif  // __EMTF_HLSLIB_TYPES_H__ not defined

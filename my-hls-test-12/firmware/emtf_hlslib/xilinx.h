@@ -47,6 +47,8 @@
  *****************************************************************************/
 
 
+namespace emtf {
+
 /*
 *------------------------------------------------------------------------------
 * Raise a value to a certain power (B^N).
@@ -169,5 +171,7 @@ struct CeilLog2
 {
   static const unsigned int value = (_Num > 0) ? (1 + FloorLog2<_Num - 1>::value) : 0;
 };
+
+}  // namespace emtf
 
 #endif  // __EMTF_HLSLIB_XILINX_H__ not defined
