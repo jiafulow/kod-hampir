@@ -147,32 +147,34 @@ typedef model_default_t                    model_out_t;
 
 // Layer output lengths
 enum layer_length_type {
-  // Out
   N_ZONING_OUT = num_img_rows,
   N_POOLING_OUT = num_img_cols,
-  // In
+  // Synonyms
+  N_ZONING_IN = N_MODEL_IN,
   N_POOLING_IN = N_ZONING_OUT
 };
 
 // Layer typedefs
-typedef ap_uint<num_img_cols> zoning_hitmap_t;  // major axis: row, minor axis: col
+typedef ap_uint<9>            zoning_col_t;  // bw: ceil(log2(80/coarse_emtf_strip))
+typedef ap_uint<num_img_cols> zoning_out_t;  // major axis: row, minor axis: col
 typedef ap_uint<num_patterns> pooling_preactivation_t;  // major axis: row, minor axis: patt
 typedef ap_uint<num_img_rows> pooling_preactivation_trans_t;  // major axis: patt, minor axis: row
-typedef ap_uint<6>            pooling_activation_t;  // major axis: col, minor axis: -
-// Out
-typedef zoning_hitmap_t       zoning_out_t;
-typedef pooling_activation_t  pooling_out_t;
-// In
+typedef ap_uint<6>            pooling_activation_t;  // major axis: col, minor axis: -, bw: num_img_rows - 2
+typedef ap_uint<2>            pooling_pattnum_t;  // bw: ceil(log2(num_patterns))
+typedef ap_uint<9>            pooling_col_t;  // bw: ceil(log2(num_img_cols))
+typedef ap_uint<6+2>          pooling_out_t;  // major axis: col, minor axis: -, bw: activation bw + pattnum bw
+// Synonyms
 typedef zoning_out_t          pooling_in_t;
-
 
 }  // namespace emtf
 
 // The following are frequently used, so get rid of namespace
 using emtf::N_MODEL_IN;
 using emtf::N_MODEL_OUT;
+using emtf::N_ZONING_IN;
 using emtf::N_ZONING_OUT;
-using emtf::N_POOLING_OUT;
 using emtf::N_POOLING_IN;
+using emtf::N_POOLING_OUT;
+
 
 #endif  // __EMTF_HLSLIB_TYPES_H__ not defined

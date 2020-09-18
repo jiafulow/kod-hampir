@@ -87,9 +87,6 @@ struct activation_fn {
 
 template <typename T_IN, typename T_OUT, int N_IN, int N_OUT>
 void transpose_array(T_IN const (&in0)[N_IN], T_OUT (&out)[N_OUT]) {
-
-#pragma HLS INLINE
-
   for (int i = 0; i < N_IN; i++) {
     for (int j = 0; j < N_OUT; j++) {
       out[j][i] = in0[i][j];
@@ -99,9 +96,6 @@ void transpose_array(T_IN const (&in0)[N_IN], T_OUT (&out)[N_OUT]) {
 
 template <typename T_IN, typename T_OUT, int N_IN, int N_OUT, class OP>
 void apply_activation(T_IN const (&in0)[N_IN], T_OUT (&out)[N_OUT], OP op) {
-
-#pragma HLS INLINE
-
   for (int i = 0; i < N_IN; i++) {
     out[i] = op(in0[i]);
   }
@@ -134,9 +128,9 @@ void pooling_patt_op(
   static_assert(PAD_START + START >= 0, "padding + pattern window start must be a valid index");
   static_assert(COLS + PAD_START + STOP <= COLS_W_PADDING, "padding + pattern window stop must be a valid index");
 
-  const ap_uint<CeilLog2<COLS_W_PADDING>::value> start = col + PAD_START + START;
-  const ap_uint<CeilLog2<COLS_W_PADDING>::value> stop = col + PAD_START + STOP;
-  const ap_uint<COLS_W_PADDING> tmp_in = (ap_uint<PAD_STOP>(0), pooling_in_row_k, ap_uint<PAD_START>(0));  // add padding to input
+  ap_uint<CeilLog2<COLS_W_PADDING>::value> start = col + PAD_START + START;
+  ap_uint<CeilLog2<COLS_W_PADDING>::value> stop = col + PAD_START + STOP;
+  ap_uint<COLS_W_PADDING> tmp_in = (ap_uint<PAD_STOP>(0), pooling_in_row_k, ap_uint<PAD_START>(0));  // add padding to input
   pooling_preactivation_row_k[PATT] = tmp_in.range(stop, start);
 }
 
@@ -144,16 +138,16 @@ template <int ZONE, int ROW>
 void pooling_row_op(
     const pooling_in_t& pooling_in_row_k,
     pooling_preactivation_t& pooling_preactivation_row_k,
-    const int col
+    const pooling_col_t col
 ) {
 
 #pragma HLS PIPELINE II=1
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
-//#pragma HLS function_instantiate variable=col
+#pragma HLS INLINE region
 
-//#pragma HLS INLINE region
+//#pragma HLS function_instantiate variable=col
 
   pooling_preactivation_row_k = 0;  // initialize
 
@@ -170,19 +164,69 @@ void pooling_row_op(
 }
 
 template <int ZONE>
-void pooling_col_op(
-    const pooling_in_t pooling_in[N_POOLING_IN],
-    pooling_out_t& pooling_out_col_l,
-    const int col
+void pooling_reduce_max_op(
+  const pooling_activation_t pooling_activation[num_patterns],
+  pooling_out_t& pooling_out_col_l
 ) {
 
 #pragma HLS PIPELINE II=1
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
-//#pragma HLS function_instantiate variable=col
+  // Loop over patterns manually
+  static_assert(num_patterns == 7, "num_patterns must be 7");
 
-//#pragma HLS INLINE region
+  const pooling_activation_t x0 = pooling_activation[0];
+  const pooling_activation_t x1 = pooling_activation[1];
+  const pooling_activation_t x2 = pooling_activation[2];
+  const pooling_activation_t x3 = pooling_activation[3];
+  const pooling_activation_t x4 = pooling_activation[4];
+  const pooling_activation_t x5 = pooling_activation[5];
+  const pooling_activation_t x6 = pooling_activation[6];
+
+  // Tree height 0
+  pooling_activation_t cmp_0_0 = (x0 >= x1) ? x0 : x1;
+  pooling_activation_t cmp_0_1 = (x2 >= x3) ? x2 : x3;
+  pooling_activation_t cmp_0_2 = (x4 >= x5) ? x4 : x5;
+  pooling_activation_t cmp_0_3 = x6;
+
+  // Tree height 1
+  pooling_activation_t cmp_1_0 = (cmp_0_0 >= cmp_0_1) ? cmp_0_0 : cmp_0_1;
+  pooling_activation_t cmp_1_1 = (cmp_0_2 >= cmp_0_3) ? cmp_0_2 : cmp_0_3;
+
+  // Tree height 2
+  pooling_activation_t cmp_2_0 = (cmp_1_0 >= cmp_1_1) ? cmp_1_0 : cmp_1_1;
+
+  // Tree height 0
+  pooling_pattnum_t idx_0_0 = (x0 >= x1) ? 0 : 1;
+  pooling_pattnum_t idx_0_1 = (x2 >= x3) ? 2 : 3;
+  pooling_pattnum_t idx_0_2 = (x4 >= x5) ? 4 : 5;
+  pooling_pattnum_t idx_0_3 = 6;
+
+  // Tree height 1
+  pooling_pattnum_t idx_1_0 = (cmp_0_0 >= cmp_0_1) ? idx_0_0 : idx_0_1;
+  pooling_pattnum_t idx_1_1 = (cmp_0_2 >= cmp_0_3) ? idx_0_2 : idx_0_3;
+
+  // Tree height 2
+  pooling_pattnum_t idx_2_0 = (cmp_1_0 >= cmp_1_1) ? idx_1_0 : idx_1_1;
+
+  pooling_out_col_l = (cmp_2_0, idx_2_0);
+}
+
+template <int ZONE>
+void pooling_col_op(
+    const pooling_in_t pooling_in[N_POOLING_IN],
+    pooling_out_t& pooling_out_col_l,
+    const pooling_col_t col
+) {
+
+#pragma HLS PIPELINE II=1
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE region
+
+//#pragma HLS function_instantiate variable=col
 
   pooling_preactivation_t pooling_preactivation[num_img_rows];
 
@@ -212,10 +256,8 @@ void pooling_col_op(
 
   apply_activation(pooling_preactivation_trans, pooling_activation, activation_fn<ZONE>());
 
-  // Loop over patterns manually
-  static_assert(num_patterns == 7, "num_patterns must be 7");
-
-  pooling_out_col_l = pooling_activation[0]; //FIXME - reduce max
+  // Reduce max over patterns
+  pooling_reduce_max_op<ZONE>(pooling_activation, pooling_out_col_l);
 }
 
 // Pooling op
@@ -229,9 +271,12 @@ void pooling_op(
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
-//#pragma HLS INLINE region
+  // Check assumptions
+  static_assert(N_POOLING_IN == num_img_rows, "N_POOLING_IN check failed");
+  static_assert(N_POOLING_OUT == num_img_cols, "N_POOLING_OUT check failed");
 
-  for (int col = 0; col < num_img_cols; col++) {
+  // Loop over columns
+  for (pooling_col_t col = 0; col < num_img_cols; col++) {
     pooling_col_op<ZONE>(pooling_in, pooling_out[col], col);
   }
 }
@@ -249,6 +294,8 @@ void pooling_layer(
 #pragma HLS PIPELINE II=1
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE region
 
   pooling_op<ZONE>(pooling_in, pooling_out);
 }
