@@ -149,11 +149,15 @@ typedef model_default_t                    model_out_t;
 enum layer_length_type {
   N_ZONING_OUT = num_img_rows,
   N_POOLING_OUT = num_img_cols,
+  N_ZONESORTING_OUT = num_out_tracks,
   // Synonyms
   N_ZONING_IN = N_MODEL_IN,
   N_POOLING_IN = N_ZONING_OUT,
   N_SUPPRESSION_IN = N_POOLING_OUT,
-  N_SUPPRESSION_OUT = N_SUPPRESSION_IN
+  N_SUPPRESSION_OUT = N_SUPPRESSION_IN,
+  N_ZONESORTING_IN = N_SUPPRESSION_OUT,
+  N_ZONEMERGING_IN = N_ZONESORTING_OUT,
+  N_ZONEMERGING_OUT = N_ZONEMERGING_IN
 };
 
 // Layer typedefs
@@ -169,6 +173,10 @@ typedef ap_uint<6+2>          pooling_out_t;  // major axis: col, minor axis: -,
 typedef zoning_out_t          pooling_in_t;
 typedef pooling_out_t         suppression_in_t;
 typedef suppression_in_t      suppression_out_t;
+typedef suppression_out_t     zonesorting_in_t;
+typedef zonesorting_in_t      zonesorting_out_t;
+typedef zonesorting_out_t     zonemerging_in_t;
+typedef zonemerging_in_t      zonemerging_out_t;
 
 }  // namespace emtf
 
@@ -181,6 +189,10 @@ using emtf::N_POOLING_IN;
 using emtf::N_POOLING_OUT;
 using emtf::N_SUPPRESSION_IN;
 using emtf::N_SUPPRESSION_OUT;
+using emtf::N_ZONESORTING_IN;
+using emtf::N_ZONESORTING_OUT;
+using emtf::N_ZONEMERGING_IN;
+using emtf::N_ZONEMERGING_OUT;
 
 
 #endif  // __EMTF_HLSLIB_TYPES_H__ not defined

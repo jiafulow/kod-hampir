@@ -82,6 +82,20 @@ void myproject(
 
   emtf::suppression_layer<0>(pooling_out, suppression_out);
 
+  // Layer 4 - zone sorting
+
+  emtf::zonesorting_out_t zonesorting_out[N_ZONESORTING_OUT];
+#pragma HLS ARRAY_PARTITION variable=zonesorting_out complete dim=0
+
+  emtf::zonesorting_layer<0>(suppression_out, zonesorting_out);
+
+  // Layer 5 - zone merging
+
+  emtf::zonemerging_out_t zonemerging_out[N_ZONEMERGING_OUT];
+#pragma HLS ARRAY_PARTITION variable=zonemerging_out complete dim=0
+
+  //FIXME - implement the other zones
+  emtf::zonemerging_layer<0>(zonesorting_out, zonesorting_out, zonesorting_out, zonemerging_out);
 
 
 
