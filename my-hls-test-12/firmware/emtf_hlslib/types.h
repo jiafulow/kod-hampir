@@ -151,7 +151,9 @@ enum layer_length_type {
   N_POOLING_OUT = num_img_cols,
   // Synonyms
   N_ZONING_IN = N_MODEL_IN,
-  N_POOLING_IN = N_ZONING_OUT
+  N_POOLING_IN = N_ZONING_OUT,
+  N_SUPPRESSION_IN = N_POOLING_OUT,
+  N_SUPPRESSION_OUT = N_SUPPRESSION_IN
 };
 
 // Layer typedefs
@@ -165,6 +167,8 @@ typedef ap_uint<9>            pooling_col_t;  // bw: ceil(log2(num_img_cols))
 typedef ap_uint<6+2>          pooling_out_t;  // major axis: col, minor axis: -, bw: activation bw + pattnum bw
 // Synonyms
 typedef zoning_out_t          pooling_in_t;
+typedef pooling_out_t         suppression_in_t;
+typedef suppression_in_t      suppression_out_t;
 
 }  // namespace emtf
 
@@ -175,6 +179,8 @@ using emtf::N_ZONING_IN;
 using emtf::N_ZONING_OUT;
 using emtf::N_POOLING_IN;
 using emtf::N_POOLING_OUT;
+using emtf::N_SUPPRESSION_IN;
+using emtf::N_SUPPRESSION_OUT;
 
 
 #endif  // __EMTF_HLSLIB_TYPES_H__ not defined

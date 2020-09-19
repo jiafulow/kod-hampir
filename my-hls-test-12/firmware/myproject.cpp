@@ -62,17 +62,25 @@ void myproject(
   PRINT_TOP_FN_ARRAYS
 
   // Layer 1 - zoning
+
   emtf::zoning_out_t zoning_out[N_ZONING_OUT];
 #pragma HLS ARRAY_PARTITION variable=zoning_out complete dim=0
 
   emtf::zoning_layer<0>(emtf_phi, flags_zone, flags_tzone, valid, zoning_out);
 
   // Layer 2 - pooling
+
   emtf::pooling_out_t pooling_out[N_POOLING_OUT];
 #pragma HLS ARRAY_PARTITION variable=pooling_out complete dim=0
 
   emtf::pooling_layer<0>(zoning_out, pooling_out);
 
+  // Layer 3 - non-max suppression
+
+  emtf::suppression_out_t suppression_out[N_SUPPRESSION_OUT];
+#pragma HLS ARRAY_PARTITION variable=suppression_out complete dim=0
+
+  emtf::suppression_layer<0>(pooling_out, suppression_out);
 
 
 
