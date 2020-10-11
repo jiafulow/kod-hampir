@@ -19,16 +19,16 @@ void myproject(
 #pragma HLS ARRAY_PARTITION variable=out complete dim=0
 
   // Deserialize from in0
-  emtf::emtf_phi_t    emtf_phi[N_MODEL_IN];
-  emtf::emtf_bend_t   emtf_bend[N_MODEL_IN];
-  emtf::emtf_theta1_t emtf_theta1[N_MODEL_IN];
-  emtf::emtf_theta2_t emtf_theta2[N_MODEL_IN];
-  emtf::emtf_qual_t   emtf_qual[N_MODEL_IN];
-  emtf::emtf_time_t   emtf_time[N_MODEL_IN];
-  emtf::flags_zone_t  flags_zone[N_MODEL_IN];
-  emtf::flags_tzone_t flags_tzone[N_MODEL_IN];
-  emtf::bx_t          bx[N_MODEL_IN];
-  emtf::valid_t       valid[N_MODEL_IN];
+  emtf::emtf_phi_t    emtf_phi    [N_MODEL_IN];
+  emtf::emtf_bend_t   emtf_bend   [N_MODEL_IN];
+  emtf::emtf_theta1_t emtf_theta1 [N_MODEL_IN];
+  emtf::emtf_theta2_t emtf_theta2 [N_MODEL_IN];
+  emtf::emtf_qual_t   emtf_qual   [N_MODEL_IN];
+  emtf::emtf_time_t   emtf_time   [N_MODEL_IN];
+  emtf::flags_zone_t  flags_zone  [N_MODEL_IN];
+  emtf::flags_tzone_t flags_tzone [N_MODEL_IN];
+  emtf::bx_t          bx          [N_MODEL_IN];
+  emtf::valid_t       valid       [N_MODEL_IN];
 
 #pragma HLS ARRAY_PARTITION variable=emtf_phi complete dim=0
 #pragma HLS ARRAY_PARTITION variable=emtf_bend complete dim=0
@@ -97,11 +97,31 @@ void myproject(
   //FIXME - implement the other zones
   emtf::zonemerging_layer<0>(zonesorting_out, zonesorting_out, zonesorting_out, zonemerging_out);
 
+  // Deserialize from zonemerging_out
+  emtf::track_qual_t track_qual [N_ZONEMERGING_OUT];
+  emtf::track_patt_t track_patt [N_ZONEMERGING_OUT];
+  emtf::track_col_t  track_col  [N_ZONEMERGING_OUT];
+  emtf::track_zone_t track_zone [N_ZONEMERGING_OUT];
 
+#pragma HLS ARRAY_PARTITION variable=track_qual complete dim=0
+#pragma HLS ARRAY_PARTITION variable=track_patt complete dim=0
+#pragma HLS ARRAY_PARTITION variable=track_col complete dim=0
+#pragma HLS ARRAY_PARTITION variable=track_zone complete dim=0
 
-  //FIXME - dummy loop
-  for (unsigned i = 0; i < N_MODEL_OUT; i++) {
-    out[i] = valid[i];
+  emtf::zonemerging_out_t in1_tmp = 0;
+
+  for (unsigned itrk = 0; itrk < N_ZONEMERGING_OUT; itrk++) {
+    in1_tmp = zonemerging_out[itrk];  // read input
+
+    track_qual[itrk] = in1_tmp.range(emtf::track_qual_bits_hi, emtf::track_qual_bits_lo);
+    track_patt[itrk] = in1_tmp.range(emtf::track_patt_bits_hi, emtf::track_patt_bits_lo);
+    track_col[itrk]  = in1_tmp.range(emtf::track_col_bits_hi , emtf::track_col_bits_lo);
+    track_zone[itrk] = in1_tmp.range(emtf::track_zone_bits_hi, emtf::track_zone_bits_lo);
   }
+
+  // Layer 6 - track building
+
+  emtf::trkbuilding_layer<0>(emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual, emtf_time, valid,
+                             track_qual, track_patt, track_col, track_zone, out);
 
 }

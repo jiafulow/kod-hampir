@@ -26,8 +26,14 @@ enum variable_type {
   VI_FLAGS_ZONE   = 6,
   VI_FLAGS_TZONE  = 7,
   VI_BX           = 8,
-  VI_VALID        = 9,  // try to keep 'valid' as the last
-  NUM_VARIABLES   = 10
+  VI_VALID        = 9  // try to keep 'valid' as the last
+};
+
+enum track_variable_type {
+  VI_TRACK_QUAL    = 0,
+  VI_TRACK_PATT    = 1,
+  VI_TRACK_COL     = 2,
+  VI_TRACK_ZONE    = 3
 };
 
 // Bit width
@@ -43,6 +49,12 @@ template <> struct variable_bw_traits<VI_FLAGS_TZONE> { static const int value =
 template <> struct variable_bw_traits<VI_BX>          { static const int value = 2; };
 template <> struct variable_bw_traits<VI_VALID>       { static const int value = 1; };
 
+template <int T> struct track_variable_bw_traits {};
+template <> struct track_variable_bw_traits<VI_TRACK_QUAL> { static const int value = 6; };
+template <> struct track_variable_bw_traits<VI_TRACK_PATT> { static const int value = 3; };
+template <> struct track_variable_bw_traits<VI_TRACK_COL>  { static const int value = 9; };
+template <> struct track_variable_bw_traits<VI_TRACK_ZONE> { static const int value = 2; };
+
 // Is signed
 template <int T> struct variable_sign_traits {};
 template <> struct variable_sign_traits<VI_EMTF_PHI>    { static const bool value = 0; };
@@ -55,6 +67,12 @@ template <> struct variable_sign_traits<VI_FLAGS_ZONE>  { static const bool valu
 template <> struct variable_sign_traits<VI_FLAGS_TZONE> { static const bool value = 0; };
 template <> struct variable_sign_traits<VI_BX>          { static const bool value = 1; };
 template <> struct variable_sign_traits<VI_VALID>       { static const bool value = 0; };
+
+template <int T> struct track_variable_sign_traits {};
+template <> struct track_variable_sign_traits<VI_TRACK_QUAL> { static const bool value = 0; };
+template <> struct track_variable_sign_traits<VI_TRACK_PATT> { static const bool value = 0; };
+template <> struct track_variable_sign_traits<VI_TRACK_COL>  { static const bool value = 0; };
+template <> struct track_variable_sign_traits<VI_TRACK_ZONE> { static const bool value = 0; };
 
 // Import stuff from <type_traits>
 template <class T, T v>
@@ -90,6 +108,11 @@ template <int T> struct find_variable_datatype {
       variable_bw_traits<T>::value, variable_sign_traits<T>::value>::type type;
 };
 
+template <int T> struct find_track_variable_datatype {
+  typedef typename select_ap_int_type<
+      track_variable_bw_traits<T>::value, track_variable_sign_traits<T>::value>::type type;
+};
+
 // Find the range of bits when the variables are serialized
 template <int T>
 struct find_variable_range_of_bits {
@@ -103,6 +126,18 @@ struct find_variable_range_of_bits<0> {  // specialize when T=0
   static const int end = begin + variable_bw_traits<0>::value;
 };
 
+template <int T>
+struct find_track_variable_range_of_bits {
+  static const int begin = find_track_variable_range_of_bits<T - 1>::end;
+  static const int end = begin + track_variable_bw_traits<T>::value;
+};
+
+template <>
+struct find_track_variable_range_of_bits<0> {  // specialize when T=0
+  static const int begin = 0;
+  static const int end = begin + track_variable_bw_traits<0>::value;
+};
+
 // Translate enums into nicer names by using text replacement macros ("token pasting")
 // For example, take enum VI_EMTF_PHI and define emtf_phi_t, emtf_phi_bits_lo, emtf_phi_bits_hi:
 //     typedef find_variable_datatype<VI_EMTF_PHI>::type emtf_phi_t;
@@ -113,7 +148,6 @@ struct find_variable_range_of_bits<0> {  // specialize when T=0
     constexpr int name##_bits_lo = find_variable_range_of_bits<T>::begin; \
     constexpr int name##_bits_hi = find_variable_range_of_bits<T>::end - 1;
 
-// Map from enum to nicer names
 DEFINE_NICE_NAMES(VI_EMTF_PHI, emtf_phi)
 DEFINE_NICE_NAMES(VI_EMTF_BEND, emtf_bend)
 DEFINE_NICE_NAMES(VI_EMTF_THETA1, emtf_theta1)
@@ -125,6 +159,17 @@ DEFINE_NICE_NAMES(VI_FLAGS_TZONE, flags_tzone)
 DEFINE_NICE_NAMES(VI_BX, bx)
 DEFINE_NICE_NAMES(VI_VALID, valid)
 #undef DEFINE_NICE_NAMES
+
+#define DEFINE_NICE_NAMES_TRACK(T, name) \
+    typedef find_track_variable_datatype<T>::type name##_t; \
+    constexpr int name##_bits_lo = find_track_variable_range_of_bits<T>::begin; \
+    constexpr int name##_bits_hi = find_track_variable_range_of_bits<T>::end - 1;
+
+DEFINE_NICE_NAMES_TRACK(VI_TRACK_QUAL, track_qual)
+DEFINE_NICE_NAMES_TRACK(VI_TRACK_PATT, track_patt)
+DEFINE_NICE_NAMES_TRACK(VI_TRACK_COL,  track_col)
+DEFINE_NICE_NAMES_TRACK(VI_TRACK_ZONE, track_zone)
+#undef DEFINE_NICE_NAMES_TRACK
 
 
 // Model input and output lengths
@@ -138,12 +183,14 @@ struct model_in_bw_traits {
   static const int value = find_variable_range_of_bits<VI_VALID>::end;  // 'valid' should be the last variable
 };
 
-// Model typedefs
-// model_in_t should have bw = 60, but it is subject to change.
-// model_out_t is also subject to change.
-typedef ap_uint<13>                        model_default_t;
+// Bit width of model_out_t is arbitrary for now
+struct model_out_bw_traits {
+  static const int value = variable_bw_traits<VI_EMTF_PHI>::value;
+};
+
+// Model input and output datatypes
 typedef ap_uint<model_in_bw_traits::value> model_in_t;
-typedef model_default_t                    model_out_t;
+typedef ap_int<model_out_bw_traits::value> model_out_t;
 
 // Layer output lengths
 enum layer_length_type {
@@ -157,7 +204,9 @@ enum layer_length_type {
   N_SUPPRESSION_OUT = N_SUPPRESSION_IN,
   N_ZONESORTING_IN = N_SUPPRESSION_OUT,
   N_ZONEMERGING_IN = N_ZONESORTING_OUT,
-  N_ZONEMERGING_OUT = N_ZONEMERGING_IN
+  N_ZONEMERGING_OUT = N_ZONEMERGING_IN,
+  N_TRKBUILDING_IN = N_ZONEMERGING_OUT,
+  N_TRKBUILDING_OUT = N_MODEL_OUT
 };
 
 // Layer typedefs
@@ -166,17 +215,18 @@ typedef ap_uint<num_img_cols> zoning_out_t;  // major axis: row, minor axis: col
 typedef ap_uint<num_patterns> pooling_preactivation_t;  // major axis: row, minor axis: patt
 typedef ap_uint<num_img_rows> pooling_preactivation_trans_t;  // major axis: patt, minor axis: row
 typedef ap_uint<6>            pooling_activation_t;  // major axis: col, minor axis: -, bw: num_img_rows - 2
-typedef ap_uint<2>            pooling_pattnum_t;  // bw: ceil(log2(num_patterns))
+typedef ap_uint<3>            pooling_pattnum_t;  // bw: ceil(log2(num_patterns))
 typedef ap_uint<9>            pooling_col_t;  // bw: ceil(log2(num_img_cols))
-typedef ap_uint<6+2>          pooling_out_t;  // major axis: col, minor axis: -, bw: activation bw + pattnum bw
+typedef ap_uint<6+3>          pooling_out_t;  // bw: activation bw + pattnum bw
+typedef ap_uint<6+3+9>        zonesorting_out_t;  // bw: activation bw + pattnum bw + col bw
+typedef ap_uint<6+3+9+2>      zonemerging_out_t;  // bw: activation bw + pattnum bw + col bw + zone bw
 // Synonyms
 typedef zoning_out_t          pooling_in_t;
 typedef pooling_out_t         suppression_in_t;
 typedef suppression_in_t      suppression_out_t;
 typedef suppression_out_t     zonesorting_in_t;
-typedef zonesorting_in_t      zonesorting_out_t;
 typedef zonesorting_out_t     zonemerging_in_t;
-typedef zonemerging_in_t      zonemerging_out_t;
+typedef model_out_t           trkbuilding_out_t;
 
 }  // namespace emtf
 
@@ -193,6 +243,8 @@ using emtf::N_ZONESORTING_IN;
 using emtf::N_ZONESORTING_OUT;
 using emtf::N_ZONEMERGING_IN;
 using emtf::N_ZONEMERGING_OUT;
+using emtf::N_TRKBUILDING_IN;
+using emtf::N_TRKBUILDING_OUT;
 
 
 #endif  // __EMTF_HLSLIB_TYPES_H__ not defined
