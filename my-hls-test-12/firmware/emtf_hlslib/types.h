@@ -74,6 +74,8 @@ template <> struct track_variable_sign_traits<VI_TRACK_PATT> { static const bool
 template <> struct track_variable_sign_traits<VI_TRACK_COL>  { static const bool value = 0; };
 template <> struct track_variable_sign_traits<VI_TRACK_ZONE> { static const bool value = 0; };
 
+
+// _____________________________________________________________________________
 // Import stuff from <type_traits>
 template <class T, T v>
 struct integral_constant { static const T value = v; };
@@ -101,6 +103,8 @@ struct select_ap_int_type {};
 template <int N> struct select_ap_int_type<N, true> { typedef ap_int<N> type; };    // signed
 template <int N> struct select_ap_int_type<N, false> { typedef ap_uint<N> type; };  // unsigned
 
+
+// _____________________________________________________________________________
 // Get bw and sign, then find the ap datatype
 // For example, enum VI_EMTF_PHI has bw = 13, sign = 0, so the datatype is ap_uint<13>.
 template <int T> struct find_variable_datatype {
@@ -172,6 +176,7 @@ DEFINE_NICE_NAMES_TRACK(VI_TRACK_ZONE, track_zone)
 #undef DEFINE_NICE_NAMES_TRACK
 
 
+// _____________________________________________________________________________
 // Model input and output lengths
 enum model_length_type {
   N_MODEL_IN = num_chambers * num_segments,
@@ -198,7 +203,6 @@ enum layer_length_type {
   N_POOLING_OUT = num_img_cols,
   N_ZONESORTING_OUT = num_out_tracks,
   // Synonyms
-  N_ZONING_IN = N_MODEL_IN,
   N_POOLING_IN = N_ZONING_OUT,
   N_SUPPRESSION_IN = N_POOLING_OUT,
   N_SUPPRESSION_OUT = N_SUPPRESSION_IN,
@@ -210,6 +214,7 @@ enum layer_length_type {
 };
 
 // Layer typedefs
+typedef ap_uint<11>           zoning_seg_t;  // bw: ceil(log2(num_chambers * 10))
 typedef ap_uint<9>            zoning_col_t;  // bw: ceil(log2(80/coarse_emtf_strip))
 typedef ap_uint<num_img_cols> zoning_out_t;  // major axis: row, minor axis: col
 typedef ap_uint<num_patterns> pooling_preactivation_t;  // major axis: row, minor axis: patt
@@ -233,7 +238,6 @@ typedef model_out_t           trkbuilding_out_t;
 // The following are frequently used, so get rid of namespace
 using emtf::N_MODEL_IN;
 using emtf::N_MODEL_OUT;
-using emtf::N_ZONING_IN;
 using emtf::N_ZONING_OUT;
 using emtf::N_POOLING_IN;
 using emtf::N_POOLING_OUT;

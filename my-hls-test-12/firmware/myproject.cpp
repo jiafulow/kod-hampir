@@ -41,9 +41,12 @@ void myproject(
 #pragma HLS ARRAY_PARTITION variable=bx complete dim=0
 #pragma HLS ARRAY_PARTITION variable=valid complete dim=0
 
-  emtf::model_in_t in0_tmp = 0;
+  emtf::model_in_t in0_tmp;
 
-  for (unsigned iseg = 0; iseg < N_MODEL_IN; iseg++) {
+  top_fn_loop_in0 : for (unsigned iseg = 0; iseg < N_MODEL_IN; iseg++) {
+
+#pragma HLS UNROLL
+
     in0_tmp = in0[iseg];  // read input
 
     emtf_phi[iseg]    = in0_tmp.range(emtf::emtf_phi_bits_hi   , emtf::emtf_phi_bits_lo);
@@ -58,46 +61,68 @@ void myproject(
     valid[iseg]       = in0_tmp.range(emtf::valid_bits_hi      , emtf::valid_bits_lo);
   }
 
-  // This is a macro defined in emtf_hlslib/helper.h. To be removed in the final version.
-  PRINT_TOP_FN_ARRAYS
+  // This macro is defined in emtf_hlslib/helper.h
+  PRINT_TOP_FN_ARRAYS_IN0
 
-  // Layer 1 - zoning
+  // Intermediate arrays
+  emtf::zoning_out_t      zoning_0_out      [N_ZONING_OUT];
+  emtf::zoning_out_t      zoning_1_out      [N_ZONING_OUT];
+  emtf::zoning_out_t      zoning_2_out      [N_ZONING_OUT];
+  emtf::pooling_out_t     pooling_0_out     [N_POOLING_OUT];
+  emtf::pooling_out_t     pooling_1_out     [N_POOLING_OUT];
+  emtf::pooling_out_t     pooling_2_out     [N_POOLING_OUT];
+  emtf::suppression_out_t suppression_0_out [N_SUPPRESSION_OUT];
+  emtf::suppression_out_t suppression_1_out [N_SUPPRESSION_OUT];
+  emtf::suppression_out_t suppression_2_out [N_SUPPRESSION_OUT];
+  emtf::zonesorting_out_t zonesorting_0_out [N_ZONESORTING_OUT];
+  emtf::zonesorting_out_t zonesorting_1_out [N_ZONESORTING_OUT];
+  emtf::zonesorting_out_t zonesorting_2_out [N_ZONESORTING_OUT];
+  emtf::zonemerging_out_t zonemerging_0_out [N_ZONEMERGING_OUT];
 
-  emtf::zoning_out_t zoning_out[N_ZONING_OUT];
-#pragma HLS ARRAY_PARTITION variable=zoning_out complete dim=0
+#pragma HLS ARRAY_PARTITION variable=zoning_0_out complete dim=0
+#pragma HLS ARRAY_PARTITION variable=zoning_1_out complete dim=0
+#pragma HLS ARRAY_PARTITION variable=zoning_2_out complete dim=0
+#pragma HLS ARRAY_PARTITION variable=pooling_0_out complete dim=0
+#pragma HLS ARRAY_PARTITION variable=pooling_1_out complete dim=0
+#pragma HLS ARRAY_PARTITION variable=pooling_2_out complete dim=0
+#pragma HLS ARRAY_PARTITION variable=suppression_0_out complete dim=0
+#pragma HLS ARRAY_PARTITION variable=suppression_1_out complete dim=0
+#pragma HLS ARRAY_PARTITION variable=suppression_2_out complete dim=0
+#pragma HLS ARRAY_PARTITION variable=zonesorting_0_out complete dim=0
+#pragma HLS ARRAY_PARTITION variable=zonesorting_1_out complete dim=0
+#pragma HLS ARRAY_PARTITION variable=zonesorting_2_out complete dim=0
+#pragma HLS ARRAY_PARTITION variable=zonemerging_0_out complete dim=0
 
-  emtf::zoning_layer<0>(emtf_phi, flags_zone, flags_tzone, valid, zoning_out);
+  // Layer 0 - zoning
 
-  // Layer 2 - pooling
+  emtf::zoning_layer<0>(emtf_phi, flags_zone, flags_tzone, valid, zoning_0_out);
+  emtf::zoning_layer<1>(emtf_phi, flags_zone, flags_tzone, valid, zoning_1_out);
+  emtf::zoning_layer<2>(emtf_phi, flags_zone, flags_tzone, valid, zoning_2_out);
 
-  emtf::pooling_out_t pooling_out[N_POOLING_OUT];
-#pragma HLS ARRAY_PARTITION variable=pooling_out complete dim=0
+  // Layer 1 - pooling
 
-  emtf::pooling_layer<0>(zoning_out, pooling_out);
+  emtf::pooling_layer<0>(zoning_0_out, pooling_0_out);
+  //emtf::pooling_layer<1>(zoning_1_out, pooling_1_out);
+  //emtf::pooling_layer<2>(zoning_2_out, pooling_2_out);
 
-  // Layer 3 - non-max suppression
+  // Layer 2 - non-max suppression
 
-  emtf::suppression_out_t suppression_out[N_SUPPRESSION_OUT];
-#pragma HLS ARRAY_PARTITION variable=suppression_out complete dim=0
+  emtf::suppression_layer<0>(pooling_0_out, suppression_0_out);
+  //emtf::suppression_layer<1>(pooling_1_out, suppression_1_out);
+  //emtf::suppression_layer<2>(pooling_2_out, suppression_2_out);
 
-  emtf::suppression_layer<0>(pooling_out, suppression_out);
+  // Layer 3 - zone sorting
 
-  // Layer 4 - zone sorting
+  emtf::zonesorting_layer<0>(suppression_0_out, zonesorting_0_out);
+  //emtf::zonesorting_layer<1>(suppression_1_out, zonesorting_1_out);
+  //emtf::zonesorting_layer<2>(suppression_2_out, zonesorting_2_out);
 
-  emtf::zonesorting_out_t zonesorting_out[N_ZONESORTING_OUT];
-#pragma HLS ARRAY_PARTITION variable=zonesorting_out complete dim=0
+  // Layer 4 - zone merging
 
-  emtf::zonesorting_layer<0>(suppression_out, zonesorting_out);
+  emtf::zonemerging_layer<0>(zonesorting_0_out, zonesorting_1_out, zonesorting_2_out,
+                             zonemerging_0_out);
 
-  // Layer 5 - zone merging
-
-  emtf::zonemerging_out_t zonemerging_out[N_ZONEMERGING_OUT];
-#pragma HLS ARRAY_PARTITION variable=zonemerging_out complete dim=0
-
-  //FIXME - implement the other zones
-  emtf::zonemerging_layer<0>(zonesorting_out, zonesorting_out, zonesorting_out, zonemerging_out);
-
-  // Deserialize from zonemerging_out
+  // Deserialize from zonemerging_0_out
   emtf::track_qual_t track_qual [N_ZONEMERGING_OUT];
   emtf::track_patt_t track_patt [N_ZONEMERGING_OUT];
   emtf::track_col_t  track_col  [N_ZONEMERGING_OUT];
@@ -108,10 +133,13 @@ void myproject(
 #pragma HLS ARRAY_PARTITION variable=track_col complete dim=0
 #pragma HLS ARRAY_PARTITION variable=track_zone complete dim=0
 
-  emtf::zonemerging_out_t in1_tmp = 0;
+  emtf::zonemerging_out_t in1_tmp;
 
-  for (unsigned itrk = 0; itrk < N_ZONEMERGING_OUT; itrk++) {
-    in1_tmp = zonemerging_out[itrk];  // read input
+  top_fn_loop_in1 : for (unsigned itrk = 0; itrk < N_ZONEMERGING_OUT; itrk++) {
+
+#pragma HLS UNROLL
+
+    in1_tmp = zonemerging_0_out[itrk];  // read input
 
     track_qual[itrk] = in1_tmp.range(emtf::track_qual_bits_hi, emtf::track_qual_bits_lo);
     track_patt[itrk] = in1_tmp.range(emtf::track_patt_bits_hi, emtf::track_patt_bits_lo);
@@ -119,9 +147,11 @@ void myproject(
     track_zone[itrk] = in1_tmp.range(emtf::track_zone_bits_hi, emtf::track_zone_bits_lo);
   }
 
-  // Layer 6 - track building
+  // This macro is defined in emtf_hlslib/helper.h
+  PRINT_TOP_FN_ARRAYS_IN1
 
-  emtf::trkbuilding_layer<0>(emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual, emtf_time, valid,
-                             track_qual, track_patt, track_col, track_zone, out);
+  // Layer 5 - track building
 
+  emtf::trkbuilding_layer<0>(emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual, emtf_time,
+                             valid, track_qual, track_patt, track_col, track_zone, out);
 }
