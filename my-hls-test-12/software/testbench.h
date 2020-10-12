@@ -28,7 +28,34 @@ typedef std::array<HitsType::T, HitsType::N> Hits;
 //  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 //  ...
 //  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
-typedef std::vector<Hits> Event;
+struct EventType {
+  typedef Hits T;
+};
+typedef std::vector<EventType::T> Event;
+
+// 'Tracks' contains 36 integer values.
+// [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+struct TracksType {
+  typedef int T;
+  static const unsigned int N = 36;
+};
+typedef std::array<TracksType::T, TracksType::N> Tracks;
+
+// 'Result' contains a list of Tracks objects.
+// [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+//  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+//  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+//  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+struct ResultType {
+  typedef Tracks T;
+  static const unsigned int N = 4;
+};
+typedef std::vector<ResultType::T> Result;
 
 // 'FPGAEvent' contains the full list of chambers.
 // Currently, it assumes 115 chambers, max 8 segments per chamber,
@@ -52,21 +79,21 @@ struct FPGAEvent {
   emtf::valid_t       valid[LENGTH];
 
   struct ArrayIndex {
-    inline unsigned operator ()(unsigned emtf_chamber, unsigned emtf_segment) const {
+    inline unsigned int operator ()(unsigned int emtf_chamber, unsigned int emtf_segment) const {
       assert(emtf_chamber < CHAMBERS);
       assert(emtf_segment < SEGMENTS);
       return (emtf_chamber * SEGMENTS) + emtf_segment;
     }
     inline int operator ()(int emtf_chamber, int emtf_segment) const {
-      assert(static_cast<unsigned>(emtf_chamber) < CHAMBERS);
-      assert(static_cast<unsigned>(emtf_segment) < SEGMENTS);
-      return (emtf_chamber * SEGMENTS) + emtf_segment;
+      assert(static_cast<unsigned int>(emtf_chamber) < CHAMBERS);
+      assert(static_cast<unsigned int>(emtf_segment) < SEGMENTS);
+      return (static_cast<unsigned int>(emtf_chamber) * SEGMENTS) + static_cast<unsigned int>(emtf_segment);
     }
   };
 
   explicit FPGAEvent(const Event& evt);  // constructor
 
-  void serialize_into(emtf::model_in_t in0[N_MODEL_IN]) const;  // serialize data into a single array
+  void serialize_into(emtf::model_in_t in0[LENGTH]) const;  // serialize data into a single array
 };
 
 FPGAEvent::FPGAEvent(const Event& evt) {
@@ -107,8 +134,8 @@ FPGAEvent::FPGAEvent(const Event& evt) {
 }
 
 // Serialize data into a single array
-void FPGAEvent::serialize_into(emtf::model_in_t in0[N_MODEL_IN]) const {
-  for (unsigned iseg = 0; iseg < N_MODEL_IN; iseg++) {
+void FPGAEvent::serialize_into(emtf::model_in_t in0[LENGTH]) const {
+  for (unsigned iseg = 0; iseg < LENGTH; iseg++) {
     auto&& in0_tmp = in0[iseg];
 
     in0_tmp.range(emtf::emtf_phi_bits_hi   , emtf::emtf_phi_bits_lo)    = emtf_phi[iseg];
@@ -125,28 +152,56 @@ void FPGAEvent::serialize_into(emtf::model_in_t in0[N_MODEL_IN]) const {
 }
 
 // 'FPGAResult' contains the output, which is going to be sent to the NN.
-// Assume 4 muon candidates and each muon candidate has 36 variables.
+// Currently, it assumes 4 track candidates and each track candidate has 36 features.
+// Therefore, the data shape is (None, 4, 36).
 struct FPGAResult {
-  static const unsigned int TRACKS = emtf::num_out_tracks;
-  static const unsigned int VARIABLES = emtf::num_out_variables;
-  static const unsigned int LENGTH = TRACKS * VARIABLES;
+  static const unsigned int TRACKS   = emtf::num_tracks;
+  static const unsigned int FEATURES = emtf::num_features;
+  static const unsigned int LENGTH   = TRACKS * FEATURES;
 
   emtf::model_out_t data[LENGTH];
 
-  FPGAResult();  // constructor
+  struct ArrayIndex {
+    inline unsigned int operator ()(unsigned int track, unsigned int feature) const {
+      assert(track < TRACKS);
+      assert(feature < FEATURES);
+      return (track * FEATURES) + feature;
+    }
+    inline int operator ()(int track, int feature) const {
+      assert(static_cast<unsigned int>(track) < TRACKS);
+      assert(static_cast<unsigned int>(feature) < FEATURES);
+      return (static_cast<unsigned int>(track) * FEATURES) + static_cast<unsigned int>(feature);
+    }
+  };
+
+  explicit FPGAResult(const Result& res);  // constructor
 };
 
-FPGAResult::FPGAResult() {
+FPGAResult::FPGAResult(const Result& res) {
   // Initialize
   for (unsigned i = 0; i < LENGTH; i++) {
     data[i] = 0;
   }
+
+  // Fill values
+  auto index_fn = ArrayIndex();
+
+  assert(res.size() == TRACKS);
+  for (unsigned itrk = 0; itrk < TRACKS; itrk++) {
+    for (unsigned ifea = 0; ifea < FEATURES; ifea++) {
+      const unsigned i = index_fn(itrk, ifea);
+      data[i] = res[itrk][ifea];
+    }
+  }
 }
 
 
-// Read test bench event file
-int read_tb_event(const std::string filename, Event& evt) {
-  std::array<HitsType::T, HitsType::N> line_buf;
+// _____________________________________________________________________________
+// Read testbench text file
+// Make sure there is no unnecessary line break
+template <class T1, class T2>
+int read_tb_data(const std::string filename, T1& evt) {
+  typename T2::T line_buf;
 
   std::string line;  // line in file
   char c;  // delimiter in line
@@ -167,7 +222,7 @@ int read_tb_event(const std::string filename, Event& evt) {
         first_line = false;
       }
       ss >> c;  // get rid of '['
-      for (unsigned i = 0; i < line_buf.size(); ++i)  // extract int, then get rid of ','
+      for (unsigned i = 0; i < line_buf.size(); i++)  // extract int, then get rid of ','
         ss >> line_buf[i] >> c;
       ss >> c;  // get rid of ']'
       ss >> c;  // get rid of ','
@@ -179,7 +234,7 @@ int read_tb_event(const std::string filename, Event& evt) {
       if (debug) {
         std::cout << "Line: " << line << std::endl;
         std::cout << "Parsed line: ";
-        for (unsigned i = 0; i < line_buf.size(); ++i)
+        for (unsigned i = 0; i < line_buf.size(); i++)
           std::cout << line_buf[i] << " ";
         std::cout << std::endl;
       }
@@ -191,6 +246,8 @@ int read_tb_event(const std::string filename, Event& evt) {
   return 0;
 }
 
+
+// _____________________________________________________________________________
 // Initialize array to zeros
 template <typename T, size_t N>
 void init_array_as_zeros(T (&arr)[N]) {
@@ -218,6 +275,18 @@ void print_std_array(T const& arr) {
 // Get array length
 template <typename T, size_t N>
 constexpr size_t get_array_length(T const (&arr)[N]) { return N; }
+
+// Count mismatches
+template <class InputIt1, class InputIt2>
+int count_mismatches(InputIt1 first1, InputIt1 last1, InputIt2 first2) {
+  int cnt = 0;
+  for (; first1 != last1; ++first1, ++first2) {
+    if (*first1 != *first2) {
+      ++cnt;
+    }
+  }
+  return cnt;
+}
 
 }  // anonymous namespace
 

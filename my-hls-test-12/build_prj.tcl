@@ -2,7 +2,9 @@
 
 set please_reset 1
 
-# Create project
+set_param general.maxThreads 8
+
+# Create a project and add files
 if {$please_reset} {
   open_project -reset myproject_prj
 } else {
@@ -11,10 +13,10 @@ if {$please_reset} {
 set_top myproject
 add_files firmware/myproject.cpp -cflags "-std=c++0x" -csimflags "-Wall -Wno-unused-label"
 add_files -tb myproject_test.cpp -cflags "-std=c++0x" -csimflags "-Wall -Wno-unused-label"
-add_files -tb firmware/weights
+#add_files -tb firmware/weights
 add_files -tb tb_data
 
-# Configure as Virtex-7, 240 MHz
+# Create a solution. Configured as Virtex-7 690T, 240 MHz
 if {$please_reset} {
   open_solution -reset "solution1"
 } else {
@@ -23,6 +25,12 @@ if {$please_reset} {
 set_part {xc7vx690tffg1927-2}
 create_clock -period 4.16667 -name default
 
+# ##############################################################
+# Set optimization directives
+config_array_partition -auto_partition_threshold 8 -auto_promotion_threshold 64 -include_extern_globals
+config_interface -trim_dangling_port
+
+# ##############################################################
 # Do stuff
 puts "@@@ C SIMULATION"
 csim_design
