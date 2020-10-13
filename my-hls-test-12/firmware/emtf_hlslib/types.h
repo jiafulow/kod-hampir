@@ -89,6 +89,12 @@ struct enable_if {};
 template <class T>
 struct enable_if<true, T> { typedef T type; };
 
+template <class T, class U>
+struct is_same : false_type {};
+
+template <class T>
+struct is_same<T, T> : true_type {};
+
 // Check for ap datatype
 template <typename T>
 struct is_ap_int_type : false_type {};
@@ -214,17 +220,17 @@ enum layer_length_type {
 };
 
 // Layer typedefs
-typedef ap_uint<11>           zoning_seg_t;  // bw: ceil(log2(num_chambers * 10))
-typedef ap_uint<9>            zoning_col_t;  // bw: ceil(log2(80/coarse_emtf_strip))
-typedef ap_uint<num_img_cols> zoning_out_t;  // major axis: row, minor axis: col
-typedef ap_uint<num_patterns> pooling_preactivation_t;  // major axis: row, minor axis: patt
-typedef ap_uint<num_img_rows> pooling_preactivation_trans_t;  // major axis: patt, minor axis: row
-typedef ap_uint<6>            pooling_activation_t;  // major axis: col, minor axis: -, bw: num_img_rows - 2
-typedef ap_uint<3>            pooling_pattnum_t;  // bw: ceil(log2(num_patterns))
-typedef ap_uint<9>            pooling_col_t;  // bw: ceil(log2(num_img_cols))
-typedef ap_uint<6+3>          pooling_out_t;  // bw: activation bw + pattnum bw
-typedef ap_uint<6+3+9>        zonesorting_out_t;  // bw: activation bw + pattnum bw + col bw
-typedef ap_uint<6+3+9+2>      zonemerging_out_t;  // bw: activation bw + pattnum bw + col bw + zone bw
+typedef ap_uint<11>           zoning_seg_t;             // bw: ceil(log2(num_chambers * 10))
+typedef ap_uint<9>            zoning_col_t;             // bw: ceil(log2(80/coarse_emtf_strip))
+typedef ap_uint<num_img_cols> zoning_out_t;             // bw: num_img_cols
+typedef ap_uint<num_img_rows> pooling_preactivation_t;  // bw: num_img_rows
+typedef ap_uint<6>            pooling_activation_t;     // bw: preactivation bw - 2
+typedef ap_uint<3>            pooling_patt_t;           // bw: ceil(log2(num_patterns))
+typedef ap_uint<9>            pooling_col_t;            // bw: ceil(log2(num_img_cols))
+typedef ap_uint<2>            pooling_zone_t;           // bw: ceil(log2(num_zones))
+typedef ap_uint<6+3>          pooling_out_t;            // bw: activation bw + patt bw
+typedef ap_uint<6+3+9>        zonesorting_out_t;        // bw: activation bw + patt bw + col bw
+typedef ap_uint<6+3+9+2>      zonemerging_out_t;        // bw: activation bw + patt bw + col bw + zone bw
 // Synonyms
 typedef zoning_out_t          pooling_in_t;
 typedef pooling_out_t         suppression_in_t;
@@ -232,6 +238,11 @@ typedef suppression_in_t      suppression_out_t;
 typedef suppression_out_t     zonesorting_in_t;
 typedef zonesorting_out_t     zonemerging_in_t;
 typedef model_out_t           trkbuilding_out_t;
+
+
+// _____________________________________________________________________________
+// Misc definitions
+constexpr static const int pooling_reuse_factor = 4;
 
 }  // namespace emtf
 

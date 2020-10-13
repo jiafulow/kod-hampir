@@ -102,20 +102,20 @@ void myproject(
   // Layer 1 - pooling
 
   emtf::pooling_layer<0>(zoning_0_out, pooling_0_out);
-  //emtf::pooling_layer<1>(zoning_1_out, pooling_1_out);
-  //emtf::pooling_layer<2>(zoning_2_out, pooling_2_out);
+  emtf::pooling_layer<1>(zoning_1_out, pooling_1_out);
+  emtf::pooling_layer<2>(zoning_2_out, pooling_2_out);
 
   // Layer 2 - non-max suppression
 
   emtf::suppression_layer<0>(pooling_0_out, suppression_0_out);
-  //emtf::suppression_layer<1>(pooling_1_out, suppression_1_out);
-  //emtf::suppression_layer<2>(pooling_2_out, suppression_2_out);
+  emtf::suppression_layer<1>(pooling_1_out, suppression_1_out);
+  emtf::suppression_layer<2>(pooling_2_out, suppression_2_out);
 
   // Layer 3 - zone sorting
 
   emtf::zonesorting_layer<0>(suppression_0_out, zonesorting_0_out);
-  //emtf::zonesorting_layer<1>(suppression_1_out, zonesorting_1_out);
-  //emtf::zonesorting_layer<2>(suppression_2_out, zonesorting_2_out);
+  emtf::zonesorting_layer<1>(suppression_1_out, zonesorting_1_out);
+  emtf::zonesorting_layer<2>(suppression_2_out, zonesorting_2_out);
 
   // Layer 4 - zone merging
 
