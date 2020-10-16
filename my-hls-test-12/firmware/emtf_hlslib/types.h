@@ -30,10 +30,10 @@ enum variable_type {
 };
 
 enum track_variable_type {
-  VI_TRACK_QUAL    = 0,
-  VI_TRACK_PATT    = 1,
-  VI_TRACK_COL     = 2,
-  VI_TRACK_ZONE    = 3
+  VI_TRACK_QUAL   = 0,
+  VI_TRACK_PATT   = 1,
+  VI_TRACK_COL    = 2,
+  VI_TRACK_ZONE   = 3
 };
 
 // Bit width
@@ -186,7 +186,7 @@ DEFINE_NICE_NAMES_TRACK(VI_TRACK_ZONE, track_zone)
 // Model input and output lengths
 enum model_length_type {
   N_MODEL_IN = num_chambers * num_segments,
-  N_MODEL_OUT = num_out_tracks * num_out_variables
+  N_MODEL_OUT = num_tracks * num_features
 };
 
 // Bit width of model_in_t is the sum of the bit widths
@@ -207,7 +207,7 @@ typedef ap_int<model_out_bw_traits::value> model_out_t;
 enum layer_length_type {
   N_ZONING_OUT = num_img_rows,
   N_POOLING_OUT = num_img_cols,
-  N_ZONESORTING_OUT = num_out_tracks,
+  N_ZONESORTING_OUT = num_tracks,
   // Synonyms
   N_POOLING_IN = N_ZONING_OUT,
   N_SUPPRESSION_IN = N_POOLING_OUT,

@@ -33,8 +33,6 @@ namespace emtf {
   constexpr int num_variables = 10;
   constexpr int num_tracks = 4;
   constexpr int num_features = 36;
-  constexpr int num_out_tracks = num_tracks;  //FIXME - remove this
-  constexpr int num_out_variables = num_features;  //FIXME - remove this
 
   constexpr int num_img_rows = 8;
   constexpr int num_img_cols = 288;

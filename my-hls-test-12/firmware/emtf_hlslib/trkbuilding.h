@@ -25,12 +25,10 @@ void trkbuilding_op(
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
-  // Check assumptions
-  static_assert(N_TRKBUILDING_IN == num_out_tracks, "N_TRKBUILDING_IN check failed");
-  static_assert(N_TRKBUILDING_OUT == num_out_tracks * num_out_variables, "N_TRKBUILDING_OUT check failed");
+#pragma HLS INLINE region
 
   //FIXME - implement the track building
-  for (int i = 0; i < num_out_tracks; i++) {
+  for (int i = 0; i < num_tracks; i++) {
     trkbuilding_out[i] = track_qual[i];
   }
 }
@@ -61,8 +59,12 @@ void trkbuilding_layer(
 
 #pragma HLS INLINE region
 
-  trkbuilding_op<ZONE>(emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual, emtf_time, valid,
-                       track_qual, track_patt, track_col, track_zone, trkbuilding_out);
+  // Check assumptions
+  static_assert(N_TRKBUILDING_IN == num_tracks, "N_TRKBUILDING_IN check failed");
+  static_assert(N_TRKBUILDING_OUT == num_tracks * num_features, "N_TRKBUILDING_OUT check failed");
+
+  trkbuilding_op<ZONE>(emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual, emtf_time,
+                       valid, track_qual, track_patt, track_col, track_zone, trkbuilding_out);
 }
 
 }  // namespace emtf
