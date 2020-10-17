@@ -117,17 +117,28 @@ constexpr static const int activations_zone_2[1u << num_img_rows] = {
 
 
 template <int ZONE, int ROW>
-struct pooling_padding_base_traits {};
+struct pooling_padding_traits {};
 
-template <int ROW> struct pooling_padding_base_traits<0, ROW> { static const int value = detail::paddings_zone_0[ROW]; };
-template <int ROW> struct pooling_padding_base_traits<1, ROW> { static const int value = detail::paddings_zone_1[ROW]; };
-template <int ROW> struct pooling_padding_base_traits<2, ROW> { static const int value = detail::paddings_zone_2[ROW]; };
+template <int ROW> struct pooling_padding_traits<0, ROW> { static const int value = detail::paddings_zone_0[ROW]; };
+template <int ROW> struct pooling_padding_traits<1, ROW> { static const int value = detail::paddings_zone_1[ROW]; };
+template <int ROW> struct pooling_padding_traits<2, ROW> { static const int value = detail::paddings_zone_2[ROW]; };
 
 template <int ZONE, int ROW>
-struct pooling_padding_traits {
-  static const int pad = pooling_padding_base_traits<ZONE, ROW>::value;
-  typedef ap_uint<pad> padding_t;
-  typedef ap_uint<num_img_cols + (pad * 2)> padded_t;
+struct pooling_select_padding_type {
+  static const int pad = pooling_padding_traits<ZONE, ROW>::value;
+  typedef ap_uint<pad> type;
+};
+
+template <int ZONE, int ROW>
+struct pooling_select_padded_type {
+  static const int pad = pooling_padding_traits<ZONE, ROW>::value;
+  typedef ap_uint<num_img_cols + (pad * 2)> type;
+};
+
+template <int ZONE, int ROW>
+struct pooling_select_patch_type {
+  static const int pad = pooling_padding_traits<ZONE, ROW>::value;
+  typedef ap_uint<1 + (pad * 2)> type;
 };
 
 template <int ZONE>
@@ -292,6 +303,11 @@ void pooling_apply_activation(const T_IN& in0, T_OUT& out, U op) {
 
 #pragma HLS PIPELINE II=1
 
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+// Keep this as a separate module
+#pragma HLS INLINE off
+
 #if !defined(__SYNTHESIS__)
   static bool initialized = false;
   static int lookup_table[1u << num_img_rows];
@@ -314,30 +330,95 @@ void pooling_reduce_max_activation(const T_IN in0[num_patterns], T_OUT& out) {
   static_assert(is_same<T_IN, pooling_activation_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, pooling_out_t>::value, "T_OUT type check failed");
 
+  typedef pooling_activation_t value_t;
   constexpr unsigned int bits_lo = 0;
-  constexpr unsigned int bits_hi = (pooling_activation_t::width - 1);
+  constexpr unsigned int bits_hi = (value_t::width - 1);
 
-  // Concatenate index and value
-  const T_OUT x0 = (pooling_patt_t(0), in0[0]);
-  const T_OUT x1 = (pooling_patt_t(1), in0[1]);
-  const T_OUT x2 = (pooling_patt_t(2), in0[2]);
-  const T_OUT x3 = (pooling_patt_t(3), in0[3]);
-  const T_OUT x4 = (pooling_patt_t(4), in0[4]);
-  const T_OUT x5 = (pooling_patt_t(5), in0[5]);
-  const T_OUT x6 = (pooling_patt_t(6), in0[6]);
-
-  // Stage 0
-  const T_OUT tmp_0_0 = x0;
-  const T_OUT tmp_0_1 = (x1.range(bits_hi, bits_lo) >= x2.range(bits_hi, bits_lo)) ? x1 : x2;
-  const T_OUT tmp_0_2 = (x3.range(bits_hi, bits_lo) >= x4.range(bits_hi, bits_lo)) ? x3 : x4;
-  const T_OUT tmp_0_3 = (x5.range(bits_hi, bits_lo) >= x6.range(bits_hi, bits_lo)) ? x5 : x6;
+  // Stage 0: prepend patt number to the input value
+  const T_OUT tmp_0_0 = (pooling_patt_t(0), in0[0]);
+  const T_OUT tmp_0_1 = (pooling_patt_t(1), in0[1]);
+  const T_OUT tmp_0_2 = (pooling_patt_t(2), in0[2]);
+  const T_OUT tmp_0_3 = (pooling_patt_t(3), in0[3]);
+  const T_OUT tmp_0_4 = (pooling_patt_t(4), in0[4]);
+  const T_OUT tmp_0_5 = (pooling_patt_t(5), in0[5]);
+  const T_OUT tmp_0_6 = (pooling_patt_t(6), in0[6]);
 
   // Stage 1
-  const T_OUT tmp_1_0 = (tmp_0_0.range(bits_hi, bits_lo) >= tmp_0_1.range(bits_hi, bits_lo)) ? tmp_0_0 : tmp_0_1;
-  const T_OUT tmp_1_1 = (tmp_0_2.range(bits_hi, bits_lo) >= tmp_0_3.range(bits_hi, bits_lo)) ? tmp_0_2 : tmp_0_3;
+  const T_OUT tmp_1_0 = tmp_0_0;
+  const T_OUT tmp_1_1 = (tmp_0_1.range(bits_hi, bits_lo) >= tmp_0_2.range(bits_hi, bits_lo)) ? tmp_0_1 : tmp_0_2;
+  const T_OUT tmp_1_2 = (tmp_0_3.range(bits_hi, bits_lo) >= tmp_0_4.range(bits_hi, bits_lo)) ? tmp_0_3 : tmp_0_4;
+  const T_OUT tmp_1_3 = (tmp_0_5.range(bits_hi, bits_lo) >= tmp_0_6.range(bits_hi, bits_lo)) ? tmp_0_5 : tmp_0_6;
 
   // Stage 2
-  out = (tmp_1_0.range(bits_hi, bits_lo) >= tmp_1_1.range(bits_hi, bits_lo)) ? tmp_1_0 : tmp_1_1;
+  const T_OUT tmp_2_0 = (tmp_1_0.range(bits_hi, bits_lo) >= tmp_1_1.range(bits_hi, bits_lo)) ? tmp_1_0 : tmp_1_1;
+  const T_OUT tmp_2_1 = (tmp_1_2.range(bits_hi, bits_lo) >= tmp_1_3.range(bits_hi, bits_lo)) ? tmp_1_2 : tmp_1_3;
+
+  // Stage 3
+  out = (tmp_2_0.range(bits_hi, bits_lo) >= tmp_2_1.range(bits_hi, bits_lo)) ? tmp_2_0 : tmp_2_1;
+}
+
+// _____________________________________________________________________________
+// Apply the patterns at a particular column
+
+template <int ZONE>
+void pooling_col_op(
+    const typename pooling_select_patch_type<ZONE, 0>::type patch_row_0,
+    const typename pooling_select_patch_type<ZONE, 1>::type patch_row_1,
+    const typename pooling_select_patch_type<ZONE, 2>::type patch_row_2,
+    const typename pooling_select_patch_type<ZONE, 3>::type patch_row_3,
+    const typename pooling_select_patch_type<ZONE, 4>::type patch_row_4,
+    const typename pooling_select_patch_type<ZONE, 5>::type patch_row_5,
+    const typename pooling_select_patch_type<ZONE, 6>::type patch_row_6,
+    const typename pooling_select_patch_type<ZONE, 7>::type patch_row_7,
+    pooling_out_t& pooling_out_col_l
+) {
+
+#pragma HLS PIPELINE II=1
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE region
+
+  int windows_col_start[num_patterns][num_img_rows];
+  pooling_init_table_2d(windows_col_start, pooling_get_col_start_op<ZONE>());
+
+  int windows_col_stop[num_patterns][num_img_rows];
+  pooling_init_table_2d(windows_col_stop, pooling_get_col_stop_op<ZONE>());
+
+  pooling_preactivation_t pooling_preactivations[num_patterns];
+  pooling_activation_t pooling_activations[num_patterns];
+
+#pragma HLS ARRAY_PARTITION variable=pooling_preactivations complete dim=0
+#pragma HLS ARRAY_PARTITION variable=pooling_activations complete dim=0
+
+  // Loop over patterns
+  for (unsigned patt = 0; patt < num_patterns; patt++) {
+
+#pragma HLS UNROLL
+
+    // Check pattern windows in each row
+    pooling_set_preactivation(
+        patch_row_0.range(windows_col_stop[patt][0], windows_col_start[patt][0]),
+        patch_row_1.range(windows_col_stop[patt][1], windows_col_start[patt][1]),
+        patch_row_2.range(windows_col_stop[patt][2], windows_col_start[patt][2]),
+        patch_row_3.range(windows_col_stop[patt][3], windows_col_start[patt][3]),
+        patch_row_4.range(windows_col_stop[patt][4], windows_col_start[patt][4]),
+        patch_row_5.range(windows_col_stop[patt][5], windows_col_start[patt][5]),
+        patch_row_6.range(windows_col_stop[patt][6], windows_col_start[patt][6]),
+        patch_row_7.range(windows_col_stop[patt][7], windows_col_start[patt][7]),
+        pooling_preactivations[patt]
+    );
+
+    // Activation
+    pooling_apply_activation(
+        pooling_preactivations[patt],
+        pooling_activations[patt],
+        pooling_get_activation_op<ZONE>()
+    );
+  }  // end loop over patterns
+
+  // Select max activation
+  pooling_reduce_max_activation(pooling_activations, pooling_out_col_l);
 }
 
 
@@ -354,31 +435,25 @@ void pooling_op(
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
-#pragma HLS INLINE region
+//#pragma HLS INLINE region
 
-  typedef typename pooling_padding_traits<ZONE, 0>::padding_t padding_row_0_t;
-  typedef typename pooling_padding_traits<ZONE, 1>::padding_t padding_row_1_t;
-  typedef typename pooling_padding_traits<ZONE, 2>::padding_t padding_row_2_t;
-  typedef typename pooling_padding_traits<ZONE, 3>::padding_t padding_row_3_t;
-  typedef typename pooling_padding_traits<ZONE, 4>::padding_t padding_row_4_t;
-  typedef typename pooling_padding_traits<ZONE, 5>::padding_t padding_row_5_t;
-  typedef typename pooling_padding_traits<ZONE, 6>::padding_t padding_row_6_t;
-  typedef typename pooling_padding_traits<ZONE, 7>::padding_t padding_row_7_t;
+  typedef typename pooling_select_padding_type<ZONE, 0>::type padding_row_0_t;
+  typedef typename pooling_select_padding_type<ZONE, 1>::type padding_row_1_t;
+  typedef typename pooling_select_padding_type<ZONE, 2>::type padding_row_2_t;
+  typedef typename pooling_select_padding_type<ZONE, 3>::type padding_row_3_t;
+  typedef typename pooling_select_padding_type<ZONE, 4>::type padding_row_4_t;
+  typedef typename pooling_select_padding_type<ZONE, 5>::type padding_row_5_t;
+  typedef typename pooling_select_padding_type<ZONE, 6>::type padding_row_6_t;
+  typedef typename pooling_select_padding_type<ZONE, 7>::type padding_row_7_t;
 
-  typedef typename pooling_padding_traits<ZONE, 0>::padded_t padded_row_0_t;
-  typedef typename pooling_padding_traits<ZONE, 1>::padded_t padded_row_1_t;
-  typedef typename pooling_padding_traits<ZONE, 2>::padded_t padded_row_2_t;
-  typedef typename pooling_padding_traits<ZONE, 3>::padded_t padded_row_3_t;
-  typedef typename pooling_padding_traits<ZONE, 4>::padded_t padded_row_4_t;
-  typedef typename pooling_padding_traits<ZONE, 5>::padded_t padded_row_5_t;
-  typedef typename pooling_padding_traits<ZONE, 6>::padded_t padded_row_6_t;
-  typedef typename pooling_padding_traits<ZONE, 7>::padded_t padded_row_7_t;
-
-  int windows_col_start[num_patterns][num_img_rows];
-  pooling_init_table_2d(windows_col_start, pooling_get_col_start_op<ZONE>());
-
-  int windows_col_stop[num_patterns][num_img_rows];
-  pooling_init_table_2d(windows_col_stop, pooling_get_col_stop_op<ZONE>());
+  typedef typename pooling_select_padded_type<ZONE, 0>::type padded_row_0_t;
+  typedef typename pooling_select_padded_type<ZONE, 1>::type padded_row_1_t;
+  typedef typename pooling_select_padded_type<ZONE, 2>::type padded_row_2_t;
+  typedef typename pooling_select_padded_type<ZONE, 3>::type padded_row_3_t;
+  typedef typename pooling_select_padded_type<ZONE, 4>::type padded_row_4_t;
+  typedef typename pooling_select_padded_type<ZONE, 5>::type padded_row_5_t;
+  typedef typename pooling_select_padded_type<ZONE, 6>::type padded_row_6_t;
+  typedef typename pooling_select_padded_type<ZONE, 7>::type padded_row_7_t;
 
   const padded_row_0_t padded_row_0 = (padding_row_0_t(0), pooling_in[0], padding_row_0_t(0));
   const padded_row_1_t padded_row_1 = (padding_row_1_t(0), pooling_in[1], padding_row_1_t(0));
@@ -390,44 +465,21 @@ void pooling_op(
   const padded_row_7_t padded_row_7 = (padding_row_7_t(0), pooling_in[7], padding_row_7_t(0));
 
   // Loop over columns
-  for (pooling_col_t col = 0; col < num_img_cols; col++) {
+  for (unsigned col = 0; col < num_img_cols; col++) {
 
 #pragma HLS UNROLL factor=num_img_cols/pooling_reuse_factor
 
-    pooling_preactivation_t pooling_preactivations[num_patterns];
-    pooling_activation_t pooling_activations[num_patterns];
-
-#pragma HLS ARRAY_PARTITION variable=pooling_preactivations complete dim=0
-#pragma HLS ARRAY_PARTITION variable=pooling_activations complete dim=0
-
-    // Loop over patterns
-    for (pooling_patt_t patt = 0; patt < num_patterns; patt++) {
-
-#pragma HLS UNROLL
-
-      // Check pattern windows in each row
-      pooling_set_preactivation(
-          padded_row_0.range(col + windows_col_stop[patt][0], col + windows_col_start[patt][0]),
-          padded_row_1.range(col + windows_col_stop[patt][1], col + windows_col_start[patt][1]),
-          padded_row_2.range(col + windows_col_stop[patt][2], col + windows_col_start[patt][2]),
-          padded_row_3.range(col + windows_col_stop[patt][3], col + windows_col_start[patt][3]),
-          padded_row_4.range(col + windows_col_stop[patt][4], col + windows_col_start[patt][4]),
-          padded_row_5.range(col + windows_col_stop[patt][5], col + windows_col_start[patt][5]),
-          padded_row_6.range(col + windows_col_stop[patt][6], col + windows_col_start[patt][6]),
-          padded_row_7.range(col + windows_col_stop[patt][7], col + windows_col_start[patt][7]),
-          pooling_preactivations[patt]
-      );
-
-      // Activation
-      pooling_apply_activation(
-          pooling_preactivations[patt],
-          pooling_activations[patt],
-          pooling_get_activation_op<ZONE>()
-      );
-    }  // end loop over patterns
-
-    // Select max activation
-    pooling_reduce_max_activation(pooling_activations, pooling_out[col]);
+    pooling_col_op<ZONE>(
+      padded_row_0.range(col + (padding_row_0_t::width * 2), col),
+      padded_row_1.range(col + (padding_row_1_t::width * 2), col),
+      padded_row_2.range(col + (padding_row_2_t::width * 2), col),
+      padded_row_3.range(col + (padding_row_3_t::width * 2), col),
+      padded_row_4.range(col + (padding_row_4_t::width * 2), col),
+      padded_row_5.range(col + (padding_row_5_t::width * 2), col),
+      padded_row_6.range(col + (padding_row_6_t::width * 2), col),
+      padded_row_7.range(col + (padding_row_7_t::width * 2), col),
+      pooling_out[col]
+    );
   }  // end loop over columns
 }
 

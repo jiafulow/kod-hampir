@@ -18,11 +18,12 @@ void suppression_op(
 
 #pragma HLS INLINE region
 
+  typedef pooling_activation_t value_t;
   constexpr unsigned int bits_lo = 0;
-  constexpr unsigned int bits_hi = (pooling_activation_t::width - 1);
+  constexpr unsigned int bits_hi = (value_t::width - 1);
 
   // Loop over columns
-  for (pooling_col_t col = 0; col < num_img_cols; col++) {
+  for (unsigned col = 0; col < num_img_cols; col++) {
 
 #pragma HLS UNROLL factor=num_img_cols/pooling_reuse_factor
 
