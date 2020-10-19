@@ -16,14 +16,14 @@ add_files -tb myproject_test.cpp -cflags "-std=c++0x" -csimflags "-Wall -Wno-unu
 #add_files -tb firmware/weights
 add_files -tb tb_data
 
-# Create a solution. Configured as Virtex-7 690T, 240 MHz
+# Create a solution. Configured as Virtex-7 690T, 200 MHz
 if {$please_reset} {
   open_solution -reset "solution1"
 } else {
   open_solution "solution1"
 }
 set_part {xc7vx690tffg1927-2}
-create_clock -period 4.16667 -name default
+create_clock -period 5 -name default
 
 # ##############################################################
 # Set optimization directives
