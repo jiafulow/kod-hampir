@@ -99,7 +99,7 @@ for idx_orig in "${!rptname_orig[@]}"; do
          left+="${latency_orig}"
          right="New:"$'\n'
          right+="${latency_new}"
-         column <(echo "${left}") <(echo "${right}")
+         column -c 160 <(echo "${left}") <(echo "${right}")
          echo ""
          echo ""
          echo ""
@@ -117,7 +117,7 @@ for idx_orig in "${!rptname_orig[@]}"; do
          left+="${utilization_orig}"
          right="New:"$'\n'
          right+="${utilization_new}"
-         column <(echo "${left}") <(echo "${right}")
+         column -c 130 <(echo "${left}") <(echo "${right}")
          echo ""
          echo ""
          echo ""
