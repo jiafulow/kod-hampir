@@ -8,12 +8,6 @@ void zonemerging_preprocess_twelve(const T_IN in0[4], const T_IN in1[4], const T
   static_assert(is_same<T_IN, zonemerging_in_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, zonemerging_out_t>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=1
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
-#pragma HLS INLINE region
-
   // Prepend zone number to the input value
   out[0] = (pooling_zone_t(0), in0[0]);
   out[1] = (pooling_zone_t(0), in0[1]);
@@ -32,12 +26,6 @@ void zonemerging_preprocess_twelve(const T_IN in0[4], const T_IN in1[4], const T
 template <typename T_IN, typename T_OUT>
 void zonemerging_merge_twelve(const T_IN in0[12], T_OUT out[4]) {
   static_assert(is_same<T_IN, T_OUT>::value, "T_OUT type check failed");
-
-#pragma HLS PIPELINE II=1
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
-#pragma HLS INLINE region
 
   typedef pooling_activation_t value_t;
   constexpr unsigned int bits_lo = 0;

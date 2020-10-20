@@ -25,12 +25,6 @@ void zonesorting_preprocess_eight(const pooling_col_t col, const T_IN in0[8], T_
   static_assert(is_same<T_IN, zonesorting_in_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, zonesorting_out_t>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=1
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
-#pragma HLS INLINE region
-
   typedef pooling_activation_t value_t;
   constexpr unsigned int bits_lo = 0;
   constexpr unsigned int bits_hi = (value_t::width - 1);
@@ -46,12 +40,6 @@ void zonesorting_preprocess_eight(const pooling_col_t col, const T_IN in0[8], T_
 template <typename T_IN, typename T_OUT>
 void zonesorting_sort_four(const T_IN in0[4], T_OUT out[4]) {
   static_assert(is_same<T_IN, T_OUT>::value, "T_OUT type check failed");
-
-#pragma HLS PIPELINE II=1
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
-#pragma HLS INLINE region
 
   typedef pooling_activation_t value_t;
   constexpr unsigned int bits_lo = 0;
@@ -121,33 +109,8 @@ void zonesorting_sort_four(const T_IN in0[4], T_OUT out[4]) {
 }
 
 template <typename T_IN, typename T_OUT>
-void zonesorting_preprocess_eight_and_sort(const pooling_col_t col, const T_IN in0[8], T_OUT out[4]) {
-  static_assert(is_same<T_IN, zonesorting_in_t>::value, "T_IN type check failed");
-  static_assert(is_same<T_OUT, zonesorting_out_t>::value, "T_OUT type check failed");
-
-#pragma HLS PIPELINE II=1
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
-#pragma HLS INLINE region
-
-  zonesorting_out_t out_tmp[4];
-
-#pragma HLS ARRAY_PARTITION variable=out_tmp complete dim=0
-
-  zonesorting_preprocess_eight(col, in0, out_tmp);
-  zonesorting_sort_four(out_tmp, out);
-}
-
-template <typename T_IN, typename T_OUT>
 void zonesorting_merge_eight(const T_IN in0[8], T_OUT out[4]) {
   static_assert(is_same<T_IN, T_OUT>::value, "T_OUT type check failed");
-
-#pragma HLS PIPELINE II=1
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
-#pragma HLS INLINE region
 
   typedef pooling_activation_t value_t;
   constexpr unsigned int bits_lo = 0;
@@ -232,6 +195,26 @@ void zonesorting_merge_eight(const T_IN in0[8], T_OUT out[4]) {
 
 // _____________________________________________________________________________
 // A wrapper for sorting
+template <typename T_IN, typename T_OUT>
+void zonesorting_preprocess_eight_and_sort(const pooling_col_t col, const T_IN in0[8], T_OUT out[4]) {
+  static_assert(is_same<T_IN, zonesorting_in_t>::value, "T_IN type check failed");
+  static_assert(is_same<T_OUT, zonesorting_out_t>::value, "T_OUT type check failed");
+
+#pragma HLS PIPELINE II=1
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE region
+
+  zonesorting_out_t out_tmp[4];
+
+#pragma HLS ARRAY_PARTITION variable=out_tmp complete dim=0
+
+  zonesorting_preprocess_eight(col, in0, out_tmp);
+  zonesorting_sort_four(out_tmp, out);
+}
+
+// A wrapper for sorting
 template <int N_IN, int N_OUT>
 void zonesorting_sort_stage(
     const zonesorting_in_t in0[N_IN],
@@ -242,7 +225,7 @@ void zonesorting_sort_stage(
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
-//#pragma HLS INLINE region
+#pragma HLS INLINE region
 
   // Loop with step size 8
   for (unsigned i = 0; i < N_IN; i += 8) {
@@ -264,7 +247,7 @@ void zonesorting_merge_stage(
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
-//#pragma HLS INLINE region
+#pragma HLS INLINE region
 
   // Loop with step size 8
   for (unsigned i = 0; i < N_IN; i += 8) {
@@ -287,7 +270,7 @@ void zonesorting_merge_stage_s1(
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
-//#pragma HLS INLINE region
+#pragma HLS INLINE region
 
   // Loop with step size 8, exclude last 16 elements
   for (unsigned i = 0; i < (N_IN - 16); i += 8) {
