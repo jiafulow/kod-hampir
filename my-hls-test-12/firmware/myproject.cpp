@@ -154,4 +154,7 @@ void myproject(
 
   emtf::trkbuilding_layer<0>(emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual, emtf_time,
                              valid, track_qual, track_patt, track_col, track_zone, out);
+
+  // This macro is defined in emtf_hlslib/helper.h
+  PRINT_TOP_FN_ARRAYS_OTHER
 }

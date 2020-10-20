@@ -45,6 +45,39 @@
 #define PRINT_TOP_FN_ARRAYS_IN1
 #endif
 
+#if !defined(__SYNTHESIS__) && !defined(NDEBUG)
+#define PRINT_TOP_FN_ARRAYS_OTHER \
+    std::cout << "Printing 'zoning_0_out' non-zero elements:" << std::endl; \
+    std::cout << "row: ["; \
+    for (unsigned i = 0; i < N_ZONING_OUT; i++) { \
+      for (unsigned j = 0; j < emtf::zoning_out_t::width; j++) { \
+        if (zoning_0_out[i].test(j)) \
+          std::cout << i << ", "; \
+      } \
+    } \
+    std::cout << "], col: ["; \
+    for (unsigned i = 0; i < N_ZONING_OUT; i++) { \
+      for (unsigned j = 0; j < emtf::zoning_out_t::width; j++) { \
+        if (zoning_0_out[i].test(j)) \
+          std::cout << j << ", "; \
+      } \
+    } \
+    std::cout << "]" << std::endl; \
+    std::cout << "Printing 'suppression_0_out' non-zero elements:" << std::endl; \
+    std::cout << "col: ["; \
+    for (unsigned i = 0; i < N_SUPPRESSION_OUT; i++) { \
+      if (suppression_0_out[i]) \
+        std::cout << i << ", "; \
+    } \
+    std::cout << "], value: ["; \
+    for (unsigned i = 0; i < N_SUPPRESSION_OUT; i++) { \
+      if (suppression_0_out[i]) \
+        std::cout << suppression_0_out[i].range(emtf::pooling_activation_t::width - 1, 0) << ", "; \
+    } \
+    std::cout << "]" << std::endl;
+#else
+#define PRINT_TOP_FN_ARRAYS_OTHER
+#endif
 
 namespace emtf {
 
