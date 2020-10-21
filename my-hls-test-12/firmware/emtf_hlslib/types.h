@@ -153,10 +153,10 @@ struct find_track_variable_range_of_bits<0> {  // specialize when T=0
 //     typedef find_variable_datatype<VI_EMTF_PHI>::type emtf_phi_t;
 //     constexpr int emtf_phi_bits_lo = find_variable_range_of_bits<VI_EMTF_PHI>::begin;
 //     constexpr int emtf_phi_bits_hi = find_variable_range_of_bits<VI_EMTF_PHI>::end - 1;
-#define DEFINE_NICE_NAMES(T, name) \
-    typedef find_variable_datatype<T>::type name##_t; \
-    constexpr int name##_bits_lo = find_variable_range_of_bits<T>::begin; \
-    constexpr int name##_bits_hi = find_variable_range_of_bits<T>::end - 1;
+#define DEFINE_NICE_NAMES(T, NAME) \
+    typedef find_variable_datatype<T>::type NAME##_t; \
+    constexpr int NAME##_bits_lo = find_variable_range_of_bits<T>::begin; \
+    constexpr int NAME##_bits_hi = find_variable_range_of_bits<T>::end - 1;
 
 DEFINE_NICE_NAMES(VI_EMTF_PHI, emtf_phi)
 DEFINE_NICE_NAMES(VI_EMTF_BEND, emtf_bend)
@@ -170,10 +170,10 @@ DEFINE_NICE_NAMES(VI_BX, bx)
 DEFINE_NICE_NAMES(VI_VALID, valid)
 #undef DEFINE_NICE_NAMES
 
-#define DEFINE_NICE_NAMES_TRACK(T, name) \
-    typedef find_track_variable_datatype<T>::type name##_t; \
-    constexpr int name##_bits_lo = find_track_variable_range_of_bits<T>::begin; \
-    constexpr int name##_bits_hi = find_track_variable_range_of_bits<T>::end - 1;
+#define DEFINE_NICE_NAMES_TRACK(T, NAME) \
+    typedef find_track_variable_datatype<T>::type NAME##_t; \
+    constexpr int NAME##_bits_lo = find_track_variable_range_of_bits<T>::begin; \
+    constexpr int NAME##_bits_hi = find_track_variable_range_of_bits<T>::end - 1;
 
 DEFINE_NICE_NAMES_TRACK(VI_TRACK_QUAL, track_qual)
 DEFINE_NICE_NAMES_TRACK(VI_TRACK_PATT, track_patt)
@@ -242,7 +242,8 @@ typedef model_out_t           trkbuilding_out_t;
 
 // _____________________________________________________________________________
 // Misc definitions
-constexpr static const int pooling_reuse_factor = 4;
+constexpr static const int pooling_reuse_factor = 4;  //FIXME - not yet implemented
+constexpr static const int pooling_fusion_factor = 8; //FIXME - not yet implemented
 
 }  // namespace emtf
 

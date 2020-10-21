@@ -14,15 +14,13 @@ constexpr static const int windows_col_start_zone_0_patt_3[num_img_rows] = {34, 
 constexpr static const int windows_col_start_zone_0_patt_4[num_img_rows] = {61, 62, 59, 55, 54, 51, 50, 49};
 constexpr static const int windows_col_start_zone_0_patt_5[num_img_rows] = {21, 23, 29, 52, 54, 52, 50, 46};
 constexpr static const int windows_col_start_zone_0_patt_6[num_img_rows] = {65, 67, 62, 55, 54, 48, 47, 45};
-
 constexpr static const int windows_col_start_zone_1_patt_0[num_img_rows] = {50, 51, 53, 54, 54, 54, 54, 54};
 constexpr static const int windows_col_start_zone_1_patt_1[num_img_rows] = {39, 41, 48, 53, 54, 55, 55, 54};
 constexpr static const int windows_col_start_zone_1_patt_2[num_img_rows] = {59, 58, 55, 55, 54, 53, 53, 53};
 constexpr static const int windows_col_start_zone_1_patt_3[num_img_rows] = {27, 30, 44, 53, 54, 52, 51, 47};
 constexpr static const int windows_col_start_zone_1_patt_4[num_img_rows] = {66, 64, 57, 55, 54, 52, 51, 51};
-constexpr static const int windows_col_start_zone_1_patt_5[num_img_rows] = {18, 18, 41, 52, 54, 41, 34, 23};
+constexpr static const int windows_col_start_zone_1_patt_5[num_img_rows] = {19, 19, 41, 52, 54, 41, 34, 23};
 constexpr static const int windows_col_start_zone_1_patt_6[num_img_rows] = {71, 68, 57, 53, 54, 51, 51, 52};
-
 constexpr static const int windows_col_start_zone_2_patt_0[num_img_rows] = {53, 53, 54, 54, 54, 54, 54, 54};
 constexpr static const int windows_col_start_zone_2_patt_1[num_img_rows] = {50, 50, 53, 54, 55, 54, 54, 54};
 constexpr static const int windows_col_start_zone_2_patt_2[num_img_rows] = {56, 55, 54, 54, 54, 53, 54, 53};
@@ -31,6 +29,28 @@ constexpr static const int windows_col_start_zone_2_patt_4[num_img_rows] = {57, 
 constexpr static const int windows_col_start_zone_2_patt_5[num_img_rows] = {43, 45, 52, 54, 46, 40, 37, 31};
 constexpr static const int windows_col_start_zone_2_patt_6[num_img_rows] = {57, 56, 53, 54, 53, 52, 52, 52};
 
+constexpr static const int windows_col_mid_zone_0_patt_0[num_img_rows]   = {55, 55, 55, 55, 55, 55, 55, 55};
+constexpr static const int windows_col_mid_zone_0_patt_1[num_img_rows]   = {49, 49, 50, 55, 55, 56, 56, 56};
+constexpr static const int windows_col_mid_zone_0_patt_2[num_img_rows]   = {61, 61, 60, 55, 55, 54, 54, 54};
+constexpr static const int windows_col_mid_zone_0_patt_3[num_img_rows]   = {42, 42, 45, 54, 55, 57, 57, 57};
+constexpr static const int windows_col_mid_zone_0_patt_4[num_img_rows]   = {68, 68, 65, 56, 55, 53, 53, 53};
+constexpr static const int windows_col_mid_zone_0_patt_5[num_img_rows]   = {33, 33, 39, 54, 55, 57, 56, 55};
+constexpr static const int windows_col_mid_zone_0_patt_6[num_img_rows]   = {77, 77, 71, 56, 55, 53, 54, 55};
+constexpr static const int windows_col_mid_zone_1_patt_0[num_img_rows]   = {55, 55, 55, 55, 55, 55, 55, 55};
+constexpr static const int windows_col_mid_zone_1_patt_1[num_img_rows]   = {46, 47, 52, 55, 55, 56, 56, 56};
+constexpr static const int windows_col_mid_zone_1_patt_2[num_img_rows]   = {64, 63, 58, 55, 55, 54, 54, 54};
+constexpr static const int windows_col_mid_zone_1_patt_3[num_img_rows]   = {35, 39, 49, 54, 55, 55, 55, 53};
+constexpr static const int windows_col_mid_zone_1_patt_4[num_img_rows]   = {75, 71, 61, 56, 55, 55, 55, 57};
+constexpr static const int windows_col_mid_zone_1_patt_5[num_img_rows]   = {28, 31, 47, 55, 55, 50, 45, 40};
+constexpr static const int windows_col_mid_zone_1_patt_6[num_img_rows]   = {82, 79, 63, 55, 55, 60, 65, 70};
+constexpr static const int windows_col_mid_zone_2_patt_0[num_img_rows]   = {55, 55, 55, 55, 55, 55, 55, 55};
+constexpr static const int windows_col_mid_zone_2_patt_1[num_img_rows]   = {52, 53, 55, 55, 55, 55, 55, 55};
+constexpr static const int windows_col_mid_zone_2_patt_2[num_img_rows]   = {58, 57, 55, 55, 55, 55, 55, 55};
+constexpr static const int windows_col_mid_zone_2_patt_3[num_img_rows]   = {50, 51, 54, 55, 55, 54, 54, 53};
+constexpr static const int windows_col_mid_zone_2_patt_4[num_img_rows]   = {60, 59, 56, 55, 55, 56, 56, 57};
+constexpr static const int windows_col_mid_zone_2_patt_5[num_img_rows]   = {48, 49, 55, 55, 53, 49, 48, 45};
+constexpr static const int windows_col_mid_zone_2_patt_6[num_img_rows]   = {62, 61, 55, 55, 57, 61, 62, 65};
+
 constexpr static const int windows_col_stop_zone_0_patt_0[num_img_rows]  = {59, 59, 58, 56, 56, 56, 56, 56};
 constexpr static const int windows_col_stop_zone_0_patt_1[num_img_rows]  = {53, 53, 54, 56, 56, 57, 57, 57};
 constexpr static const int windows_col_stop_zone_0_patt_2[num_img_rows]  = {67, 67, 64, 57, 56, 55, 55, 55};
@@ -38,15 +58,13 @@ constexpr static const int windows_col_stop_zone_0_patt_3[num_img_rows]  = {49, 
 constexpr static const int windows_col_stop_zone_0_patt_4[num_img_rows]  = {76, 75, 71, 57, 56, 56, 56, 57};
 constexpr static const int windows_col_stop_zone_0_patt_5[num_img_rows]  = {45, 43, 48, 55, 56, 62, 63, 65};
 constexpr static const int windows_col_stop_zone_0_patt_6[num_img_rows]  = {89, 87, 81, 58, 56, 58, 60, 64};
-
 constexpr static const int windows_col_stop_zone_1_patt_0[num_img_rows]  = {60, 59, 57, 56, 56, 56, 56, 56};
 constexpr static const int windows_col_stop_zone_1_patt_1[num_img_rows]  = {51, 52, 55, 55, 56, 57, 57, 57};
 constexpr static const int windows_col_stop_zone_1_patt_2[num_img_rows]  = {71, 69, 62, 57, 56, 55, 55, 56};
 constexpr static const int windows_col_stop_zone_1_patt_3[num_img_rows]  = {44, 46, 53, 55, 56, 58, 59, 59};
 constexpr static const int windows_col_stop_zone_1_patt_4[num_img_rows]  = {83, 80, 66, 57, 56, 58, 59, 63};
 constexpr static const int windows_col_stop_zone_1_patt_5[num_img_rows]  = {39, 42, 53, 57, 56, 59, 59, 58};
-constexpr static const int windows_col_stop_zone_1_patt_6[num_img_rows]  = {92, 92, 69, 58, 56, 69, 76, 87};
-
+constexpr static const int windows_col_stop_zone_1_patt_6[num_img_rows]  = {91, 91, 69, 58, 56, 69, 76, 87};
 constexpr static const int windows_col_stop_zone_2_patt_0[num_img_rows]  = {57, 57, 56, 56, 56, 56, 56, 56};
 constexpr static const int windows_col_stop_zone_2_patt_1[num_img_rows]  = {54, 55, 56, 56, 56, 57, 56, 57};
 constexpr static const int windows_col_stop_zone_2_patt_2[num_img_rows]  = {60, 60, 57, 56, 55, 56, 56, 56};
@@ -56,7 +74,7 @@ constexpr static const int windows_col_stop_zone_2_patt_5[num_img_rows]  = {53, 
 constexpr static const int windows_col_stop_zone_2_patt_6[num_img_rows]  = {67, 65, 58, 56, 64, 70, 73, 79};
 
 constexpr static const int paddings_zone_0[num_img_rows] = {34, 32, 26,  3,  1,  7,  8, 10};
-constexpr static const int paddings_zone_1[num_img_rows] = {37, 37, 14,  3,  1, 14, 21, 32};
+constexpr static const int paddings_zone_1[num_img_rows] = {36, 36, 14,  3,  1, 14, 21, 32};
 constexpr static const int paddings_zone_2[num_img_rows] = {12, 10,  3,  1,  9, 15, 18, 24};
 
 constexpr static const int activations_zone_0[1u << num_img_rows] = {
@@ -142,119 +160,56 @@ struct pooling_select_patch_type {
 };
 
 template <int ZONE>
-struct pooling_get_col_start_op {};
-
-template <> struct pooling_get_col_start_op<0> {  // zone 0
-  inline int operator ()(int i, int j) const {    // patt i row j
-    const int ref = detail::windows_col_reference;
-    const int pad = detail::paddings_zone_0[j];
-    switch (i) {
-      case 0  : return (detail::windows_col_start_zone_0_patt_0[j] - ref + pad);
-      case 1  : return (detail::windows_col_start_zone_0_patt_1[j] - ref + pad);
-      case 2  : return (detail::windows_col_start_zone_0_patt_2[j] - ref + pad);
-      case 3  : return (detail::windows_col_start_zone_0_patt_3[j] - ref + pad);
-      case 4  : return (detail::windows_col_start_zone_0_patt_4[j] - ref + pad);
-      case 5  : return (detail::windows_col_start_zone_0_patt_5[j] - ref + pad);
-      case 6  : return (detail::windows_col_start_zone_0_patt_6[j] - ref + pad);
-      default : return 0;
-    }
-  }
-};
-
-template <> struct pooling_get_col_start_op<1> {  // zone 1
-  inline int operator ()(int i, int j) const {    // patt i row j
-    const int ref = detail::windows_col_reference;
-    const int pad = detail::paddings_zone_1[j];
-    switch (i) {
-      case 0  : return (detail::windows_col_start_zone_1_patt_0[j] - ref + pad);
-      case 1  : return (detail::windows_col_start_zone_1_patt_1[j] - ref + pad);
-      case 2  : return (detail::windows_col_start_zone_1_patt_2[j] - ref + pad);
-      case 3  : return (detail::windows_col_start_zone_1_patt_3[j] - ref + pad);
-      case 4  : return (detail::windows_col_start_zone_1_patt_4[j] - ref + pad);
-      case 5  : return (detail::windows_col_start_zone_1_patt_5[j] - ref + pad);
-      case 6  : return (detail::windows_col_start_zone_1_patt_6[j] - ref + pad);
-      default : return 0;
-    }
-  }
-};
-
-template <> struct pooling_get_col_start_op<2> {  // zone 2
-  inline int operator ()(int i, int j) const {    // patt i row j
-    const int ref = detail::windows_col_reference;
-    const int pad = detail::paddings_zone_2[j];
-    switch (i) {
-      case 0  : return (detail::windows_col_start_zone_2_patt_0[j] - ref + pad);
-      case 1  : return (detail::windows_col_start_zone_2_patt_1[j] - ref + pad);
-      case 2  : return (detail::windows_col_start_zone_2_patt_2[j] - ref + pad);
-      case 3  : return (detail::windows_col_start_zone_2_patt_3[j] - ref + pad);
-      case 4  : return (detail::windows_col_start_zone_2_patt_4[j] - ref + pad);
-      case 5  : return (detail::windows_col_start_zone_2_patt_5[j] - ref + pad);
-      case 6  : return (detail::windows_col_start_zone_2_patt_6[j] - ref + pad);
-      default : return 0;
-    }
-  }
-};
-
-template <int ZONE>
-struct pooling_get_col_stop_op {};
-
-template <> struct pooling_get_col_stop_op<0> {  // zone 0
-  inline int operator ()(int i, int j) const {   // patt i row j
-    const int ref = detail::windows_col_reference;
-    const int pad = detail::paddings_zone_0[j];
-    switch (i) {
-      case 0  : return (detail::windows_col_stop_zone_0_patt_0[j] - ref + pad);
-      case 1  : return (detail::windows_col_stop_zone_0_patt_1[j] - ref + pad);
-      case 2  : return (detail::windows_col_stop_zone_0_patt_2[j] - ref + pad);
-      case 3  : return (detail::windows_col_stop_zone_0_patt_3[j] - ref + pad);
-      case 4  : return (detail::windows_col_stop_zone_0_patt_4[j] - ref + pad);
-      case 5  : return (detail::windows_col_stop_zone_0_patt_5[j] - ref + pad);
-      case 6  : return (detail::windows_col_stop_zone_0_patt_6[j] - ref + pad);
-      default : return 0;
-    }
-  }
-};
-
-template <> struct pooling_get_col_stop_op<1> {  // zone 1
-  inline int operator ()(int i, int j) const {   // patt i row j
-    const int ref = detail::windows_col_reference;
-    const int pad = detail::paddings_zone_1[j];
-    switch (i) {
-      case 0  : return (detail::windows_col_stop_zone_1_patt_0[j] - ref + pad);
-      case 1  : return (detail::windows_col_stop_zone_1_patt_1[j] - ref + pad);
-      case 2  : return (detail::windows_col_stop_zone_1_patt_2[j] - ref + pad);
-      case 3  : return (detail::windows_col_stop_zone_1_patt_3[j] - ref + pad);
-      case 4  : return (detail::windows_col_stop_zone_1_patt_4[j] - ref + pad);
-      case 5  : return (detail::windows_col_stop_zone_1_patt_5[j] - ref + pad);
-      case 6  : return (detail::windows_col_stop_zone_1_patt_6[j] - ref + pad);
-      default : return 0;
-    }
-  }
-};
-
-template <> struct pooling_get_col_stop_op<2> {  // zone 2
-  inline int operator ()(int i, int j) const {   // patt i row j
-    const int ref = detail::windows_col_reference;
-    const int pad = detail::paddings_zone_2[j];
-    switch (i) {
-      case 0  : return (detail::windows_col_stop_zone_2_patt_0[j] - ref + pad);
-      case 1  : return (detail::windows_col_stop_zone_2_patt_1[j] - ref + pad);
-      case 2  : return (detail::windows_col_stop_zone_2_patt_2[j] - ref + pad);
-      case 3  : return (detail::windows_col_stop_zone_2_patt_3[j] - ref + pad);
-      case 4  : return (detail::windows_col_stop_zone_2_patt_4[j] - ref + pad);
-      case 5  : return (detail::windows_col_stop_zone_2_patt_5[j] - ref + pad);
-      case 6  : return (detail::windows_col_stop_zone_2_patt_6[j] - ref + pad);
-      default : return 0;
-    }
-  }
-};
-
-template <int ZONE>
 struct pooling_get_activation_op {};
 
 template <> struct pooling_get_activation_op<0> { inline int operator ()(int i) const { return detail::activations_zone_0[i]; } };
 template <> struct pooling_get_activation_op<1> { inline int operator ()(int i) const { return detail::activations_zone_1[i]; } };
 template <> struct pooling_get_activation_op<2> { inline int operator ()(int i) const { return detail::activations_zone_2[i]; } };
+
+template <int ZONE>
+struct pooling_get_col_start_op {};
+
+template <int ZONE>
+struct pooling_get_col_mid_op {};
+
+template <int ZONE>
+struct pooling_get_col_stop_op {};
+
+// Implement the pooling_get_blah_op by using text replacement macros ("token pasting")
+// It defines the following for 'col_start':
+//     template <> struct pooling_get_col_start_op<0> { inline int operator ()(int i, int j) const { ... } };
+//     template <> struct pooling_get_col_start_op<1> { inline int operator ()(int i, int j) const { ... } };
+//     template <> struct pooling_get_col_start_op<2> { inline int operator ()(int i, int j) const { ... } };
+// and similarly for 'col_mid' and 'col_stop'.
+// The operator ()(int i, int j) takes patt 'i' and row 'j'.
+#define DEFINE_NICE_OPS_POOLING(ZONE, NAME) \
+    template <> struct pooling_get_##NAME##_op<ZONE> { \
+      inline int operator ()(int i, int j) const { \
+        const int ref = detail::windows_col_reference; \
+        const int pad = detail::paddings_zone_##ZONE[j]; \
+        switch (i) { \
+          case 0  : return (detail::windows_##NAME##_zone_##ZONE##_patt_0[j] - ref + pad); \
+          case 1  : return (detail::windows_##NAME##_zone_##ZONE##_patt_1[j] - ref + pad); \
+          case 2  : return (detail::windows_##NAME##_zone_##ZONE##_patt_2[j] - ref + pad); \
+          case 3  : return (detail::windows_##NAME##_zone_##ZONE##_patt_3[j] - ref + pad); \
+          case 4  : return (detail::windows_##NAME##_zone_##ZONE##_patt_4[j] - ref + pad); \
+          case 5  : return (detail::windows_##NAME##_zone_##ZONE##_patt_5[j] - ref + pad); \
+          case 6  : return (detail::windows_##NAME##_zone_##ZONE##_patt_6[j] - ref + pad); \
+          default : return 0; \
+        } \
+      } \
+    };
+
+DEFINE_NICE_OPS_POOLING(0, col_start)
+DEFINE_NICE_OPS_POOLING(1, col_start)
+DEFINE_NICE_OPS_POOLING(2, col_start)
+DEFINE_NICE_OPS_POOLING(0, col_mid)
+DEFINE_NICE_OPS_POOLING(1, col_mid)
+DEFINE_NICE_OPS_POOLING(2, col_mid)
+DEFINE_NICE_OPS_POOLING(0, col_stop)
+DEFINE_NICE_OPS_POOLING(1, col_stop)
+DEFINE_NICE_OPS_POOLING(2, col_stop)
+#undef DEFINE_NICE_OPS_POOLING
 
 // Function to init table
 template <typename T, int N, class U>
@@ -283,7 +238,7 @@ void pooling_set_preactivation(
     const T4& in4, const T5& in5, const T6& in6, const T7& in7,
     T_OUT& out
 ) {
-  static_assert(is_same<T_OUT, pooling_preactivation_t>::value, "T_OUT type check failed");
+  static_assert(T_OUT::width == 8, "T_OUT type check failed");
 
   out[0] = (bool) in0;
   out[1] = (bool) in1;
