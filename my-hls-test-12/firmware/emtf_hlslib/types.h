@@ -220,17 +220,22 @@ enum layer_length_type {
 };
 
 // Layer typedefs
-typedef ap_uint<11>           zoning_seg_t;             // bw: ceil(log2(num_chambers * 10))
-typedef ap_uint<9>            zoning_col_t;             // bw: ceil(log2(80/coarse_emtf_strip))
-typedef ap_uint<num_img_cols> zoning_out_t;             // bw: num_img_cols
-typedef ap_uint<num_img_rows> pooling_preactivation_t;  // bw: num_img_rows
-typedef ap_uint<6>            pooling_activation_t;     // bw: preactivation bw - 2
-typedef ap_uint<3>            pooling_patt_t;           // bw: ceil(log2(num_patterns))
-typedef ap_uint<9>            pooling_col_t;            // bw: ceil(log2(num_img_cols))
-typedef ap_uint<2>            pooling_zone_t;           // bw: ceil(log2(num_zones))
-typedef ap_uint<6+3>          pooling_out_t;            // bw: activation bw + patt bw
-typedef ap_uint<6+3+9>        zonesorting_out_t;        // bw: activation bw + patt bw + col bw
-typedef ap_uint<6+3+9+2>      zonemerging_out_t;        // bw: activation bw + patt bw + col bw + zone bw
+typedef ap_uint<8>            zoning_seg_t;               // bw: ceil(log2(num_chambers * num_segments))
+typedef ap_uint<9>            zoning_col_t;               // bw: ceil(log2(80 / coarse_emtf_strip))
+typedef ap_uint<num_img_cols> zoning_out_t;               // bw: num_img_cols
+typedef ap_uint<num_img_rows> pooling_preactivation_t;    // bw: num_img_rows
+typedef ap_uint<6>            pooling_activation_t;       // bw: preactivation bw - 2
+typedef ap_uint<3>            pooling_patt_t;             // bw: ceil(log2(num_patterns))
+typedef ap_uint<9>            pooling_col_t;              // bw: ceil(log2(num_img_cols))
+typedef ap_uint<2>            pooling_zone_t;             // bw: ceil(log2(num_zones))
+typedef ap_uint<6+3>          pooling_out_t;              // bw: activation bw + patt bw
+typedef ap_uint<6+3+9>        zonesorting_out_t;          // bw: activation bw + patt bw + col bw
+typedef ap_uint<6+3+9+2>      zonemerging_out_t;          // bw: activation bw + patt bw + col bw + zone bw
+typedef ap_uint<8>            trkbuilding_seg_t;          // bw: ceil(log2(num_chambers * num_segments))
+typedef ap_uint<2>            trkbuilding_area_t;         // bw: ceil(log2(num_img_areas))
+typedef ap_uint<10>           trkbuilding_ph_diff_t;      // bw: ceil(log2(10 / emtf_phi_scale))
+typedef ap_uint<5>            trkbuilding_ph_diff_idx_t;  // bw: ceil(log2(24))
+typedef ap_uint<6>            trkbuilding_th_diff_t;      // bw: ceil(log2(14 / emtf_theta_scale))
 // Synonyms
 typedef zoning_out_t          pooling_in_t;
 typedef pooling_out_t         suppression_in_t;

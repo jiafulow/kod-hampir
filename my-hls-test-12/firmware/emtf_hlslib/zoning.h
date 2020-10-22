@@ -16,6 +16,21 @@ constexpr static const int chamber_20deg_ext_nch = 11;
 constexpr static const int chamber_img_bw = 90;          // 24 deg
 constexpr static const int chamber_img_joined_bw = 315;  // 84 deg
 
+// Full endcap region: 12 rows, 101 chambers
+// Note: ME1/3 and RE1/3 are not included as they belong to the overlap region
+constexpr static const int chambers_endcap_row_0[7]    = {  0,   1,   2,   9,  10,  11,  45};  // ME1/1
+constexpr static const int chambers_endcap_row_1[7]    = {  3,   4,   5,  12,  13,  14,  46};  // ME1/2
+constexpr static const int chambers_endcap_row_2[11]   = { 18,  19,  20,  48,  21,  22,  23,  24,  25,  26,  49};  // ME2/1 + ME2/2
+constexpr static const int chambers_endcap_row_3[11]   = { 27,  28,  29,  50,  30,  31,  32,  33,  34,  35,  51};  // ME3/1 + ME3/2
+constexpr static const int chambers_endcap_row_4[11]   = { 36,  37,  38,  52,  39,  40,  41,  42,  43,  44,  53};  // ME4/1 + ME4/2
+constexpr static const int chambers_endcap_row_5[7]    = { 57,  58,  59,  66,  67,  68, 100};  // RE1/2
+constexpr static const int chambers_endcap_row_6[7]    = { 75,  76,  77,  78,  79,  80, 103};  // RE2/2
+constexpr static const int chambers_endcap_row_7[11]   = { 81,  82,  83, 104,  84,  85,  86,  87,  88,  89, 105};  // RE3/1 + RE3/2
+constexpr static const int chambers_endcap_row_8[11]   = { 90,  91,  92, 106,  93,  94,  95,  96,  97,  98, 107};  // RE4/1 + RE4/2
+constexpr static const int chambers_endcap_row_9[7]    = { 54,  55,  56,  63,  64,  65,  99};  // GE1/1
+constexpr static const int chambers_endcap_row_10[4]   = { 72,  73,  74, 102};  // GE2/1
+constexpr static const int chambers_endcap_row_11[7]   = {108, 109, 110, 111, 112, 113, 114};  // ME0
+
 // Zone 0: 9 rows, 45 chambers
 constexpr static const int chambers_zone_0_row_0[7]    = {108, 109, 110, 111, 112, 113, 114};  // ME0
 constexpr static const int chambers_zone_0_row_1[7]    = { 54,  55,  56,  63,  64,  65,  99};  // GE1/1
@@ -61,8 +76,8 @@ constexpr static const int chambers_10deg_ph_cover[7]      = {127, 165, 202, 240
 constexpr static const int chambers_20deg_ph_cover[4]      = {165, 240, 315,  90};
 constexpr static const int chambers_20deg_ext_ph_cover[11] = {165, 240, 315,  90, 127, 165, 202, 240, 277, 315,  90};
 
-constexpr static const int chamber_288unit_ph_init = 27;    // 7.2 deg
-constexpr static const int chamber_288unit_ph_cover = 315;  // 84 deg (difference of 76.8 deg)
+constexpr static const int chamber_288unit_ph_init = chamber_img_joined_bw - 288; // 27; 7.2 deg
+constexpr static const int chamber_288unit_ph_cover = chamber_img_joined_bw;      // 315; 84 deg
 
 }  // namespace detail
 
@@ -413,6 +428,7 @@ void zoning_layer(
   // Check assumptions
   static_assert(N_ZONING_OUT == num_img_rows, "N_ZONING_OUT check failed");
   static_assert(num_img_rows == 8, "num_img_rows must be 8");
+  static_assert(num_img_cols == 288, "num_img_cols must be 288");
   static_assert(zoning_num_rows_traits<0>::value == 9, "num_rows (zone 0) must be 9");
   static_assert(zoning_num_rows_traits<1>::value == 10, "num_rows (zone 1) must be 10");
   static_assert(zoning_num_rows_traits<2>::value == 8, "num_rows (zone 2) must be 8");

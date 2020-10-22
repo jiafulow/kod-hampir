@@ -3,7 +3,7 @@
 
 namespace emtf {
 
-struct zonesorting_stage_traits {
+struct zonesorting_length_traits {
   // Stage 0: perform mux for each pair of 2, and sort each block of 4. N: 288 -> 144
   // Stage 1: merge each pair of blocks, exclude the last 16 cols. N: 144 -> 64
   // Stage 2: merge each pair of blocks. N: 64 -> 32
@@ -307,13 +307,13 @@ void zonesorting_op(
 
 //#pragma HLS DATAFLOW
 
-  constexpr unsigned int n_stage_0 = zonesorting_stage_traits::n_stage_0;
-  constexpr unsigned int n_stage_1 = zonesorting_stage_traits::n_stage_1;
-  constexpr unsigned int n_stage_2 = zonesorting_stage_traits::n_stage_2;
-  constexpr unsigned int n_stage_3 = zonesorting_stage_traits::n_stage_3;
-  constexpr unsigned int n_stage_4 = zonesorting_stage_traits::n_stage_4;
-  constexpr unsigned int n_stage_5 = zonesorting_stage_traits::n_stage_5;
-  constexpr unsigned int n_stage_6 = zonesorting_stage_traits::n_stage_6;
+  const unsigned int n_stage_0 = zonesorting_length_traits::n_stage_0;
+  const unsigned int n_stage_1 = zonesorting_length_traits::n_stage_1;
+  const unsigned int n_stage_2 = zonesorting_length_traits::n_stage_2;
+  const unsigned int n_stage_3 = zonesorting_length_traits::n_stage_3;
+  const unsigned int n_stage_4 = zonesorting_length_traits::n_stage_4;
+  const unsigned int n_stage_5 = zonesorting_length_traits::n_stage_5;
+  const unsigned int n_stage_6 = zonesorting_length_traits::n_stage_6;
 
   zonesorting_out_t stage_0_out[n_stage_0];
   zonesorting_out_t stage_1_out[n_stage_1];
@@ -369,13 +369,13 @@ void zonesorting_layer(
   // Check assumptions
   static_assert(N_ZONESORTING_IN == num_img_cols, "N_ZONESORTING_IN check failed");
   static_assert(N_ZONESORTING_OUT == num_tracks, "N_ZONESORTING_OUT check failed");
-  static_assert((zonesorting_stage_traits::n_stage_0 % 8) == 0, "n_stage_0 must be divisible by 8");
-  static_assert((zonesorting_stage_traits::n_stage_1 % 8) == 0, "n_stage_1 must be divisible by 8");
-  static_assert((zonesorting_stage_traits::n_stage_2 % 8) == 0, "n_stage_2 must be divisible by 8");
-  static_assert((zonesorting_stage_traits::n_stage_3 % 8) == 0, "n_stage_3 must be divisible by 8");
-  static_assert((zonesorting_stage_traits::n_stage_4 % 8) == 0, "n_stage_4 must be divisible by 8");
-  static_assert((zonesorting_stage_traits::n_stage_5 % 8) == 0, "n_stage_5 must be divisible by 8");
-  static_assert(zonesorting_stage_traits::n_stage_6 == num_tracks, "n_stage_6 must be equal to num_tracks");
+  static_assert((zonesorting_length_traits::n_stage_0 % 8) == 0, "n_stage_0 must be divisible by 8");
+  static_assert((zonesorting_length_traits::n_stage_1 % 8) == 0, "n_stage_1 must be divisible by 8");
+  static_assert((zonesorting_length_traits::n_stage_2 % 8) == 0, "n_stage_2 must be divisible by 8");
+  static_assert((zonesorting_length_traits::n_stage_3 % 8) == 0, "n_stage_3 must be divisible by 8");
+  static_assert((zonesorting_length_traits::n_stage_4 % 8) == 0, "n_stage_4 must be divisible by 8");
+  static_assert((zonesorting_length_traits::n_stage_5 % 8) == 0, "n_stage_5 must be divisible by 8");
+  static_assert(zonesorting_length_traits::n_stage_6 == num_tracks, "n_stage_6 must be equal to num_tracks");
 
   zonesorting_op<ZONE>(zonesorting_in, zonesorting_out);
 }
