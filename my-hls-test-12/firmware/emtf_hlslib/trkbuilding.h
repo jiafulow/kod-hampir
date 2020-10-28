@@ -5,8 +5,11 @@ namespace emtf {
 
 namespace detail {
 
-constexpr static const int ph_invalid = (1 << trkbuilding_ph_diff_t::width) - 1;
-constexpr static const int th_invalid = (1 << trkbuilding_th_diff_t::width) - 1;
+constexpr static const int th_invalid = 0;
+
+constexpr static const int ph_diff_invalid = (1 << trkbuilding_ph_diff_t::width) - 1;
+//constexpr static const int th_diff_invalid = (1 << trkbuilding_th_diff_t::width) - 1;
+constexpr static const int th_diff_invalid = 8;
 
 constexpr static const int groups_zone_0_rows[num_feature_groups] = { 2, 2, 4, 5, 7, 2, 4, 6, 7, 1, 3, 0};
 constexpr static const int groups_zone_1_rows[num_feature_groups] = { 1, 2, 4, 5, 7, 2, 4, 6, 7, 0, 3, 0};
@@ -368,6 +371,153 @@ void trkbuilding_reduce_min_ph_diff(const trkbuilding_ph_diff_t in0[N/2], trkbui
   out = tmp_4_0.range(index_bits_hi, index_bits_lo);
 }
 
+template <typename T_IN, typename T_OUT>
+void trkbuilding_sort_three(const T_IN in0[3], T_OUT& out0, T_OUT& out1, T_OUT& out2) {
+  static_assert(is_same<T_IN, T_OUT>::value, "T_OUT type check failed");
+
+  // The following implements the bubble sorting network, which is a stable sort algo.
+  // There are 3 wires (0,1,2 from top to bottom), and there are 3 stages.
+  // In each stage, compare a pair of wires (connected by a vertical line in the diagram).
+  // If the value of the top wire is less than that of the bottom wire, swap the wires.
+  // Thus, the smallest value moves to the bottom. At the end, all the values are sorted
+  // (descending from top to bottom).
+  //
+  // 0   1   2   3
+  // ----o-------o----
+  //     |       |
+  // ----o---o---o----
+  //         |
+  // --------o--------
+
+  // Stage 0
+  typedef T_OUT T;
+  const T invalid = detail::th_invalid;
+
+  const T tmp_0_0 = (in0[0] != invalid) ? in0[0] : ((in0[1] != invalid) ? in0[1] : in0[2]);
+  const T tmp_0_1 = (in0[1] != invalid) ? in0[1] : ((in0[2] != invalid) ? in0[2] : in0[0]);
+  const T tmp_0_2 = (in0[2] != invalid) ? in0[2] : ((in0[0] != invalid) ? in0[0] : in0[1]);
+
+  // Stage 1: compare-swap if (wire[i] < wire[j]) swap(wire[j], wire[i])
+  const T tmp_1_0 = (tmp_0_0 < tmp_0_1) ? tmp_0_1 : tmp_0_0;
+  const T tmp_1_1 = (tmp_0_0 < tmp_0_1) ? tmp_0_0 : tmp_0_1;
+
+  // Stage 2
+  const T tmp_2_1 = (tmp_1_1 < tmp_0_2) ? tmp_0_2 : tmp_1_1;
+  const T tmp_2_2 = (tmp_1_1 < tmp_0_2) ? tmp_1_1 : tmp_0_2;
+
+  // Stage 3
+  const T tmp_3_0 = (tmp_1_0 < tmp_2_1) ? tmp_2_1 : tmp_1_0;
+  const T tmp_3_1 = (tmp_1_0 < tmp_2_1) ? tmp_1_0 : tmp_2_1;
+
+  // Output
+  out0 = tmp_3_0;
+  out1 = tmp_3_1;
+  out2 = tmp_2_2;
+}
+
+template <typename T_IN, typename T_OUT>
+void trkbuilding_reduce_median_theta(const T_IN in0[9], T_OUT& out) {
+  static_assert(is_same<T_IN, T_OUT>::value, "T_OUT type check failed");
+
+#pragma HLS PIPELINE II=1
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE region
+
+  // See https://stackoverflow.com/a/46801450
+
+  typedef T_OUT T;
+
+  T tmp_0[9];
+  T tmp_1[9];
+  T tmp_2[3];
+
+#pragma HLS ARRAY_PARTITION variable=tmp_0 complete dim=0
+#pragma HLS ARRAY_PARTITION variable=tmp_1 complete dim=0
+#pragma HLS ARRAY_PARTITION variable=tmp_2 complete dim=0
+
+  // Stage 0
+  trkbuilding_sort_three(in0 + 0, tmp_0[0], tmp_0[3], tmp_0[6]);
+  trkbuilding_sort_three(in0 + 3, tmp_0[1], tmp_0[4], tmp_0[7]);
+  trkbuilding_sort_three(in0 + 6, tmp_0[2], tmp_0[5], tmp_0[8]);
+
+  // Stage 1
+  trkbuilding_sort_three(tmp_0 + 0, tmp_1[5], tmp_1[8], tmp_1[2]);
+  trkbuilding_sort_three(tmp_0 + 3, tmp_1[7], tmp_1[1], tmp_1[4]);
+  trkbuilding_sort_three(tmp_0 + 6, tmp_1[0], tmp_1[3], tmp_1[6]);
+
+  // Stage 2
+  trkbuilding_sort_three(tmp_1 + 0, tmp_2[0], tmp_2[1], tmp_2[2]);
+
+  // Output
+  out = tmp_2[1];
+}
+
+template <typename T_IN, typename T_OUT>
+void trkbuilding_reduce_median_theta_s1(const T_IN in0[3], T_OUT& out) {
+  static_assert(is_same<T_IN, T_OUT>::value, "T_OUT type check failed");
+
+#pragma HLS PIPELINE II=1
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE region
+
+  // See https://stackoverflow.com/a/46801450
+
+  typedef T_OUT T;
+
+  T tmp_0[3];
+
+#pragma HLS ARRAY_PARTITION variable=tmp_0 complete dim=0
+
+  // Stage 0
+  trkbuilding_sort_three(in0 + 0, tmp_0[0], tmp_0[1], tmp_0[2]);
+
+  // Output
+  out = tmp_0[1];
+}
+
+template <typename T_IN, typename T_OUT>
+void trkbuilding_select_best_theta(const T_IN in0, const T_IN in1, const T_IN theta_median, T_OUT& out, bool& valid) {
+  static_assert(is_same<T_IN, T_OUT>::value, "T_OUT type check failed");
+
+  const T_IN invalid = (T_IN) detail::th_diff_invalid;
+  const T_IN th_diff_tmp_0_0 = (in0 >= theta_median) ? (in0 - theta_median) : (theta_median - in0);
+  const T_IN th_diff_tmp_0_1 = (in1 >= theta_median) ? (in1 - theta_median) : (theta_median - in1);
+  const T_IN th_diff_tmp_1_0 = (th_diff_tmp_0_0 < invalid) ? th_diff_tmp_0_0 : invalid;
+  const T_IN th_diff_tmp_1_1 = (th_diff_tmp_0_1 < invalid) ? th_diff_tmp_0_1 : invalid;
+  const T_IN th_diff_tmp_2_0 = (th_diff_tmp_1_0 < th_diff_tmp_1_1) ? th_diff_tmp_1_0 : th_diff_tmp_1_1;
+
+  out = (T_OUT) th_diff_tmp_2_0;
+  valid = (th_diff_tmp_2_0 != invalid);
+}
+
+template <typename T_IN, typename T_OUT>
+void trkbuilding_select_best_theta(const T_IN in0, const T_IN theta_median, T_OUT& out, bool& valid) {
+  static_assert(is_same<T_IN, T_OUT>::value, "T_OUT type check failed");
+
+  const T_IN invalid = (T_IN) detail::th_diff_invalid;
+  const T_IN th_diff_tmp_0_0 = (in0 >= theta_median) ? (in0 - theta_median) : (theta_median - in0);
+  const T_IN th_diff_tmp_1_0 = (th_diff_tmp_0_0 < invalid) ? th_diff_tmp_0_0 : invalid;
+
+  out = (T_OUT) th_diff_tmp_1_0;
+  valid = (th_diff_tmp_1_0 != invalid);
+}
+
+template <typename T_IN, typename T_OUT>
+void trkbuilding_set_idx_vld(const T_IN in0[num_feature_groups], T_OUT& out) {
+  static_assert(is_same<T_IN, bool>::value, "T_IN type check failed");
+
+  for (int i = 0; i < num_feature_groups; i++) {
+
+#pragma HLS UNROLL
+
+    out[i] = in0[i];
+  }
+}
+
 
 // _____________________________________________________________________________
 // Perform loop over chambers and all the segments in the chambers
@@ -381,7 +531,7 @@ void trkbuilding_row_op(
     const track_patt_t track_patt_trk_i,
     const track_col_t track_col_trk_i,
     const track_zone_t track_zone_trk_i,
-    trkbuilding_seg_t& trkbuilding_idx_out_row_k
+    trkbuilding_idx_t& trkbuilding_idx_out_row_k
 ) {
 
 #pragma HLS PIPELINE II=1
@@ -442,7 +592,7 @@ void trkbuilding_row_op(
       } else if (vld_zone_2) {
         trkbuilding_ph_diff[idiff] = trkbuilding_ph_diff_zone_2[idiff];
       } else {
-        trkbuilding_ph_diff[idiff] = detail::ph_invalid;
+        trkbuilding_ph_diff[idiff] = detail::ph_diff_invalid;
       }
 
       idiff++;
@@ -454,7 +604,7 @@ void trkbuilding_row_op(
 
 #pragma HLS UNROLL
 
-    trkbuilding_ph_diff[idiff] = detail::ph_invalid;
+    trkbuilding_ph_diff[idiff] = detail::ph_diff_invalid;
   }
 
   trkbuilding_reorder_ph_diff_array<CHTYPE, n_ph_diff>(trkbuilding_ph_diff, trkbuilding_ph_diff_reordered);
@@ -513,7 +663,7 @@ void trkbuilding_op(
 
 #pragma HLS INLINE region
 
-  trkbuilding_seg_t trkbuilding_idx_out[num_feature_groups];
+  trkbuilding_idx_t trkbuilding_idx_out[num_feature_groups];
 
 #pragma HLS ARRAY_PARTITION variable=trkbuilding_idx_out complete dim=0
 
@@ -536,8 +686,80 @@ void trkbuilding_op(
     trkbuilding_row_op<ZONE, 10>(emtf_phi, flags_zone, valid, track_qual[i], track_patt[i], track_col[i], track_zone[i], trkbuilding_idx_out[10]);
     trkbuilding_row_op<ZONE, 11>(emtf_phi, flags_zone, valid, track_qual[i], track_patt[i], track_col[i], track_zone[i], trkbuilding_idx_out[11]);
 
-    trkbuilding_out[i] = track_qual[i];
+    trkbuilding_out[i] = track_qual[i];  //FIXME - remove this
   }
+
+  // Find theta_median
+  emtf_theta1_t theta_values[9];
+  emtf_theta1_t theta_values_s1[3];  // special case for ME0/ME1-only tracks
+
+#pragma HLS ARRAY_PARTITION variable=theta_values complete dim=0
+#pragma HLS ARRAY_PARTITION variable=theta_values_s1 complete dim=0
+
+  emtf_theta1_t theta_value_0_0 = emtf_theta1[trkbuilding_idx_out[0]];
+  emtf_theta1_t theta_value_0_1 = emtf_theta2[trkbuilding_idx_out[0]];
+  emtf_theta1_t theta_value_1_0 = emtf_theta1[trkbuilding_idx_out[1]];
+  emtf_theta1_t theta_value_1_1 = emtf_theta2[trkbuilding_idx_out[1]];
+  emtf_theta1_t theta_value_2_0 = emtf_theta1[trkbuilding_idx_out[2]];
+  emtf_theta1_t theta_value_2_1 = emtf_theta2[trkbuilding_idx_out[2]];
+  emtf_theta1_t theta_value_3_0 = emtf_theta1[trkbuilding_idx_out[3]];
+  emtf_theta1_t theta_value_3_1 = emtf_theta2[trkbuilding_idx_out[3]];
+  emtf_theta1_t theta_value_4_0 = emtf_theta1[trkbuilding_idx_out[4]];
+  emtf_theta1_t theta_value_4_1 = emtf_theta2[trkbuilding_idx_out[4]];
+  emtf_theta1_t theta_value_5_0 = emtf_theta1[trkbuilding_idx_out[5]];
+  emtf_theta1_t theta_value_6_0 = emtf_theta1[trkbuilding_idx_out[6]];
+  emtf_theta1_t theta_value_7_0 = emtf_theta1[trkbuilding_idx_out[7]];
+  emtf_theta1_t theta_value_8_0 = emtf_theta1[trkbuilding_idx_out[8]];
+  emtf_theta1_t theta_value_9_0 = emtf_theta1[trkbuilding_idx_out[9]];
+  emtf_theta1_t theta_value_10_0 = emtf_theta1[trkbuilding_idx_out[10]];
+  emtf_theta1_t theta_value_11_0 = emtf_theta1[trkbuilding_idx_out[11]];
+
+  theta_values[0] = theta_value_2_0;  // ME2 theta 1
+  theta_values[1] = theta_value_3_0;  // ME3 theta 1
+  theta_values[2] = theta_value_4_0;  // ME4 theta 1
+  theta_values[3] = theta_value_2_1;  // ME2 theta 2
+  theta_values[4] = theta_value_3_1;  // ME3 theta 2
+  theta_values[5] = theta_value_4_1;  // ME4 theta 2
+  theta_values[6] = (theta_value_6_0 != detail::th_invalid) ? theta_value_6_0 : theta_value_10_0;  // RE2 or GE2/1 theta
+  theta_values[7] = theta_value_7_0;  // RE3 theta
+  theta_values[8] = theta_value_8_0;  // RE4 theta
+
+  theta_values_s1[0] = (theta_value_0_0 != detail::th_invalid) ? theta_value_0_0 : theta_value_1_0;  // ME1/1 or ME1/2 theta 1
+  theta_values_s1[1] = (theta_value_0_1 != detail::th_invalid) ? theta_value_0_1 : theta_value_1_1;  // ME1/1 or ME1/2 theta 2
+  theta_values_s1[2] = (theta_value_11_0 != detail::th_invalid) ? theta_value_11_0 : theta_value_9_0;  // ME0 or GE1/1 theta
+
+  emtf_theta1_t theta_median;
+  emtf_theta1_t theta_median_s1;
+
+  trkbuilding_reduce_median_theta(theta_values, theta_median);
+  trkbuilding_reduce_median_theta_s1(theta_values_s1, theta_median_s1);
+
+  theta_median = (theta_median != detail::th_invalid) ? theta_median : theta_median_s1;
+
+  // Find the most compatible theta values
+  emtf_theta1_t emtf_theta_best[num_feature_groups];
+  bool emtf_theta_valid[num_feature_groups];
+
+#pragma HLS ARRAY_PARTITION variable=emtf_theta_best complete dim=0
+#pragma HLS ARRAY_PARTITION variable=emtf_theta_valid complete dim=0
+
+  trkbuilding_select_best_theta(theta_value_0_0, theta_value_0_1, theta_median, emtf_theta_best[0], emtf_theta_valid[0]);
+  trkbuilding_select_best_theta(theta_value_1_0, theta_value_1_1, theta_median, emtf_theta_best[1], emtf_theta_valid[1]);
+  trkbuilding_select_best_theta(theta_value_2_0, theta_value_2_1, theta_median, emtf_theta_best[2], emtf_theta_valid[2]);
+  trkbuilding_select_best_theta(theta_value_3_0, theta_value_3_1, theta_median, emtf_theta_best[3], emtf_theta_valid[3]);
+  trkbuilding_select_best_theta(theta_value_4_0, theta_value_4_1, theta_median, emtf_theta_best[4], emtf_theta_valid[4]);
+  trkbuilding_select_best_theta(theta_value_5_0, theta_median, emtf_theta_best[5], emtf_theta_valid[5]);
+  trkbuilding_select_best_theta(theta_value_6_0, theta_median, emtf_theta_best[6], emtf_theta_valid[6]);
+  trkbuilding_select_best_theta(theta_value_7_0, theta_median, emtf_theta_best[7], emtf_theta_valid[7]);
+  trkbuilding_select_best_theta(theta_value_8_0, theta_median, emtf_theta_best[8], emtf_theta_valid[8]);
+  trkbuilding_select_best_theta(theta_value_9_0, theta_median, emtf_theta_best[9], emtf_theta_valid[9]);
+  trkbuilding_select_best_theta(theta_value_10_0, theta_median, emtf_theta_best[10], emtf_theta_valid[10]);
+  trkbuilding_select_best_theta(theta_value_11_0, theta_median, emtf_theta_best[11], emtf_theta_valid[11]);
+
+  trkbuilding_idx_vld_t trkbuilding_idx_vld_out;
+
+  trkbuilding_set_idx_vld(emtf_theta_valid, trkbuilding_idx_vld_out);
+
 }
 
 

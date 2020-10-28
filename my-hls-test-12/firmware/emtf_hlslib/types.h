@@ -236,6 +236,8 @@ typedef ap_uint<2>            trkbuilding_area_t;         // bw: ceil(log2(num_i
 typedef ap_uint<10>           trkbuilding_ph_diff_t;      // bw: ceil(log2(10 / emtf_phi_scale))
 typedef ap_uint<5>            trkbuilding_ph_diff_idx_t;  // bw: ceil(log2(24))
 typedef ap_uint<6>            trkbuilding_th_diff_t;      // bw: ceil(log2(14 / emtf_theta_scale))
+typedef ap_uint<8>            trkbuilding_idx_t;          // bw: seg bw
+typedef ap_uint<12>           trkbuilding_idx_vld_t;      // bw: num_feature_groups
 // Synonyms
 typedef zoning_out_t          pooling_in_t;
 typedef pooling_out_t         suppression_in_t;
