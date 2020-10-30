@@ -18,10 +18,10 @@ namespace {
 // 'Hits' contains 12 integer values.
 // [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 struct HitsType {
-  typedef int T;
+  typedef int type;
   static const unsigned int N = 12;
 };
-typedef std::array<HitsType::T, HitsType::N> Hits;
+typedef std::array<HitsType::type, HitsType::N> Hits;
 
 // 'Event' contains a list of Hits objects.
 // [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -29,18 +29,18 @@ typedef std::array<HitsType::T, HitsType::N> Hits;
 //  ...
 //  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 struct EventType {
-  typedef Hits T;
+  typedef Hits type;
 };
-typedef std::vector<EventType::T> Event;
+typedef std::vector<EventType::type> Event;
 
 // 'Tracks' contains 36 integer values.
 // [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 //  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 struct TracksType {
-  typedef int T;
+  typedef int type;
   static const unsigned int N = 36;
 };
-typedef std::array<TracksType::T, TracksType::N> Tracks;
+typedef std::array<TracksType::type, TracksType::N> Tracks;
 
 // 'Result' contains a list of Tracks objects.
 // [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -52,10 +52,10 @@ typedef std::array<TracksType::T, TracksType::N> Tracks;
 //  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 //   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 struct ResultType {
-  typedef Tracks T;
+  typedef Tracks type;
   static const unsigned int N = 4;
 };
-typedef std::vector<ResultType::T> Result;
+typedef std::vector<ResultType::type> Result;
 
 // 'FPGAEvent' contains the full list of chambers.
 // Currently, it assumes 115 chambers, max 8 segments per chamber,
@@ -188,9 +188,9 @@ FPGAResult::FPGAResult(const Result& res) {
 
   assert(res.size() == TRACKS);
   for (unsigned itrk = 0; itrk < TRACKS; itrk++) {
-    for (unsigned ifea = 0; ifea < FEATURES; ifea++) {
-      const unsigned i = index_fn(itrk, ifea);
-      data[i] = res[itrk][ifea];
+    for (unsigned ifeat = 0; ifeat < FEATURES; ifeat++) {
+      const unsigned i = index_fn(itrk, ifeat);
+      data[i] = res[itrk][ifeat];
     }
   }
 }
@@ -199,9 +199,9 @@ FPGAResult::FPGAResult(const Result& res) {
 // _____________________________________________________________________________
 // Read testbench text file
 // Make sure there is no unnecessary line break
-template <class T1, class T2>
-int read_tb_data(const std::string filename, T1& evt) {
-  typename T2::T line_buf;
+template <class T0, class T1>
+int read_tb_data(const std::string filename, T0& evt) {
+  typename T1::type line_buf;
 
   std::string line;  // line in file
   char c;  // delimiter in line

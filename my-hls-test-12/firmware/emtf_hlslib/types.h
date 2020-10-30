@@ -33,7 +33,11 @@ enum track_variable_type {
   VI_TRACK_QUAL   = 0,
   VI_TRACK_PATT   = 1,
   VI_TRACK_COL    = 2,
-  VI_TRACK_ZONE   = 3
+  VI_TRACK_ZONE   = 3,
+  VI_TRACK_SEG    = 4,
+  VI_TRACK_SEG_V  = 5,
+  VI_TRACK_FEAT   = 6,
+  VI_TRACK_VALID  = 7
 };
 
 // Bit width
@@ -50,10 +54,14 @@ template <> struct variable_bw_traits<VI_BX>          { static const int value =
 template <> struct variable_bw_traits<VI_VALID>       { static const int value = 1; };
 
 template <int T> struct track_variable_bw_traits {};
-template <> struct track_variable_bw_traits<VI_TRACK_QUAL> { static const int value = 6; };
-template <> struct track_variable_bw_traits<VI_TRACK_PATT> { static const int value = 3; };
-template <> struct track_variable_bw_traits<VI_TRACK_COL>  { static const int value = 9; };
-template <> struct track_variable_bw_traits<VI_TRACK_ZONE> { static const int value = 2; };
+template <> struct track_variable_bw_traits<VI_TRACK_QUAL>  { static const int value = 6; };
+template <> struct track_variable_bw_traits<VI_TRACK_PATT>  { static const int value = 3; };
+template <> struct track_variable_bw_traits<VI_TRACK_COL>   { static const int value = 9; };
+template <> struct track_variable_bw_traits<VI_TRACK_ZONE>  { static const int value = 2; };
+template <> struct track_variable_bw_traits<VI_TRACK_SEG>   { static const int value = 8; };
+template <> struct track_variable_bw_traits<VI_TRACK_SEG_V> { static const int value = 12; };
+template <> struct track_variable_bw_traits<VI_TRACK_FEAT>  { static const int value = 13; };
+template <> struct track_variable_bw_traits<VI_TRACK_VALID> { static const int value = 1; };
 
 // Is signed
 template <int T> struct variable_sign_traits {};
@@ -69,10 +77,14 @@ template <> struct variable_sign_traits<VI_BX>          { static const bool valu
 template <> struct variable_sign_traits<VI_VALID>       { static const bool value = 0; };
 
 template <int T> struct track_variable_sign_traits {};
-template <> struct track_variable_sign_traits<VI_TRACK_QUAL> { static const bool value = 0; };
-template <> struct track_variable_sign_traits<VI_TRACK_PATT> { static const bool value = 0; };
-template <> struct track_variable_sign_traits<VI_TRACK_COL>  { static const bool value = 0; };
-template <> struct track_variable_sign_traits<VI_TRACK_ZONE> { static const bool value = 0; };
+template <> struct track_variable_sign_traits<VI_TRACK_QUAL>  { static const bool value = 0; };
+template <> struct track_variable_sign_traits<VI_TRACK_PATT>  { static const bool value = 0; };
+template <> struct track_variable_sign_traits<VI_TRACK_COL>   { static const bool value = 0; };
+template <> struct track_variable_sign_traits<VI_TRACK_ZONE>  { static const bool value = 0; };
+template <> struct track_variable_sign_traits<VI_TRACK_SEG>   { static const bool value = 0; };
+template <> struct track_variable_sign_traits<VI_TRACK_SEG_V> { static const bool value = 0; };
+template <> struct track_variable_sign_traits<VI_TRACK_FEAT>  { static const bool value = 0; };
+template <> struct track_variable_sign_traits<VI_TRACK_VALID> { static const bool value = 0; };
 
 
 // _____________________________________________________________________________
@@ -99,27 +111,52 @@ struct is_same<T, T> : true_type {};
 template <typename T>
 struct is_ap_int_type : false_type {};
 
-template <int N> struct is_ap_int_type<ap_int<N> > : true_type {};   // toggle to true
-template <int N> struct is_ap_int_type<ap_uint<N> > : true_type {};  // toggle to true
+template <int N> struct is_ap_int_type<ap_int<N> > : true_type {};  // toggle to true
+template <int N> struct is_ap_int_type<ap_uint<N> > : true_type {};
 
-// Select ap datatype - ap_int<N> or ap_uint<N>
+// Make ap datatype - ap_int<N> or ap_uint<N>
 template <int N, bool S>
-struct select_ap_int_type {};
+struct make_ap_int_type { typedef ap_int<N> type; };  // signed
 
-template <int N> struct select_ap_int_type<N, true> { typedef ap_int<N> type; };    // signed
-template <int N> struct select_ap_int_type<N, false> { typedef ap_uint<N> type; };  // unsigned
+template <int N> struct make_ap_int_type<N, false> { typedef ap_uint<N> type; };  // unsigned
+
+// Make signed ap datatype
+template <class T>
+struct make_signed { typedef T type; };
+
+template <int N> struct make_signed<ap_uint<N> > { typedef ap_int<N> type; };
+
+// Make unsigned ap datatype
+template <class T>
+struct make_unsigned { typedef T type; };
+
+template <int N> struct make_unsigned<ap_int<N> > { typedef ap_uint<N> type; };
+
+// Make wider ap datatype
+template <class T>
+struct make_wider { typedef T type; };
+
+template <int N> struct make_wider<ap_int<N> > { typedef ap_int<N+1> type; };
+template <int N> struct make_wider<ap_uint<N> > { typedef ap_uint<N+1> type; };
+
+// Make narrower ap datatype
+template <class T>
+struct make_narrower { typedef T type; };
+
+template <int N> struct make_narrower<ap_int<N> > { typedef ap_int<N-1> type; };
+template <int N> struct make_narrower<ap_uint<N> > { typedef ap_uint<N-1> type; };
 
 
 // _____________________________________________________________________________
 // Get bw and sign, then find the ap datatype
 // For example, enum VI_EMTF_PHI has bw = 13, sign = 0, so the datatype is ap_uint<13>.
 template <int T> struct find_variable_datatype {
-  typedef typename select_ap_int_type<
+  typedef typename make_ap_int_type<
       variable_bw_traits<T>::value, variable_sign_traits<T>::value>::type type;
 };
 
 template <int T> struct find_track_variable_datatype {
-  typedef typename select_ap_int_type<
+  typedef typename make_ap_int_type<
       track_variable_bw_traits<T>::value, track_variable_sign_traits<T>::value>::type type;
 };
 
@@ -177,8 +214,12 @@ DEFINE_NICE_NAMES(VI_VALID, valid)
 
 DEFINE_NICE_NAMES_TRACK(VI_TRACK_QUAL, track_qual)
 DEFINE_NICE_NAMES_TRACK(VI_TRACK_PATT, track_patt)
-DEFINE_NICE_NAMES_TRACK(VI_TRACK_COL,  track_col)
+DEFINE_NICE_NAMES_TRACK(VI_TRACK_COL, track_col)
 DEFINE_NICE_NAMES_TRACK(VI_TRACK_ZONE, track_zone)
+DEFINE_NICE_NAMES_TRACK(VI_TRACK_SEG, track_seg)
+DEFINE_NICE_NAMES_TRACK(VI_TRACK_SEG_V, track_seg_v)
+DEFINE_NICE_NAMES_TRACK(VI_TRACK_FEAT, track_feat)
+DEFINE_NICE_NAMES_TRACK(VI_TRACK_VALID, track_valid)
 #undef DEFINE_NICE_NAMES_TRACK
 
 
@@ -201,7 +242,7 @@ struct model_out_bw_traits {
 
 // Model input and output datatypes
 typedef ap_uint<model_in_bw_traits::value> model_in_t;
-typedef ap_int<model_out_bw_traits::value> model_out_t;
+typedef ap_int<model_out_bw_traits::value> model_out_t;  // output variables are signed
 
 // Layer output lengths
 enum layer_length_type {
@@ -216,7 +257,7 @@ enum layer_length_type {
   N_ZONEMERGING_IN = N_ZONESORTING_OUT,
   N_ZONEMERGING_OUT = N_ZONEMERGING_IN,
   N_TRKBUILDING_IN = N_ZONEMERGING_OUT,
-  N_TRKBUILDING_OUT = N_MODEL_OUT
+  N_TRKBUILDING_OUT = N_TRKBUILDING_IN
 };
 
 // Layer typedefs
@@ -231,13 +272,9 @@ typedef ap_uint<2>            pooling_zone_t;             // bw: ceil(log2(num_z
 typedef ap_uint<6+3>          pooling_out_t;              // bw: activation bw + patt bw
 typedef ap_uint<6+3+9>        zonesorting_out_t;          // bw: activation bw + patt bw + col bw
 typedef ap_uint<6+3+9+2>      zonemerging_out_t;          // bw: activation bw + patt bw + col bw + zone bw
-typedef ap_uint<8>            trkbuilding_seg_t;          // bw: ceil(log2(num_chambers * num_segments))
 typedef ap_uint<2>            trkbuilding_area_t;         // bw: ceil(log2(num_img_areas))
 typedef ap_uint<10>           trkbuilding_ph_diff_t;      // bw: ceil(log2(10 / emtf_phi_scale))
-typedef ap_uint<5>            trkbuilding_ph_diff_idx_t;  // bw: ceil(log2(24))
 typedef ap_uint<6>            trkbuilding_th_diff_t;      // bw: ceil(log2(14 / emtf_theta_scale))
-typedef ap_uint<8>            trkbuilding_idx_t;          // bw: seg bw
-typedef ap_uint<12>           trkbuilding_idx_vld_t;      // bw: num_feature_groups
 // Synonyms
 typedef zoning_out_t          pooling_in_t;
 typedef pooling_out_t         suppression_in_t;
@@ -249,8 +286,11 @@ typedef model_out_t           trkbuilding_out_t;
 
 // _____________________________________________________________________________
 // Misc definitions
-constexpr static const int pooling_reuse_factor = 4;  //FIXME - not yet implemented
-constexpr static const int pooling_fusion_factor = 8; //FIXME - not yet implemented
+constexpr static const int pooling_reuse_factor = 4;      //FIXME - not yet implemented
+constexpr static const int zonesorting_reuse_factor = 4;  //FIXME - not yet implemented
+constexpr static const int trkbuilding_reuse_factor = 4;  //FIXME - not yet implemented
+
+constexpr static const int pooling_fusion_factor = 8;     //FIXME - not yet implemented
 
 }  // namespace emtf
 

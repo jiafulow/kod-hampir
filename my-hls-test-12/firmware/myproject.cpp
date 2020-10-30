@@ -59,7 +59,7 @@ void myproject(
     flags_tzone[iseg] = in0_tmp.range(emtf::flags_tzone_bits_hi, emtf::flags_tzone_bits_lo);
     bx[iseg]          = in0_tmp.range(emtf::bx_bits_hi         , emtf::bx_bits_lo);
     valid[iseg]       = in0_tmp.range(emtf::valid_bits_hi      , emtf::valid_bits_lo);
-  }
+  }  // end top_fn_loop_in0
 
   // This macro is defined in emtf_hlslib/helper.h
   PRINT_TOP_FN_ARRAYS_IN0
@@ -145,16 +145,51 @@ void myproject(
     track_patt[itrk] = in1_tmp.range(emtf::track_patt_bits_hi, emtf::track_patt_bits_lo);
     track_col[itrk]  = in1_tmp.range(emtf::track_col_bits_hi , emtf::track_col_bits_lo);
     track_zone[itrk] = in1_tmp.range(emtf::track_zone_bits_hi, emtf::track_zone_bits_lo);
-  }
+  }  // end top_fn_loop_in1
 
   // This macro is defined in emtf_hlslib/helper.h
   PRINT_TOP_FN_ARRAYS_IN1
 
   // Layer 5 - track building
 
+  // Auxiliary output arrays
+  emtf::track_seg_t   track_seg   [N_TRKBUILDING_OUT * emtf::num_sites];
+  emtf::track_seg_v_t track_seg_v [N_TRKBUILDING_OUT];
+  emtf::track_feat_t  track_feat  [N_TRKBUILDING_OUT * emtf::num_features];
+  emtf::track_valid_t track_valid [N_TRKBUILDING_OUT];
+
+#pragma HLS ARRAY_PARTITION variable=track_seg complete dim=0
+#pragma HLS ARRAY_PARTITION variable=track_seg_v complete dim=0
+#pragma HLS ARRAY_PARTITION variable=track_feat complete dim=0
+#pragma HLS ARRAY_PARTITION variable=track_valid complete dim=0
+
   emtf::trkbuilding_layer<0>(emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual, emtf_time,
                              flags_zone, flags_tzone, bx, valid, track_qual, track_patt,
-                             track_col, track_zone, out);
+                             track_col, track_zone, track_seg, track_seg_v, track_feat, track_valid);
+
+  // Layer 6 - dupremoval
+  //FIXME - not yet implemented
+
+  // Output
+  //FIXME - check all seg, seg_v, out, out_v in testbench
+
+  top_fn_loop_out : for (unsigned itrk = 0; itrk < N_TRKBUILDING_OUT; itrk++) {
+
+#pragma HLS UNROLL
+
+    for (unsigned ifeat = 0; ifeat < emtf::num_features; ifeat++) {
+
+#pragma HLS UNROLL
+
+      const unsigned idx = (itrk * emtf::num_features) + ifeat;
+
+      if (track_valid[itrk]) {
+        out[idx] = track_feat[idx];
+      } else {
+        out[idx] = 0;
+      }
+    }
+  }  // end top_fn_loop_out
 
   // This macro is defined in emtf_hlslib/helper.h
   PRINT_TOP_FN_ARRAYS_OTHER
