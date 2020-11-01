@@ -167,28 +167,25 @@ void myproject(
                              flags_zone, flags_tzone, bx, valid, track_qual, track_patt,
                              track_col, track_zone, track_seg, track_seg_v, track_feat, track_valid);
 
-  // Layer 6 - dupremoval
-  //FIXME - not yet implemented
+  // Layer 6 - duperemoval
+
+  // Auxiliary output arrays
+  emtf::track_feat_t  track_feat_rm  [N_DUPEREMOVAL_OUT * emtf::num_features];
+  emtf::track_valid_t track_valid_rm [N_DUPEREMOVAL_OUT];
+
+#pragma HLS ARRAY_PARTITION variable=track_feat_rm complete dim=0
+#pragma HLS ARRAY_PARTITION variable=track_valid_rm complete dim=0
+
+  emtf::duperemoval_layer<0>(track_seg, track_seg_v, track_feat, track_valid, track_feat_rm, track_valid_rm);
 
   // Output
   //FIXME - check all seg, seg_v, out, out_v in testbench
 
-  top_fn_loop_out : for (unsigned itrk = 0; itrk < N_TRKBUILDING_OUT; itrk++) {
+  top_fn_loop_out : for (int i = 0; i < (N_DUPEREMOVAL_OUT * emtf::num_features); i++) {
 
 #pragma HLS UNROLL
 
-    for (unsigned ifeat = 0; ifeat < emtf::num_features; ifeat++) {
-
-#pragma HLS UNROLL
-
-      const unsigned idx = (itrk * emtf::num_features) + ifeat;
-
-      if (track_valid[itrk]) {
-        out[idx] = track_feat[idx];
-      } else {
-        out[idx] = 0;
-      }
-    }
+    out[i] = track_feat_rm[i];
   }  // end top_fn_loop_out
 
   // This macro is defined in emtf_hlslib/helper.h

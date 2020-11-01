@@ -12,5 +12,6 @@
 #include "zonesorting.h"
 #include "zonemerging.h"
 #include "trkbuilding.h"
+#include "duperemoval.h"
 
 #endif  // __EMTF_HLSLIB_ALL_H__ not defined

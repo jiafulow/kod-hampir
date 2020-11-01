@@ -257,7 +257,9 @@ enum layer_length_type {
   N_ZONEMERGING_IN = N_ZONESORTING_OUT,
   N_ZONEMERGING_OUT = N_ZONEMERGING_IN,
   N_TRKBUILDING_IN = N_ZONEMERGING_OUT,
-  N_TRKBUILDING_OUT = N_TRKBUILDING_IN
+  N_TRKBUILDING_OUT = N_TRKBUILDING_IN,
+  N_DUPEREMOVAL_IN = N_TRKBUILDING_OUT,
+  N_DUPEREMOVAL_OUT = N_DUPEREMOVAL_IN
 };
 
 // Layer typedefs
@@ -275,6 +277,7 @@ typedef ap_uint<6+3+9+2>      zonemerging_out_t;          // bw: activation bw +
 typedef ap_uint<2>            trkbuilding_area_t;         // bw: ceil(log2(num_img_areas))
 typedef ap_uint<10>           trkbuilding_ph_diff_t;      // bw: ceil(log2(10 / emtf_phi_scale))
 typedef ap_uint<6>            trkbuilding_th_diff_t;      // bw: ceil(log2(14 / emtf_theta_scale))
+typedef ap_uint<num_tracks>   duperemoval_survivor_t;     // bw: num_tracks
 // Synonyms
 typedef zoning_out_t          pooling_in_t;
 typedef pooling_out_t         suppression_in_t;
@@ -308,6 +311,8 @@ using emtf::N_ZONEMERGING_IN;
 using emtf::N_ZONEMERGING_OUT;
 using emtf::N_TRKBUILDING_IN;
 using emtf::N_TRKBUILDING_OUT;
+using emtf::N_DUPEREMOVAL_IN;
+using emtf::N_DUPEREMOVAL_OUT;
 
 
 #endif  // __EMTF_HLSLIB_TYPES_H__ not defined
