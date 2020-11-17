@@ -26,14 +26,15 @@ namespace emtf {
   // EMTF
   constexpr int num_sectors = 12;  // 2 endcaps, 6 sectors per endcap
   constexpr int num_zones = 3;     // per sector
-  constexpr int num_patterns = 7;  // per zone
   constexpr int num_timezones = 1; //FIXME - need to include more than one BX
 
   constexpr int num_chambers = 115;
   constexpr int num_segments = 2;  //FIXME - need to accommodate GEM and ME0
   constexpr int num_variables = 10;
-  constexpr int num_tracks = 4;
-  constexpr int num_features = 36;
+
+  constexpr int num_tracks = 4;    // per sector
+  constexpr int num_patterns = 7;  // per zone
+  constexpr int num_features = 36; // per track
   constexpr int num_sites = 12;
   constexpr int num_sites_rm = 5;
 
