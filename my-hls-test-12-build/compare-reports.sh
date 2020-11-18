@@ -1,1 +1,0 @@
-../my-hls-test-12/compare-reports.sh

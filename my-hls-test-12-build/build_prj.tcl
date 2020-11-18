@@ -1,1 +1,0 @@
-../my-hls-test-12/build_prj.tcl
