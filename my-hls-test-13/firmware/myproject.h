@@ -7,12 +7,12 @@
 //#include "hls_stream.h"
 
 // EMTF HLS
-#include "emtf_hlslib/types.h"
+#include "emtf_hlslib.h"
 
 // Top-level function prototype
 void myproject(
-    const emtf::model_in_t in0[N_MODEL_IN],
-    emtf::model_out_t out[N_MODEL_OUT]
+    const emtf::model_in_t in0[emtf::N_MODEL_IN],
+    emtf::model_out_t out[emtf::N_MODEL_OUT]
 );
 
 #endif  // __MYPROJECT_H__ not defined
