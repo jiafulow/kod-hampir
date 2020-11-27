@@ -11,8 +11,8 @@
 
 // Top-level function prototype
 void myproject(
-    const emtf::model_in_t in0[emtf::N_MODEL_IN],
-    emtf::model_out_t out[emtf::N_MODEL_OUT]
+    const emtf::model_in_t in0[emtf::model_config::n_in],
+    emtf::model_out_t out[emtf::model_config::n_out]
 );
 
 #endif  // __MYPROJECT_H__ not defined

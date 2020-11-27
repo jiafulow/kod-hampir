@@ -3,10 +3,10 @@
 
 #include "emtf_hlslib/common.h"
 #include "emtf_hlslib/types.h"
-#include "emtf_hlslib/lengths.h"
+#include "emtf_hlslib/layers.h"
 #include "emtf_hlslib/helper.h"
 
-//#include "emtf_hlslib/zoning.h"
+#include "emtf_hlslib/zoning.h"
 //#include "emtf_hlslib/pooling.h"
 //#include "emtf_hlslib/suppression.h"
 //#include "emtf_hlslib/zonesorting.h"

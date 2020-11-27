@@ -4,11 +4,11 @@ using namespace emtf;
 
 // Top-level function implementation
 void myproject(
-    const emtf::model_in_t in0[emtf::N_MODEL_IN],
-    emtf::model_out_t out[emtf::N_MODEL_OUT]
+    const emtf::model_in_t in0[emtf::model_config::n_in],
+    emtf::model_out_t out[emtf::model_config::n_out]
 ) {
 
-#pragma HLS PIPELINE II=1
+#pragma HLS PIPELINE II=model_config::target_ii
 
 #pragma HLS INTERFACE ap_vld port=in0
 #pragma HLS INTERFACE ap_vld port=out
@@ -18,19 +18,19 @@ void myproject(
 #pragma HLS ARRAY_PARTITION variable=out complete dim=0
 
   // Unpack from in0
-  emtf_phi_t    emtf_phi    [N_MODEL_IN];
-  emtf_bend_t   emtf_bend   [N_MODEL_IN];
-  emtf_theta1_t emtf_theta1 [N_MODEL_IN];
-  emtf_theta2_t emtf_theta2 [N_MODEL_IN];
-  emtf_qual1_t  emtf_qual1  [N_MODEL_IN];
-  emtf_qual2_t  emtf_qual2  [N_MODEL_IN];
-  emtf_time_t   emtf_time   [N_MODEL_IN];
-  seg_zones_t   seg_zones   [N_MODEL_IN];
-  seg_tzones_t  seg_tzones  [N_MODEL_IN];
-  seg_fr_t      seg_fr      [N_MODEL_IN];
-  seg_dl_t      seg_dl      [N_MODEL_IN];
-  seg_bx_t      seg_bx      [N_MODEL_IN];
-  seg_valid_t   seg_valid   [N_MODEL_IN];
+  emtf_phi_t    emtf_phi    [model_config::n_in];
+  emtf_bend_t   emtf_bend   [model_config::n_in];
+  emtf_theta1_t emtf_theta1 [model_config::n_in];
+  emtf_theta2_t emtf_theta2 [model_config::n_in];
+  emtf_qual1_t  emtf_qual1  [model_config::n_in];
+  emtf_qual2_t  emtf_qual2  [model_config::n_in];
+  emtf_time_t   emtf_time   [model_config::n_in];
+  seg_zones_t   seg_zones   [model_config::n_in];
+  seg_tzones_t  seg_tzones  [model_config::n_in];
+  seg_fr_t      seg_fr      [model_config::n_in];
+  seg_dl_t      seg_dl      [model_config::n_in];
+  seg_bx_t      seg_bx      [model_config::n_in];
+  seg_valid_t   seg_valid   [model_config::n_in];
 
 #pragma HLS ARRAY_PARTITION variable=emtf_phi complete dim=0
 #pragma HLS ARRAY_PARTITION variable=emtf_bend complete dim=0
@@ -48,7 +48,7 @@ void myproject(
 
 top_fn_loop_in0:
 
-  for (unsigned iseg = 0; iseg < N_MODEL_IN; iseg++) {
+  for (unsigned iseg = 0; iseg < model_config::n_in; iseg++) {
 
 #pragma HLS UNROLL
 
@@ -71,19 +71,19 @@ top_fn_loop_in0:
   PRINT_TOP_FN_ARRAYS_IN0
 
   // Intermediate arrays (1)
-  zoning_out_t      zoning_0_out      [N_ZONING_OUT];
-  zoning_out_t      zoning_1_out      [N_ZONING_OUT];
-  zoning_out_t      zoning_2_out      [N_ZONING_OUT];
-  pooling_out_t     pooling_0_out     [N_POOLING_OUT];
-  pooling_out_t     pooling_1_out     [N_POOLING_OUT];
-  pooling_out_t     pooling_2_out     [N_POOLING_OUT];
-  suppression_out_t suppression_0_out [N_SUPPRESSION_OUT];
-  suppression_out_t suppression_1_out [N_SUPPRESSION_OUT];
-  suppression_out_t suppression_2_out [N_SUPPRESSION_OUT];
-  zonesorting_out_t zonesorting_0_out [N_ZONESORTING_OUT];
-  zonesorting_out_t zonesorting_1_out [N_ZONESORTING_OUT];
-  zonesorting_out_t zonesorting_2_out [N_ZONESORTING_OUT];
-  zonemerging_out_t zonemerging_0_out [N_ZONEMERGING_OUT];
+  zoning_out_t      zoning_0_out      [zoning_config::n_out];
+  zoning_out_t      zoning_1_out      [zoning_config::n_out];
+  zoning_out_t      zoning_2_out      [zoning_config::n_out];
+  pooling_out_t     pooling_0_out     [pooling_config::n_out];
+  pooling_out_t     pooling_1_out     [pooling_config::n_out];
+  pooling_out_t     pooling_2_out     [pooling_config::n_out];
+  suppression_out_t suppression_0_out [suppression_config::n_out];
+  suppression_out_t suppression_1_out [suppression_config::n_out];
+  suppression_out_t suppression_2_out [suppression_config::n_out];
+  zonesorting_out_t zonesorting_0_out [zonesorting_config::n_out];
+  zonesorting_out_t zonesorting_1_out [zonesorting_config::n_out];
+  zonesorting_out_t zonesorting_2_out [zonesorting_config::n_out];
+  zonemerging_out_t zonemerging_0_out [zonemerging_config::n_out];
 
 #pragma HLS ARRAY_PARTITION variable=zoning_0_out complete dim=0
 #pragma HLS ARRAY_PARTITION variable=zoning_1_out complete dim=0
@@ -99,11 +99,19 @@ top_fn_loop_in0:
 #pragma HLS ARRAY_PARTITION variable=zonesorting_2_out complete dim=0
 #pragma HLS ARRAY_PARTITION variable=zonemerging_0_out complete dim=0
 
+  // Layer 0 - zoning
+
+  zoning_layer<m_zone_0_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_0_out);
+  zoning_layer<m_zone_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_1_out);
+  zoning_layer<m_zone_2_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_2_out);
+
+  // ...
+
   // Unpack from zonemerging_0_out (a.k.a. in1)
-  trk_qual_t  trk_qual [N_ZONEMERGING_OUT];
-  trk_patt_t  trk_patt [N_ZONEMERGING_OUT];
-  trk_col_t   trk_col  [N_ZONEMERGING_OUT];
-  trk_zone_t  trk_zone [N_ZONEMERGING_OUT];
+  trk_qual_t  trk_qual [zonemerging_config::n_out];
+  trk_patt_t  trk_patt [zonemerging_config::n_out];
+  trk_col_t   trk_col  [zonemerging_config::n_out];
+  trk_zone_t  trk_zone [zonemerging_config::n_out];
 
 #pragma HLS ARRAY_PARTITION variable=trk_qual complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_patt complete dim=0
@@ -112,7 +120,7 @@ top_fn_loop_in0:
 
 top_fn_loop_in1:
 
-  for (unsigned itrk = 0; itrk < N_ZONEMERGING_OUT; itrk++) {
+  for (unsigned itrk = 0; itrk < zonemerging_config::n_out; itrk++) {
 
 #pragma HLS UNROLL
 
@@ -123,11 +131,11 @@ top_fn_loop_in1:
   PRINT_TOP_FN_ARRAYS_IN1
 
   // Intermediate arrays (2)
-  trk_seg_t   trk_seg      [N_TRKBUILDING_OUT * num_emtf_sites];
-  trk_feat_t  trk_feat     [N_TRKBUILDING_OUT * num_emtf_features];
-  trk_valid_t trk_valid    [N_TRKBUILDING_OUT];
-  trk_feat_t  trk_feat_rm  [N_DUPEREMOVAL_OUT * num_emtf_features];
-  trk_valid_t trk_valid_rm [N_DUPEREMOVAL_OUT];
+  trk_seg_t   trk_seg      [trkbuilding_config::n_out * num_emtf_sites];
+  trk_feat_t  trk_feat     [trkbuilding_config::n_out * num_emtf_features];
+  trk_valid_t trk_valid    [trkbuilding_config::n_out];
+  trk_feat_t  trk_feat_rm  [duperemoval_config::n_out * num_emtf_features];
+  trk_valid_t trk_valid_rm [duperemoval_config::n_out];
 
 #pragma HLS ARRAY_PARTITION variable=trk_seg complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_feat complete dim=0
@@ -137,7 +145,7 @@ top_fn_loop_in1:
 
 top_fn_loop_out:
 
-  for (unsigned i = 0; i < (N_DUPEREMOVAL_OUT * num_emtf_features); i++) {
+  for (unsigned i = 0; i < (duperemoval_config::n_out * num_emtf_features); i++) {
 
 #pragma HLS UNROLL
 

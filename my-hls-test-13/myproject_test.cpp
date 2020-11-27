@@ -9,10 +9,8 @@ using namespace testbench;
 void sanity_check() {
   static_assert(HitsType::len == emtf::num_emtf_variables + 2, "Inconsistent HitsType::len");
   static_assert(TracksType::len == emtf::num_emtf_features, "Inconsistent TracksType::len");
-  static_assert(FPGAEvent::len == emtf::N_MODEL_IN, "Inconsistent FPGAEvent::len");
-  static_assert(FPGAResult::len == emtf::N_MODEL_OUT, "Inconsistent FPGAResult::len");
-  static_assert(emtf::N_MODEL_IN < 1024, "Too large N_MODEL_IN");
-  static_assert(emtf::N_MODEL_OUT < 1024, "Too large N_MODEL_OUT");
+  static_assert(FPGAEvent::len == emtf::model_config::n_in, "Inconsistent FPGAEvent::len");
+  static_assert(FPGAResult::len == emtf::model_config::n_out, "Inconsistent FPGAResult::len");
 }
 
 // Main driver
@@ -31,8 +29,8 @@ int main(int argc, char **argv) {
   const FPGAResult fw_res(res);
 
   // Prepare input and output
-  emtf::model_in_t in0[emtf::N_MODEL_IN];
-  emtf::model_out_t out[emtf::N_MODEL_OUT];
+  emtf::model_in_t in0[emtf::model_config::n_in];
+  emtf::model_out_t out[emtf::model_config::n_out];
   copy_array(fw_evt.data, in0);
   init_array_as_zeros(out);
 
