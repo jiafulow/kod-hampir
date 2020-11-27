@@ -4,7 +4,7 @@
 #include "emtf_hlslib/common.h"
 #include "emtf_hlslib/types.h"
 #include "emtf_hlslib/lengths.h"
-//#include "emtf_hlslib/helper.h"
+#include "emtf_hlslib/helper.h"
 
 //#include "emtf_hlslib/zoning.h"
 //#include "emtf_hlslib/pooling.h"

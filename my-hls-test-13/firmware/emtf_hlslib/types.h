@@ -9,6 +9,7 @@
 
 namespace emtf {
 
+// Scoped enums
 enum struct SegmentDataType {
   emtf_phi = 0,
   emtf_bend = 1,
@@ -89,19 +90,19 @@ template <> struct track_data_sign_traits<TrackDataType::trk_feat>  { static con
 template <> struct track_data_sign_traits<TrackDataType::trk_valid> { static const bool value = 0; };
 
 // Use bw and sign traits to select the ap datatype
-template <SegmentDataType T> struct find_segment_datatype {
+template <SegmentDataType T> struct select_segment_datatype {
   typedef typename make_ap_int_type<
       segment_data_bw_traits<T>::value, segment_data_sign_traits<T>::value>::type type;
 };
 
-template <TrackDataType T> struct find_track_datatype {
+template <TrackDataType T> struct select_track_datatype {
   typedef typename make_ap_int_type<
       track_data_bw_traits<T>::value, track_data_sign_traits<T>::value>::type type;
 };
 
 // Text replacement macro ("token pasting") used to define the ap datatype
 #define DEFINE_SEGMENT_DATATYPE(NAME) \
-    typedef find_segment_datatype<SegmentDataType::NAME>::type NAME##_t;
+    typedef select_segment_datatype<SegmentDataType::NAME>::type NAME##_t;
 
 DEFINE_SEGMENT_DATATYPE(emtf_phi)
 DEFINE_SEGMENT_DATATYPE(emtf_bend)
@@ -119,7 +120,7 @@ DEFINE_SEGMENT_DATATYPE(seg_valid)
 #undef DEFINE_SEGMENT_DATATYPE
 
 #define DEFINE_TRACK_DATATYPE(NAME) \
-    typedef find_track_datatype<TrackDataType::NAME>::type NAME##_t;
+    typedef select_track_datatype<TrackDataType::NAME>::type NAME##_t;
 
 DEFINE_TRACK_DATATYPE(trk_qual)
 DEFINE_TRACK_DATATYPE(trk_patt)
@@ -130,6 +131,9 @@ DEFINE_TRACK_DATATYPE(trk_seg)
 DEFINE_TRACK_DATATYPE(trk_feat)
 DEFINE_TRACK_DATATYPE(trk_valid)
 #undef DEFINE_TRACK_DATATYPE
+
+// _____________________________________________________________________________
+// Model typedefs
 
 typedef struct {
   emtf_phi_t emtf_phi;
@@ -148,6 +152,32 @@ typedef struct {
 } model_in_t;
 
 typedef trk_feat_t model_out_t;
+
+// _____________________________________________________________________________
+// Layer typedefs
+
+typedef ap_uint<8>                 zoning_seg_t;            // bw: ceil(log2(num_emtf_chambers * num_emtf_segments))
+typedef ap_uint<9>                 zoning_col_t;            // bw: ceil(log2(80 / coarse_emtf_strip))
+typedef ap_uint<num_emtf_img_cols> zoning_out_t;            // bw: num_emtf_img_cols
+typedef ap_uint<num_emtf_img_rows> pooling_accumulation_t;  // bw: num_emtf_img_rows
+typedef ap_uint<6>                 pooling_activation_t;    // bw: accumulation bw - 2
+typedef ap_uint<3>                 pooling_patt_t;          // bw: ceil(log2(num_emtf_patterns))
+typedef ap_uint<9>                 pooling_col_t;           // bw: ceil(log2(num_emtf_img_cols))
+typedef ap_uint<2>                 pooling_zone_t;          // bw: ceil(log2(num_emtf_zones))
+typedef ap_uint<6+3>               pooling_out_t;           // bw: activation bw + patt bw
+typedef ap_uint<6+3+9>             zonesorting_out_t;       // bw: activation bw + patt bw + col bw
+typedef ap_uint<6+3+9+2>           zonemerging_out_t;       // bw: activation bw + patt bw + col bw + zone bw
+typedef ap_uint<2>                 trkbuilding_area_t;      // bw: ceil(log2(num_emtf_img_areas))
+typedef ap_uint<10>                trkbuilding_ph_diff_t;   // bw: ceil(log2(10 / emtf_phi_scale))
+typedef ap_uint<6>                 trkbuilding_th_diff_t;   // bw: ceil(log2(14 / emtf_theta_scale))
+typedef ap_uint<num_emtf_tracks>   duperemoval_survivor_t;  // bw: num_emtf_tracks
+
+// Synonyms
+typedef zoning_out_t               pooling_in_t;
+typedef pooling_out_t              suppression_in_t;
+typedef suppression_in_t           suppression_out_t;
+typedef suppression_out_t          zonesorting_in_t;
+typedef zonesorting_out_t          zonemerging_in_t;
 
 }  // namespace emtf
 
