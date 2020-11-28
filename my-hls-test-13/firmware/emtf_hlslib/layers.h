@@ -113,6 +113,31 @@ struct m_zone_2_row_5_tag : m_zone_2_tag {};
 struct m_zone_2_row_6_tag : m_zone_2_tag {};
 struct m_zone_2_row_7_tag : m_zone_2_tag {};
 
+// Pattern tags
+struct m_zone_0_patt_0_tag : m_zone_0_tag {};
+struct m_zone_0_patt_1_tag : m_zone_0_tag {};
+struct m_zone_0_patt_2_tag : m_zone_0_tag {};
+struct m_zone_0_patt_3_tag : m_zone_0_tag {};
+struct m_zone_0_patt_4_tag : m_zone_0_tag {};
+struct m_zone_0_patt_5_tag : m_zone_0_tag {};
+struct m_zone_0_patt_6_tag : m_zone_0_tag {};
+//
+struct m_zone_1_patt_0_tag : m_zone_1_tag {};
+struct m_zone_1_patt_1_tag : m_zone_1_tag {};
+struct m_zone_1_patt_2_tag : m_zone_1_tag {};
+struct m_zone_1_patt_3_tag : m_zone_1_tag {};
+struct m_zone_1_patt_4_tag : m_zone_1_tag {};
+struct m_zone_1_patt_5_tag : m_zone_1_tag {};
+struct m_zone_1_patt_6_tag : m_zone_1_tag {};
+//
+struct m_zone_2_patt_0_tag : m_zone_2_tag {};
+struct m_zone_2_patt_1_tag : m_zone_2_tag {};
+struct m_zone_2_patt_2_tag : m_zone_2_tag {};
+struct m_zone_2_patt_3_tag : m_zone_2_tag {};
+struct m_zone_2_patt_4_tag : m_zone_2_tag {};
+struct m_zone_2_patt_5_tag : m_zone_2_tag {};
+struct m_zone_2_patt_6_tag : m_zone_2_tag {};
+
 namespace details {
 
 // Traits
@@ -177,7 +202,32 @@ template <> struct row_chamber_category_traits<m_zone_2_row_5_tag> { typedef m_1
 template <> struct row_chamber_category_traits<m_zone_2_row_6_tag> { typedef m_10deg_chamber_tag chamber_category; };
 template <> struct row_chamber_category_traits<m_zone_2_row_7_tag> { typedef m_10deg_chamber_tag chamber_category; };
 
-// Getters
+template <typename Category, int I>
+struct pattern_col_pad_traits {};
+
+template <int I> struct pattern_col_pad_traits<m_zone_0_tag, I> { static const int value = pattern_col_pad_zone_0[I]; };
+template <int I> struct pattern_col_pad_traits<m_zone_1_tag, I> { static const int value = pattern_col_pad_zone_1[I]; };
+template <int I> struct pattern_col_pad_traits<m_zone_2_tag, I> { static const int value = pattern_col_pad_zone_2[I]; };
+
+template <typename Category, int I>
+struct select_pattern_col_padding_type {
+  static const int pad = pattern_col_pad_traits<Category, I>::value;
+  typedef ap_uint<pad> type;
+};
+
+template <typename Category, int I>
+struct select_pattern_col_padded_type {
+  static const int pad = pattern_col_pad_traits<Category, I>::value;
+  typedef ap_uint<num_emtf_img_cols + (pad * 2)> type;
+};
+
+template <typename Category, int I>
+struct select_pattern_col_patch_type {
+  static const int pad = pattern_col_pad_traits<Category, I>::value;
+  typedef ap_uint<1 + (pad * 2)> type;
+};
+
+// Getter ops
 template <typename Category>
 struct get_chamber_id_op {};
 
@@ -190,7 +240,7 @@ template <> struct get_chamber_id_op<m_zone_0_row_5_tag> { inline int operator (
 template <> struct get_chamber_id_op<m_zone_0_row_6_tag> { inline int operator ()(int i) const { return chamber_id_zone_0_row_6[i]; } };
 template <> struct get_chamber_id_op<m_zone_0_row_7_0_tag> { inline int operator ()(int i) const { return chamber_id_zone_0_row_7_0[i]; } };
 template <> struct get_chamber_id_op<m_zone_0_row_7_1_tag> { inline int operator ()(int i) const { return chamber_id_zone_0_row_7_1[i]; } };
-
+//
 template <> struct get_chamber_id_op<m_zone_1_row_0_tag> { inline int operator ()(int i) const { return chamber_id_zone_1_row_0[i]; } };
 template <> struct get_chamber_id_op<m_zone_1_row_1_tag> { inline int operator ()(int i) const { return chamber_id_zone_1_row_1[i]; } };
 template <> struct get_chamber_id_op<m_zone_1_row_2_0_tag> { inline int operator ()(int i) const { return chamber_id_zone_1_row_2_0[i]; } };
@@ -201,7 +251,7 @@ template <> struct get_chamber_id_op<m_zone_1_row_5_tag> { inline int operator (
 template <> struct get_chamber_id_op<m_zone_1_row_6_tag> { inline int operator ()(int i) const { return chamber_id_zone_1_row_6[i]; } };
 template <> struct get_chamber_id_op<m_zone_1_row_7_0_tag> { inline int operator ()(int i) const { return chamber_id_zone_1_row_7_0[i]; } };
 template <> struct get_chamber_id_op<m_zone_1_row_7_1_tag> { inline int operator ()(int i) const { return chamber_id_zone_1_row_7_1[i]; } };
-
+//
 template <> struct get_chamber_id_op<m_zone_2_row_0_tag> { inline int operator ()(int i) const { return chamber_id_zone_2_row_0[i]; } };
 template <> struct get_chamber_id_op<m_zone_2_row_1_tag> { inline int operator ()(int i) const { return chamber_id_zone_2_row_1[i]; } };
 template <> struct get_chamber_id_op<m_zone_2_row_2_tag> { inline int operator ()(int i) const { return chamber_id_zone_2_row_2[i]; } };
@@ -225,27 +275,100 @@ template <> struct get_chamber_ph_cover_op<m_10deg_chamber_tag> { inline int ope
 template <> struct get_chamber_ph_cover_op<m_20deg_chamber_tag> { inline int operator ()(int i) const { return chamber_ph_cover_20deg[i]; } };
 template <> struct get_chamber_ph_cover_op<m_20deg_ext_chamber_tag> { inline int operator ()(int i) const { return chamber_ph_cover_20deg_ext[i]; } };
 
-// Function to init table
-struct init_table_op {
-  template <typename T, int N, class U>
-  inline void operator()(T (&arr)[N], U op) const {
-    for (int i = 0; i < N; i++) {
-      arr[i] = op(i);
-    }
-  }
+// Text replacement macro ("token pasting") used to define the getters for col_start, col_mid, col_stop
+#define DEFINE_PATTERN_GETTER_OP(NAME) \
+    template <typename Zone, typename Enable = void> \
+    struct get_pattern_##NAME##_op {}; \
+    \
+    template <typename Zone> struct get_pattern_##NAME##_op<Zone, typename enable_if<is_same<Zone, m_zone_0_tag>::value>::type> { \
+      inline int operator ()(int i, int j) const { \
+        const int ref = details::pattern_col_reference; \
+        switch (i) { \
+          case 0: return pattern_##NAME##_zone_0_patt_0[j] + pattern_col_pad_zone_0[j] - ref; \
+          case 1: return pattern_##NAME##_zone_0_patt_1[j] + pattern_col_pad_zone_0[j] - ref; \
+          case 2: return pattern_##NAME##_zone_0_patt_2[j] + pattern_col_pad_zone_0[j] - ref; \
+          case 3: return pattern_##NAME##_zone_0_patt_3[j] + pattern_col_pad_zone_0[j] - ref; \
+          case 4: return pattern_##NAME##_zone_0_patt_4[j] + pattern_col_pad_zone_0[j] - ref; \
+          case 5: return pattern_##NAME##_zone_0_patt_5[j] + pattern_col_pad_zone_0[j] - ref; \
+          case 6: return pattern_##NAME##_zone_0_patt_6[j] + pattern_col_pad_zone_0[j] - ref; \
+          default: return 0; \
+        } \
+      } \
+    }; \
+    \
+    template <typename Zone> struct get_pattern_##NAME##_op<Zone, typename enable_if<is_same<Zone, m_zone_1_tag>::value>::type> { \
+      inline int operator ()(int i, int j) const { \
+        const int ref = details::pattern_col_reference; \
+        switch (i) { \
+          case 0: return pattern_##NAME##_zone_1_patt_0[j] + pattern_col_pad_zone_1[j] - ref; \
+          case 1: return pattern_##NAME##_zone_1_patt_1[j] + pattern_col_pad_zone_1[j] - ref; \
+          case 2: return pattern_##NAME##_zone_1_patt_2[j] + pattern_col_pad_zone_1[j] - ref; \
+          case 3: return pattern_##NAME##_zone_1_patt_3[j] + pattern_col_pad_zone_1[j] - ref; \
+          case 4: return pattern_##NAME##_zone_1_patt_4[j] + pattern_col_pad_zone_1[j] - ref; \
+          case 5: return pattern_##NAME##_zone_1_patt_5[j] + pattern_col_pad_zone_1[j] - ref; \
+          case 6: return pattern_##NAME##_zone_1_patt_6[j] + pattern_col_pad_zone_1[j] - ref; \
+          default: return 0; \
+        } \
+      } \
+    }; \
+    \
+    template <typename Zone> struct get_pattern_##NAME##_op<Zone, typename enable_if<is_same<Zone, m_zone_2_tag>::value>::type> { \
+      inline int operator ()(int i, int j) const { \
+        const int ref = details::pattern_col_reference; \
+        switch (i) { \
+          case 0: return pattern_##NAME##_zone_2_patt_0[j] + pattern_col_pad_zone_2[j] - ref; \
+          case 1: return pattern_##NAME##_zone_2_patt_1[j] + pattern_col_pad_zone_2[j] - ref; \
+          case 2: return pattern_##NAME##_zone_2_patt_2[j] + pattern_col_pad_zone_2[j] - ref; \
+          case 3: return pattern_##NAME##_zone_2_patt_3[j] + pattern_col_pad_zone_2[j] - ref; \
+          case 4: return pattern_##NAME##_zone_2_patt_4[j] + pattern_col_pad_zone_2[j] - ref; \
+          case 5: return pattern_##NAME##_zone_2_patt_5[j] + pattern_col_pad_zone_2[j] - ref; \
+          case 6: return pattern_##NAME##_zone_2_patt_6[j] + pattern_col_pad_zone_2[j] - ref; \
+          default: return 0; \
+        } \
+      } \
+    };
+
+DEFINE_PATTERN_GETTER_OP(col_start)
+DEFINE_PATTERN_GETTER_OP(col_mid)
+DEFINE_PATTERN_GETTER_OP(col_stop)
+#undef DEFINE_PATTERN_GETTER_OP
+
+template <typename Category>
+struct get_pattern_activation_op {};
+
+template <> struct get_pattern_activation_op<m_zone_0_tag> { inline int operator ()(int i) const { return pattern_activation_zone_0[i]; } };
+template <> struct get_pattern_activation_op<m_zone_1_tag> { inline int operator ()(int i) const { return pattern_activation_zone_1[i]; } };
+template <> struct get_pattern_activation_op<m_zone_2_tag> { inline int operator ()(int i) const { return pattern_activation_zone_2[i]; } };
+
+// Helper class for argsort
+template <typename T, typename U>
+struct argsort_pair {
+  typedef T first_type;
+  typedef U second_type;
+  T first;
+  U second;
+  argsort_pair(T a, U b) : first(a), second(b) {}
+  inline bool operator <(const argsort_pair& o) const { return second < o.second; }
+  inline bool operator >=(const argsort_pair& o) const { return second >= o.second; }
 };
 
-// Function to init 2D table
-struct init_2d_table_op {
-  template <typename T, int M, int N, class U>
-  inline void operator()(T (&arr)[M][N], U op) const {
-    for (int i = 0; i < M; i++) {
-      for (int j = 0; j < N; j++) {
-        arr[i][j] = op(i, j);
-      }
+// Helper function to init table
+template <typename T, int N, typename U>
+void init_table_op(T (&arr)[N], U op) {
+  for (int i = 0; i < N; i++) {
+    arr[i] = op(i);
+  }
+}
+
+// Helper function to init 2D table
+template <typename T, int M, int N, typename U>
+void init_2d_table_op(T (&arr)[M][N], U op) {
+  for (int i = 0; i < M; i++) {
+    for (int j = 0; j < N; j++) {
+      arr[i][j] = op(i, j);
     }
   }
-};
+}
 
 }  // namespace details
 

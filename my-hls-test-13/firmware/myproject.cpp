@@ -105,6 +105,18 @@ top_fn_loop_in0:
   zoning_layer<m_zone_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_1_out);
   zoning_layer<m_zone_2_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_2_out);
 
+  // Layer 1 - pooling
+
+  pooling_layer<m_zone_0_tag>(zoning_0_out, pooling_0_out);
+  pooling_layer<m_zone_1_tag>(zoning_1_out, pooling_1_out);
+  pooling_layer<m_zone_2_tag>(zoning_2_out, pooling_2_out);
+
+  // Layer 2 - non-max suppression
+
+  suppression_layer<m_zone_0_tag>(pooling_0_out, suppression_0_out);
+  suppression_layer<m_zone_1_tag>(pooling_1_out, suppression_1_out);
+  suppression_layer<m_zone_2_tag>(pooling_2_out, suppression_2_out);
+
   // ...
 
   // Unpack from zonemerging_0_out (a.k.a. in1)

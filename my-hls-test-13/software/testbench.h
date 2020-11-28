@@ -147,9 +147,9 @@ struct FPGAResult {
 // Read test bench text files.
 // Note that the text files are whitespace-sensitive. Removing linebreaks or
 // changing num of spaces can break this stupid function.
-template <class T>
+template <typename T>
 int read_tb_data(const std::string filename, T& evt) {
-  typename T::value_type line_buf;
+  typename T::value_type line_buf;  // it should be a std::array
 
   std::string line;  // line in file
   char c;            // delimiter in line
@@ -175,9 +175,10 @@ int read_tb_data(const std::string filename, T& evt) {
         ss >> c;  // get rid of opening '['
         first_line = false;
       }
-      ss >> c;                                        // get rid of '['
-      for (unsigned i = 0; i < line_buf.size(); i++)  // extract int, then get rid of ','
-        ss >> line_buf[i] >> c;
+      ss >> c;  // get rid of '['
+      for (unsigned i = 0; i < line_buf.size(); i++) {
+        ss >> line_buf[i] >> c;  // extract int, then get rid of ','
+      }
       ss >> c;  // get rid of ']'
       ss >> c;  // get rid of ',' or ending ']'
 
@@ -188,8 +189,9 @@ int read_tb_data(const std::string filename, T& evt) {
       if (debug) {
         std::cout << "Line: " << line << std::endl;
         std::cout << "Parsed line: ";
-        for (unsigned i = 0; i < line_buf.size(); i++)
+        for (unsigned i = 0; i < line_buf.size(); i++) {
           std::cout << line_buf[i] << " ";
+        }
         std::cout << std::endl;
       }
     }
@@ -234,12 +236,12 @@ void print_std_array(T const& arr) {
 
 // Get array length
 template <typename T, size_t N>
-constexpr size_t get_array_length(T const (&arr)[N]) {
+size_t get_array_length(T const (&arr)[N]) {
   return N;
 }
 
 // Count mismatches
-template <class InputIt1, class InputIt2>
+template <typename InputIt1, typename InputIt2>
 int count_mismatches(InputIt1 first1, InputIt1 last1, InputIt2 first2) {
   int cnt = 0;
   for (; first1 != last1; ++first1, ++first2) {

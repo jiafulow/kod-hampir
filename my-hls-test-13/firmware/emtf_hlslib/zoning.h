@@ -23,19 +23,18 @@ void zoning_row_op(
 #pragma HLS INLINE
 
   typedef typename details::row_chamber_category_traits<Row>::chamber_category chamber_category;
-  static const int N = details::num_chambers_traits<chamber_category>::value;
-  static const int the_zone = details::zone_traits<Zone>::value;
-  static const int the_tzone = details::timezone_traits<Timezone>::value;
-  auto the_init_table_op = details::init_table_op();
+  const int N = details::num_chambers_traits<chamber_category>::value;
+  const int the_zone = details::zone_traits<Zone>::value;
+  const int the_tzone = details::timezone_traits<Timezone>::value;
 
   int chamber_id_table[N];
-  the_init_table_op(chamber_id_table, details::get_chamber_id_op<Row>());
+  details::init_table_op(chamber_id_table, details::get_chamber_id_op<Row>());
 
   int chamber_ph_init_table[N];
-  the_init_table_op(chamber_ph_init_table, details::get_chamber_ph_init_op<chamber_category>());
+  details::init_table_op(chamber_ph_init_table, details::get_chamber_ph_init_op<chamber_category>());
 
   int chamber_ph_cover_table[N];
-  the_init_table_op(chamber_ph_cover_table, details::get_chamber_ph_cover_op<chamber_category>());
+  details::init_table_op(chamber_ph_cover_table, details::get_chamber_ph_cover_op<chamber_category>());
 
   typedef ap_uint<details::chamber_img_bw> chamber_img_t;
   typedef ap_uint<details::chamber_img_joined_bw> chamber_img_joined_t;
@@ -45,7 +44,7 @@ void zoning_row_op(
 zoning_row_op_loop:
 
   // Loop over chambers
-  for (int i = 0; i < N; i++) {
+  for (unsigned i = 0; i < N; i++) {
 
 #pragma HLS UNROLL
 
@@ -56,7 +55,7 @@ zoning_row_op_loop:
 zoning_row_op_inner_loop:
 
     // Loop over segments
-    for (int j = 0; j < num_emtf_segments; j++) {
+    for (unsigned j = 0; j < num_emtf_segments; j++) {
 
 #pragma HLS UNROLL
 
@@ -68,8 +67,8 @@ zoning_row_op_inner_loop:
       // Use condition: (valid && is_same_zone && is_same_timezone)
       if (
           (seg_valid[iseg] == 1) and \
-          (seg_zones[iseg][2-the_zone] == 1) and \
-          (seg_tzones[iseg][2-the_tzone] == 1)
+          (seg_zones[iseg][(num_emtf_zones - 1) - the_zone] == 1) and \
+          (seg_tzones[iseg][(num_emtf_timezones - 1) - the_tzone] == 1)
       ) {
         // truncate last 4 bits (i.e. divide by 16), subtract offset
         assert((emtf_phi[iseg] >> 4) >= chamber_ph_init_table[i]);
@@ -232,8 +231,8 @@ void zoning_layer(
 
   // Check assumptions
   static_assert(zoning_config::n_out == num_emtf_img_rows, "zoning_config::n_out check failed");
-  static_assert(num_emtf_img_rows == 8, "num_img_rows must be 8");
-  static_assert(num_emtf_img_cols == 288, "num_img_cols must be 288");
+  static_assert(num_emtf_img_rows == 8, "num_emtf_img_rows must be 8");
+  static_assert(num_emtf_img_cols == 288, "num_emtf_img_cols must be 288");
 
   typedef m_timezone_0_tag Timezone;  // default timezone
 
