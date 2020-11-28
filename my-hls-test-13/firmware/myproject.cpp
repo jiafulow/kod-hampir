@@ -117,18 +117,37 @@ top_fn_loop_in0:
   suppression_layer<m_zone_1_tag>(pooling_1_out, suppression_1_out);
   suppression_layer<m_zone_2_tag>(pooling_2_out, suppression_2_out);
 
-  // ...
+  // Layer 3 - zone sorting
 
-  // Unpack from zonemerging_0_out (a.k.a. in1)
-  trk_qual_t  trk_qual [zonemerging_config::n_out];
-  trk_patt_t  trk_patt [zonemerging_config::n_out];
-  trk_col_t   trk_col  [zonemerging_config::n_out];
-  trk_zone_t  trk_zone [zonemerging_config::n_out];
+  zonesorting_layer<m_zone_0_tag>(suppression_0_out, zonesorting_0_out);
+  zonesorting_layer<m_zone_1_tag>(suppression_1_out, zonesorting_1_out);
+  zonesorting_layer<m_zone_2_tag>(suppression_2_out, zonesorting_2_out);
+
+  // Layer 4 - zone merging
+
+  zonemerging_layer<m_zone_any_tag>(
+      zonesorting_0_out, zonesorting_1_out, zonesorting_2_out, zonemerging_0_out
+  );
+
+  // Unpack from in1 (a.k.a. zonemerging_0_out)
+  trk_qual_t trk_qual [zonemerging_config::n_out];
+  trk_patt_t trk_patt [zonemerging_config::n_out];
+  trk_col_t  trk_col  [zonemerging_config::n_out];
+  trk_zone_t trk_zone [zonemerging_config::n_out];
 
 #pragma HLS ARRAY_PARTITION variable=trk_qual complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_patt complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_col complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_zone complete dim=0
+
+  constexpr unsigned int in1_0_bits_lo = 0;
+  constexpr unsigned int in1_0_bits_hi = (in1_0_bits_lo + trk_qual_t::width - 1);
+  constexpr unsigned int in1_1_bits_lo = (in1_0_bits_hi + 1);
+  constexpr unsigned int in1_1_bits_hi = (in1_1_bits_lo + trk_patt_t::width - 1);
+  constexpr unsigned int in1_2_bits_lo = (in1_1_bits_hi + 1);
+  constexpr unsigned int in1_2_bits_hi = (in1_2_bits_lo + trk_col_t::width - 1);
+  constexpr unsigned int in1_3_bits_lo = (in1_2_bits_hi + 1);
+  constexpr unsigned int in1_3_bits_hi = (in1_3_bits_lo + trk_zone_t::width - 1);
 
 top_fn_loop_in1:
 
@@ -136,7 +155,10 @@ top_fn_loop_in1:
 
 #pragma HLS UNROLL
 
-    zonemerging_out_t in1_tmp = zonemerging_0_out[itrk];  // read input
+    trk_qual[itrk] = zonemerging_0_out[itrk].range(in1_0_bits_hi, in1_0_bits_lo);
+    trk_patt[itrk] = zonemerging_0_out[itrk].range(in1_1_bits_hi, in1_1_bits_lo);
+    trk_col[itrk]  = zonemerging_0_out[itrk].range(in1_2_bits_hi, in1_2_bits_lo);
+    trk_zone[itrk] = zonemerging_0_out[itrk].range(in1_3_bits_hi, in1_3_bits_lo);
   }  // end top_fn_loop_in1
 
   // This macro is defined in emtf_hlslib/helper.h
@@ -154,6 +176,21 @@ top_fn_loop_in1:
 #pragma HLS ARRAY_PARTITION variable=trk_valid complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_feat_rm complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_valid_rm complete dim=0
+
+  //// Layer 5 - track building
+  //
+  //trkbuilding_layer<m_zone_any_tag>(
+  //    emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2,
+  //    emtf_time, seg_zones, seg_tzones, seg_fr, seg_dl, seg_bx,
+  //    seg_valid, trk_qual, trk_patt, trk_col, trk_zone, trk_seg,
+  //    trk_feat, trk_valid
+  //);
+
+  //// Layer 6 - dupe removal
+  //
+  //duperemoval_layer<m_zone_any_tag>(
+  //    trk_seg, trk_feat, trk_valid, trk_feat_rm, trk_valid_rm
+  //);
 
 top_fn_loop_out:
 

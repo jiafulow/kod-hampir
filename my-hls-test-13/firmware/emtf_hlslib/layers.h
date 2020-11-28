@@ -42,12 +42,24 @@ struct zonesorting_config {
   static const int n_in = suppression_config::n_out;
   static const int n_out = num_emtf_tracks;
   static const int target_ii = 1;
+
+  // Used in sorting stages
+  static const unsigned int n_stage_0 = n_in / 2;
+  static const unsigned int n_stage_1 = (n_stage_0 - 16) / 2;
+  static const unsigned int n_stage_2 = n_stage_1 / 2;
+  static const unsigned int n_stage_3 = (n_stage_2 / 2) + 16;
+  static const unsigned int n_stage_4 = n_stage_3 / 2;
+  static const unsigned int n_stage_5 = n_stage_4 / 2;
+  static const unsigned int n_stage_6 = n_stage_5 / 2;
 };
 
 struct zonemerging_config {
   static const int n_in = zonesorting_config::n_out;
   static const int n_out = n_in;
   static const int target_ii = 1;
+
+  // Used in sorting stages
+  static const unsigned int n_stage_0 = n_in * num_emtf_zones;
 };
 
 struct trkbuilding_config {
