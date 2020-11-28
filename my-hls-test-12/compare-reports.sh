@@ -1,1 +1,0 @@
-../external/hls4ml/2019.08-bcolbf/test/compare-reports.sh
