@@ -35,7 +35,7 @@
 #if !defined(__SYNTHESIS__) && !defined(NDEBUG)
 #define PRINT_TOP_FN_ARRAYS_IN1 \
     std::cout << "Printing 'in1' arrays:" << std::endl; \
-    for (unsigned itrk = 0; itrk < zonemerging_config::n_out; itrk++) { \
+    for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) { \
       std::cout << itrk << " " \
                 << trk_qual[itrk] << " " \
                 << trk_patt[itrk] << " " \
@@ -49,6 +49,12 @@
 
 #if !defined(__SYNTHESIS__) && !defined(NDEBUG)
 #define PRINT_TOP_FN_ARRAYS_OTHER \
+    std::cout << "Printing 'seg_valid' non-zero indices:" << std::endl; \
+    for (unsigned iseg = 0; iseg < model_config::n_in; iseg++) { \
+      if (seg_valid[iseg] == 1) { \
+        std::cout << iseg << std::endl; \
+      } \
+    } \
     std::cout << "Printing 'zoning_0_out' non-zero elements:" << std::endl; \
     std::cout << "row: ["; \
     for (unsigned i = 0; i < zoning_config::n_out; i++) { \
@@ -107,6 +113,36 @@
     std::cout << "value: ["; \
     for (unsigned i = 0; i < zonemerging_config::n_out; i++) { \
       std::cout << zonemerging_0_out[i].range(pooling_activation_t::width - 1, 0) << ", "; \
+    } \
+    std::cout << "]" << std::endl; \
+    std::cout << "Printing 'trk_seg', 'trk_seg_v' first-track elements:" << std::endl; \
+    std::cout << "trk_seg: ["; \
+    for (unsigned i = 0; i < num_emtf_sites; i++) { \
+      std::cout << trk_seg[i] << ", "; \
+    } \
+    std::cout << "], trk_seg_v: ["; \
+    for (unsigned i = 0; i < num_emtf_sites; i++) { \
+      std::cout << trk_seg_v[0][i] << ", "; \
+    } \
+    std::cout << "]" << std::endl; \
+    std::cout << "Printing 'trk_feat', 'trk_valid' first-track elements:" << std::endl; \
+    std::cout << "trk_feat: ["; \
+    for (unsigned i = 0; i < num_emtf_features; i++) { \
+      std::cout << trk_feat[i] << ", "; \
+    } \
+    std::cout << "], trk_valid: ["; \
+    for (unsigned i = 0; i < trk_valid_t::width; i++) { \
+      std::cout << trk_valid[i] << ", "; \
+    } \
+    std::cout << "]" << std::endl; \
+    std::cout << "Printing 'trk_feat_rm', 'trk_valid_rm' first-track elements:" << std::endl; \
+    std::cout << "trk_feat_rm: ["; \
+    for (unsigned i = 0; i < num_emtf_features; i++) { \
+      std::cout << trk_feat_rm[i] << ", "; \
+    } \
+    std::cout << "], trk_valid_rm: ["; \
+    for (unsigned i = 0; i < trk_valid_t::width; i++) { \
+      std::cout << trk_valid_rm[i] << ", "; \
     } \
     std::cout << "]" << std::endl;
 #else

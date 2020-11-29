@@ -33,8 +33,9 @@ enum struct TrackDataType {
   trk_zone = 3,
   trk_tzone = 4,
   trk_seg = 5,
-  trk_feat = 6,
-  trk_valid = 7
+  trk_seg_v = 6,
+  trk_feat = 7,
+  trk_valid = 8
 };
 
 // Bit width
@@ -60,6 +61,7 @@ template <> struct track_data_bw_traits<TrackDataType::trk_col>   { static const
 template <> struct track_data_bw_traits<TrackDataType::trk_zone>  { static const int value = 2; };
 template <> struct track_data_bw_traits<TrackDataType::trk_tzone> { static const int value = 2; };
 template <> struct track_data_bw_traits<TrackDataType::trk_seg>   { static const int value = 8; };
+template <> struct track_data_bw_traits<TrackDataType::trk_seg_v> { static const int value = 12; };
 template <> struct track_data_bw_traits<TrackDataType::trk_feat>  { static const int value = 13; };
 template <> struct track_data_bw_traits<TrackDataType::trk_valid> { static const int value = 1; };
 
@@ -86,6 +88,7 @@ template <> struct track_data_sign_traits<TrackDataType::trk_col>   { static con
 template <> struct track_data_sign_traits<TrackDataType::trk_zone>  { static const bool value = 0; };
 template <> struct track_data_sign_traits<TrackDataType::trk_tzone> { static const bool value = 0; };
 template <> struct track_data_sign_traits<TrackDataType::trk_seg>   { static const bool value = 0; };
+template <> struct track_data_sign_traits<TrackDataType::trk_seg_v> { static const bool value = 0; };
 template <> struct track_data_sign_traits<TrackDataType::trk_feat>  { static const bool value = 1; };
 template <> struct track_data_sign_traits<TrackDataType::trk_valid> { static const bool value = 0; };
 
@@ -128,6 +131,7 @@ DEFINE_TRACK_DATATYPE(trk_col)
 DEFINE_TRACK_DATATYPE(trk_zone)
 DEFINE_TRACK_DATATYPE(trk_tzone)
 DEFINE_TRACK_DATATYPE(trk_seg)
+DEFINE_TRACK_DATATYPE(trk_seg_v)
 DEFINE_TRACK_DATATYPE(trk_feat)
 DEFINE_TRACK_DATATYPE(trk_valid)
 #undef DEFINE_TRACK_DATATYPE
@@ -157,7 +161,7 @@ typedef trk_feat_t model_out_t;
 // Layer typedefs
 
 typedef ap_uint<8>                 zoning_seg_t;            // bw: ceil(log2(num_emtf_chambers * num_emtf_segments))
-typedef ap_uint<9>                 zoning_col_t;            // bw: ceil(log2(80 / coarse_emtf_strip))
+typedef ap_uint<9>                 zoning_col_t;            // bw: ceil(log2(80 / coarse_emtf_phi_scale) + coarse_emtf_phi_padding)
 typedef ap_uint<num_emtf_img_cols> zoning_out_t;            // bw: num_emtf_img_cols
 typedef ap_uint<num_emtf_img_rows> pooling_accumulation_t;  // bw: num_emtf_img_rows
 typedef ap_uint<6>                 pooling_activation_t;    // bw: accumulation bw - 2
@@ -167,6 +171,8 @@ typedef ap_uint<2>                 pooling_zone_t;          // bw: ceil(log2(num
 typedef ap_uint<6+3>               pooling_out_t;           // bw: activation bw + patt bw
 typedef ap_uint<6+3+9>             zonesorting_out_t;       // bw: activation bw + patt bw + col bw
 typedef ap_uint<6+3+9+2>           zonemerging_out_t;       // bw: activation bw + patt bw + col bw + zone bw
+typedef ap_uint<8>                 trkbuilding_seg_t;       // bw: ceil(log2(num_emtf_chambers * num_emtf_segments))
+typedef ap_uint<8>                 trkbuilding_col_t;       // bw: ceil(log2(80 / coarse_emtf_phi_scale) + coarse_emtf_phi_padding)
 typedef ap_uint<2>                 trkbuilding_area_t;      // bw: ceil(log2(num_emtf_img_areas))
 typedef ap_uint<10>                trkbuilding_ph_diff_t;   // bw: ceil(log2(10 / emtf_phi_scale))
 typedef ap_uint<6>                 trkbuilding_th_diff_t;   // bw: ceil(log2(14 / emtf_theta_scale))

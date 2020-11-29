@@ -22,7 +22,7 @@ void zoning_row_op(
 
 #pragma HLS INLINE
 
-  typedef typename details::row_chamber_category_traits<Row>::chamber_category chamber_category;
+  typedef typename details::chamber_category_traits<Row>::chamber_category chamber_category;
   const int N = details::num_chambers_traits<chamber_category>::value;
   const int the_zone = details::zone_traits<Zone>::value;
   const int the_tzone = details::timezone_traits<Timezone>::value;

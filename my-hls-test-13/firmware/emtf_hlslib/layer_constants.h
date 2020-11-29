@@ -46,6 +46,21 @@ constexpr static const int chamber_id_zone_2_row_5[7]     = { 84,  85,  86,  87,
 constexpr static const int chamber_id_zone_2_row_6[7]     = { 39,  40,  41,  42,  43,  44,  53};  // ME4/2
 constexpr static const int chamber_id_zone_2_row_7[7]     = { 93,  94,  95,  96,  97,  98, 107};  // RE4/2
 
+// Zone any: 12 sites, 101 chambers
+// Note: ME1/3 and RE1/3 are not included as they belong to the Overlap region
+constexpr static const int chamber_id_zone_any_site_0[7]  = {  0,   1,   2,   9,  10,  11,  45};  // ME1/1
+constexpr static const int chamber_id_zone_any_site_1[7]  = {  3,   4,   5,  12,  13,  14,  46};  // ME1/2
+constexpr static const int chamber_id_zone_any_site_2[11] = { 18,  19,  20,  48,  21,  22,  23,  24,  25,  26,  49};  // ME2/1 + ME2/2
+constexpr static const int chamber_id_zone_any_site_3[11] = { 27,  28,  29,  50,  30,  31,  32,  33,  34,  35,  51};  // ME3/1 + ME3/2
+constexpr static const int chamber_id_zone_any_site_4[11] = { 36,  37,  38,  52,  39,  40,  41,  42,  43,  44,  53};  // ME4/1 + ME4/2
+constexpr static const int chamber_id_zone_any_site_5[7]  = { 57,  58,  59,  66,  67,  68, 100};  // RE1/2
+constexpr static const int chamber_id_zone_any_site_6[7]  = { 75,  76,  77,  78,  79,  80, 103};  // RE2/2
+constexpr static const int chamber_id_zone_any_site_7[11] = { 81,  82,  83, 104,  84,  85,  86,  87,  88,  89, 105};  // RE3/1 + RE3/2
+constexpr static const int chamber_id_zone_any_site_8[11] = { 90,  91,  92, 106,  93,  94,  95,  96,  97,  98, 107};  // RE4/1 + RE4/2
+constexpr static const int chamber_id_zone_any_site_9[7]  = { 54,  55,  56,  63,  64,  65,  99};  // GE1/1
+constexpr static const int chamber_id_zone_any_site_10[4] = { 72,  73,  74, 102};                 // GE2/1
+constexpr static const int chamber_id_zone_any_site_11[7] = {108, 109, 110, 111, 112, 113, 114};  // ME0
+
 // ph_init reference values
 // [0, 38, 75, 113, 150, 188, 225, 263] -> [0.0, 10.1333, 20.0, 30.1333, 40.0, 50.1333, 60.0, 70.1333] deg
 constexpr static const int chamber_ph_init_10deg[7]       = { 75, 113, 150, 188, 225, 263,  38};
@@ -62,10 +77,10 @@ constexpr static const int chamber_ph_cover_20deg_ext[11] = {165, 240, 315,  90,
 // They must be compatible with num_emtf_img_cols
 constexpr static const int chamber_img_bw = 90;          // 24 deg
 constexpr static const int chamber_img_joined_bw = 315;  // 84 deg
-constexpr static const int chamber_img_joined_col_start = chamber_img_joined_bw - 288;
-constexpr static const int chamber_img_joined_col_stop = chamber_img_joined_bw - 1;
+constexpr static const int chamber_img_joined_col_start = chamber_img_joined_bw - 288;  // 27
+constexpr static const int chamber_img_joined_col_stop = chamber_img_joined_bw - 1;     // 314
 
-// Pattern definitions
+// Pattern definitions for each row
 constexpr static const int pattern_col_reference = 55;
 
 constexpr static const int pattern_col_start_zone_0_patt_0[8] = {51, 51, 52, 54, 54, 54, 54, 54};
@@ -191,6 +206,20 @@ constexpr static const int pattern_activation_zone_2[1u << 8] = {
   35, 55, 23, 49, 50, 62,  8, 21, 34, 53, 21, 50, 48, 62, 38, 55, 52, 62,
   58, 63, 61, 63
 };
+
+// Chamber order on each site
+constexpr static const int site_chamber_order_10deg[8]      = {6, 7, 0, 1, 2, 3, 4, 5};
+constexpr static const int site_chamber_order_20deg[4]      = {3, 0, 1, 2};
+constexpr static const int site_chamber_order_20deg_ext[12] = {3, 10, 11, 0, 4, 5, 1, 6, 7, 2, 8, 9};
+
+// Mapping site number to row number
+constexpr static const int site_to_row_zone_0[12] = { 2, 2, 4, 5, 7, 2, 4, 6, 7, 1, 3, 0};
+constexpr static const int site_to_row_zone_1[12] = { 1, 2, 4, 5, 7, 2, 4, 6, 7, 0, 3, 0};
+constexpr static const int site_to_row_zone_2[12] = { 0, 0, 3, 4, 6, 1, 2, 5, 7, 0, 3, 0};
+
+// Theta window
+constexpr static const int th_invalid = 0;
+constexpr static const int th_window = 8;  // max - min + 1
 
 }  // namespace details
 

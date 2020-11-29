@@ -70,7 +70,7 @@ top_fn_loop_in0:
   // This macro is defined in emtf_hlslib/helper.h
   PRINT_TOP_FN_ARRAYS_IN0
 
-  // Intermediate arrays (1)
+  // Intermediate arrays (for layers 0..4)
   zoning_out_t      zoning_0_out      [zoning_config::n_out];
   zoning_out_t      zoning_1_out      [zoning_config::n_out];
   zoning_out_t      zoning_2_out      [zoning_config::n_out];
@@ -113,15 +113,15 @@ top_fn_loop_in0:
 
   // Layer 2 - non-max suppression
 
-  suppression_layer<m_zone_0_tag>(pooling_0_out, suppression_0_out);
-  suppression_layer<m_zone_1_tag>(pooling_1_out, suppression_1_out);
-  suppression_layer<m_zone_2_tag>(pooling_2_out, suppression_2_out);
+  suppression_layer<m_zone_any_tag>(pooling_0_out, suppression_0_out);
+  suppression_layer<m_zone_any_tag>(pooling_1_out, suppression_1_out);
+  suppression_layer<m_zone_any_tag>(pooling_2_out, suppression_2_out);
 
   // Layer 3 - zone sorting
 
-  zonesorting_layer<m_zone_0_tag>(suppression_0_out, zonesorting_0_out);
-  zonesorting_layer<m_zone_1_tag>(suppression_1_out, zonesorting_1_out);
-  zonesorting_layer<m_zone_2_tag>(suppression_2_out, zonesorting_2_out);
+  zonesorting_layer<m_zone_any_tag>(suppression_0_out, zonesorting_0_out);
+  zonesorting_layer<m_zone_any_tag>(suppression_1_out, zonesorting_1_out);
+  zonesorting_layer<m_zone_any_tag>(suppression_2_out, zonesorting_2_out);
 
   // Layer 4 - zone merging
 
@@ -130,10 +130,10 @@ top_fn_loop_in0:
   );
 
   // Unpack from in1 (a.k.a. zonemerging_0_out)
-  trk_qual_t trk_qual [zonemerging_config::n_out];
-  trk_patt_t trk_patt [zonemerging_config::n_out];
-  trk_col_t  trk_col  [zonemerging_config::n_out];
-  trk_zone_t trk_zone [zonemerging_config::n_out];
+  trk_qual_t trk_qual [trkbuilding_config::n_in];
+  trk_patt_t trk_patt [trkbuilding_config::n_in];
+  trk_col_t  trk_col  [trkbuilding_config::n_in];
+  trk_zone_t trk_zone [trkbuilding_config::n_in];
 
 #pragma HLS ARRAY_PARTITION variable=trk_qual complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_patt complete dim=0
@@ -151,7 +151,7 @@ top_fn_loop_in0:
 
 top_fn_loop_in1:
 
-  for (unsigned itrk = 0; itrk < zonemerging_config::n_out; itrk++) {
+  for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) {
 
 #pragma HLS UNROLL
 
@@ -164,37 +164,41 @@ top_fn_loop_in1:
   // This macro is defined in emtf_hlslib/helper.h
   PRINT_TOP_FN_ARRAYS_IN1
 
-  // Intermediate arrays (2)
+  // Intermediate arrays (for layers 5..6)
   trk_seg_t   trk_seg      [trkbuilding_config::n_out * num_emtf_sites];
+  trk_seg_v_t trk_seg_v    [trkbuilding_config::n_out];
   trk_feat_t  trk_feat     [trkbuilding_config::n_out * num_emtf_features];
   trk_valid_t trk_valid    [trkbuilding_config::n_out];
   trk_feat_t  trk_feat_rm  [duperemoval_config::n_out * num_emtf_features];
   trk_valid_t trk_valid_rm [duperemoval_config::n_out];
 
 #pragma HLS ARRAY_PARTITION variable=trk_seg complete dim=0
+#pragma HLS ARRAY_PARTITION variable=trk_seg_v complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_feat complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_valid complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_feat_rm complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_valid_rm complete dim=0
 
-  //// Layer 5 - track building
-  //
-  //trkbuilding_layer<m_zone_any_tag>(
-  //    emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2,
-  //    emtf_time, seg_zones, seg_tzones, seg_fr, seg_dl, seg_bx,
-  //    seg_valid, trk_qual, trk_patt, trk_col, trk_zone, trk_seg,
-  //    trk_feat, trk_valid
-  //);
+  // Layer 5 - track building
 
-  //// Layer 6 - dupe removal
-  //
-  //duperemoval_layer<m_zone_any_tag>(
-  //    trk_seg, trk_feat, trk_valid, trk_feat_rm, trk_valid_rm
-  //);
+  trkbuilding_layer<m_zone_any_tag>(
+      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2,
+      emtf_time, seg_zones, seg_tzones, seg_fr, seg_dl, seg_bx,
+      seg_valid, trk_qual, trk_patt, trk_col, trk_zone, trk_seg,
+      trk_seg_v, trk_feat, trk_valid
+  );
+
+  // Layer 6 - dupe removal
+
+  duperemoval_layer<m_zone_any_tag>(
+      trk_seg, trk_seg_v, trk_feat, trk_valid, trk_feat_rm, trk_valid_rm
+  );
+
+  // Copy to output
 
 top_fn_loop_out:
 
-  for (unsigned i = 0; i < (duperemoval_config::n_out * num_emtf_features); i++) {
+  for (unsigned i = 0; i < model_config::n_out; i++) {
 
 #pragma HLS UNROLL
 

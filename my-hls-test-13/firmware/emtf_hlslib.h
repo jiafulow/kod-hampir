@@ -11,7 +11,7 @@
 #include "emtf_hlslib/suppression.h"
 #include "emtf_hlslib/zonesorting.h"
 #include "emtf_hlslib/zonemerging.h"
-//#include "emtf_hlslib/trkbuilding.h"
-//#include "emtf_hlslib/duperemoval.h"
+#include "emtf_hlslib/trkbuilding.h"
+#include "emtf_hlslib/duperemoval.h"
 
 #endif  // __EMTF_HLSLIB_H__ not defined
