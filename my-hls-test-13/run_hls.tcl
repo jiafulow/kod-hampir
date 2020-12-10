@@ -3,7 +3,7 @@
 set PROJ "myproject_prj"
 set SOLN "solution1"
 set XPART xc7vx690tffg1927-2
-set CLKP 200MHz
+set CLKP 160MHz
 set CFLAGS "-std=c++11"
 set CSIMFLAGS "-Wall -Wno-ignored-attributes -Wno-unused-parameter -Wno-unused-variable -Wno-unused-label"
 set CSIM 1
@@ -28,7 +28,9 @@ set_part $XPART
 create_clock -period $CLKP
 
 # Set any optimization directives
-config_array_partition -auto_partition_threshold 16 -auto_promotion_threshold 64 -include_extern_globals
+config_compile -pipeline_loops 64
+config_array_partition -auto_partition_threshold 32 -auto_promotion_threshold 64
+config_array_partition -include_extern_globals
 config_interface -trim_dangling_port
 # End of directives
 

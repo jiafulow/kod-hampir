@@ -37,11 +37,11 @@ int main(int argc, char **argv) {
   // Call the top function !!
   myproject(in0, out);
 
-  // Check for mismatches
+  // Compare with the expectation
   int err = count_mismatches(std::begin(out), std::end(out), std::begin(fw_res.data));
 
+  // Print error info
   if (err) {
-    // Print error info
     std::string clr_error = "\033[1;31m";  // red
     std::string clr_reset = "\033[0m";     // reset
     std::cout << clr_error << "FAILED!" << clr_reset << std::endl;
@@ -53,5 +53,7 @@ int main(int argc, char **argv) {
     std::cout << std::endl;
     std::cout << "Mismatches: " << err << std::endl;
   }
-  return 0;  //FIXME - return err
+
+  // Return 0 only if the results are correct
+  return err;
 }
