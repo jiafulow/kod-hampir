@@ -135,10 +135,8 @@ void pooling_col_op(
 #pragma HLS ARRAY_PARTITION variable=pooling_accumulations complete dim=0
 #pragma HLS ARRAY_PARTITION variable=pooling_activations complete dim=0
 
-pooling_col_op_loop:
-
   // Loop over patterns
-  for (unsigned patt = 0; patt < num_emtf_patterns; patt++) {
+  LOOP_PATT: for (unsigned patt = 0; patt < num_emtf_patterns; patt++) {
 
 #pragma HLS UNROLL
 
@@ -205,10 +203,8 @@ void pooling_op(
   const padded_row_6_t padded_row_6 = (padding_row_6_t(0), pooling_in[6], padding_row_6_t(0));
   const padded_row_7_t padded_row_7 = (padding_row_7_t(0), pooling_in[7], padding_row_7_t(0));
 
-pooling_op_loop:
-
   // Loop over columns
-  for (unsigned col = 0; col < num_emtf_img_cols; col++) {
+  LOOP_COL: for (unsigned col = 0; col < num_emtf_img_cols; col++) {
 
 #pragma HLS UNROLL
 

@@ -361,8 +361,6 @@ void trkbuilding_match_ph_op(
   const trkbuilding_col_t col_stop = col_patt + pattern_col_stop_table[curr_trk_zone][curr_trk_patt];
   const trkbuilding_col_t col_pad = pattern_col_pad_table[curr_trk_zone];
 
-trkbuilding_match_ph_op_loop:
-
   // Loop over segments (incl those in fake chambers)
   for (unsigned i = 0; i < N; i++) {
 
@@ -709,8 +707,6 @@ void trkbuilding_layer(
   static_assert(num_emtf_features == 36, "num_emtf_features must be 36");
 
   typedef m_timezone_0_tag Timezone;  // default timezone
-
-trkbuilding_layer_loop:
 
   // Loop over tracks
   for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) {

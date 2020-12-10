@@ -41,10 +41,8 @@ void zoning_row_op(
 
   chamber_img_joined_t chamber_img_joined = 0;  // init as zero
 
-zoning_row_op_loop:
-
   // Loop over chambers
-  for (unsigned i = 0; i < N; i++) {
+  LOOP_I: for (unsigned i = 0; i < N; i++) {
 
 #pragma HLS UNROLL
 
@@ -52,10 +50,8 @@ zoning_row_op_loop:
 
     chamber_img_t chamber_img = 0;  // init as zero
 
-zoning_row_op_inner_loop:
-
     // Loop over segments
-    for (unsigned j = 0; j < num_emtf_segments; j++) {
+    LOOP_J: for (unsigned j = 0; j < num_emtf_segments; j++) {
 
 #pragma HLS UNROLL
 

@@ -46,9 +46,8 @@ void myproject(
 #pragma HLS ARRAY_PARTITION variable=seg_bx complete dim=0
 #pragma HLS ARRAY_PARTITION variable=seg_valid complete dim=0
 
-top_fn_loop_in0:
-
-  for (unsigned iseg = 0; iseg < model_config::n_in; iseg++) {
+  // Loop over in0
+  LOOP_IN0: for (unsigned iseg = 0; iseg < model_config::n_in; iseg++) {
 
 #pragma HLS UNROLL
 
@@ -65,7 +64,7 @@ top_fn_loop_in0:
     seg_dl[iseg]      = in0[iseg].seg_dl;
     seg_bx[iseg]      = in0[iseg].seg_bx;
     seg_valid[iseg]   = in0[iseg].seg_valid;
-  }  // end top_fn_loop_in0
+  }  // end loop over in0
 
   // This macro is defined in emtf_hlslib/helper.h
   PRINT_TOP_FN_ARRAYS_IN0
@@ -149,9 +148,8 @@ top_fn_loop_in0:
   constexpr unsigned int in1_3_bits_lo = (in1_2_bits_hi + 1);
   constexpr unsigned int in1_3_bits_hi = (in1_3_bits_lo + trk_zone_t::width - 1);
 
-top_fn_loop_in1:
-
-  for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) {
+  // Loop over in1
+  LOOP_IN1: for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) {
 
 #pragma HLS UNROLL
 
@@ -159,7 +157,7 @@ top_fn_loop_in1:
     trk_patt[itrk] = zonemerging_0_out[itrk].range(in1_1_bits_hi, in1_1_bits_lo);
     trk_col[itrk]  = zonemerging_0_out[itrk].range(in1_2_bits_hi, in1_2_bits_lo);
     trk_zone[itrk] = zonemerging_0_out[itrk].range(in1_3_bits_hi, in1_3_bits_lo);
-  }  // end top_fn_loop_in1
+  }  // end loop over in1
 
   // This macro is defined in emtf_hlslib/helper.h
   PRINT_TOP_FN_ARRAYS_IN1
@@ -195,15 +193,12 @@ top_fn_loop_in1:
   );
 
   // Copy to output
-
-top_fn_loop_out:
-
-  for (unsigned i = 0; i < model_config::n_out; i++) {
+  LOOP_OUT: for (unsigned i = 0; i < model_config::n_out; i++) {
 
 #pragma HLS UNROLL
 
     out[i] = trk_feat_rm[i];
-  }  // end top_fn_loop_out
+  }
 
   // This macro is defined in emtf_hlslib/helper.h
   PRINT_TOP_FN_ARRAYS_OTHER

@@ -17,8 +17,6 @@ void duperemoval_preprocess_op(
 
 #pragma HLS INLINE
 
-duperemoval_preprocess_op_loop:
-
   // Loop over tracks
   for (unsigned itrk = 0; itrk < duperemoval_config::n_in; itrk++) {
 
@@ -73,20 +71,14 @@ void duperemoval_set_survivors_op(
 
   duperemoval_survivor_t removal = 0;  // initialize
 
-duperemoval_set_survivors_op_loop_i:
-
   // Find duplicates and mark them for removal
   for (unsigned i = 0; i < (num_emtf_tracks - 1); i++) {
 
 #pragma HLS UNROLL
 
-  duperemoval_set_survivors_op_loop_j:
-
     for (unsigned j = i + 1; j < num_emtf_tracks; j++) {
 
 #pragma HLS UNROLL
-
-    duperemoval_set_survivors_op_loop_k:
 
       for (unsigned k = 0; k < num_emtf_sites_rm; k++) {
 
@@ -100,8 +92,6 @@ duperemoval_set_survivors_op_loop_i:
       }
     }
   }
-
-duperemoval_set_survivors_op_loop_i_1:
 
   // Determine indices for output after removal
   for (unsigned i = 0, j = 0; j < num_emtf_tracks; j++) {
@@ -131,8 +121,6 @@ void duperemoval_set_features_op(
 
 #pragma HLS INLINE
 
-duperemoval_set_features_op_loop_i:
-
   // Multiplex to output
   for (unsigned i = 0; i < num_emtf_tracks; i++) {
 
@@ -142,15 +130,11 @@ duperemoval_set_features_op_loop_i:
 
     if (trk_valid_rm[i]) {
 
-    duperemoval_set_features_op_loop_j:
-
       for (unsigned j = i; j < num_emtf_tracks; j++) {
 
 #pragma HLS UNROLL
 
         if (survivors[i][j]) {  // only one survives
-
-        duperemoval_set_features_op_loop_k:
 
           // Simple copy
           for (unsigned k = 0; k < num_emtf_features; k++) {
@@ -162,11 +146,7 @@ duperemoval_set_features_op_loop_i:
         }
       }
     } else {
-      // Invalid track
-
-    duperemoval_set_features_op_loop_j_else:
-
-      // Fill with zero
+      // Invalid track. Fill with zero
       for (unsigned k = 0; k < num_emtf_features; k++) {
 
 #pragma HLS UNROLL

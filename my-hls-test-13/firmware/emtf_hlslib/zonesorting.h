@@ -189,8 +189,6 @@ void zonesorting_preprocess_stage_op(const T_IN in0[N_IN], T_OUT out[N_OUT]) {
 
 #pragma HLS INLINE
 
-zonesorting_preprocess_stage_op_loop:
-
   // Loop with step size 8
   for (unsigned i = 0; i < N_IN; i += 8) {
 
@@ -211,8 +209,6 @@ void zonesorting_merge_stage_op(const T_IN in0[N_IN], T_OUT out[N_OUT]) {
 
 #pragma HLS INLINE
 
-zonesorting_merge_stage_op_loop:
-
   // Loop with step size 8
   for (unsigned i = 0; i < N_IN; i += 8) {
 
@@ -232,8 +228,6 @@ void zonesorting_merge_stage_s1_op(const T_IN in0[N_IN], T_OUT out[N_OUT]) {
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
 #pragma HLS INLINE
-
-zonesorting_merge_stage_s1_op_loop:
 
   // Simple copy
   for (unsigned i = 0; i < N_IN; i++) {

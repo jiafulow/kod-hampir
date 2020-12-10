@@ -23,10 +23,8 @@ void suppression_op(
   constexpr unsigned int bits_lo = 0;
   constexpr unsigned int bits_hi = (data_t::width - 1);
 
-suppression_op_loop:
-
   // Loop over columns
-  for (unsigned col = 0; col < num_emtf_img_cols; col++) {
+  LOOP_COL: for (unsigned col = 0; col < num_emtf_img_cols; col++) {
 
 #pragma HLS UNROLL
 
