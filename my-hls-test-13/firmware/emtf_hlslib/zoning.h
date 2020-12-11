@@ -28,13 +28,13 @@ void zoning_row_op(
   const int the_tzone = details::timezone_traits<Timezone>::value;
 
   int chamber_id_table[N];
-  details::init_table_op(chamber_id_table, details::get_chamber_id_op<Row>());
+  details::init_table_op<N>(chamber_id_table, details::get_chamber_id_op<Row>());
 
   int chamber_ph_init_table[N];
-  details::init_table_op(chamber_ph_init_table, details::get_chamber_ph_init_op<chamber_category>());
+  details::init_table_op<N>(chamber_ph_init_table, details::get_chamber_ph_init_op<chamber_category>());
 
   int chamber_ph_cover_table[N];
-  details::init_table_op(chamber_ph_cover_table, details::get_chamber_ph_cover_op<chamber_category>());
+  details::init_table_op<N>(chamber_ph_cover_table, details::get_chamber_ph_cover_op<chamber_category>());
 
   typedef ap_uint<details::chamber_img_bw> chamber_img_t;
   typedef ap_uint<details::chamber_img_joined_bw> chamber_img_joined_t;

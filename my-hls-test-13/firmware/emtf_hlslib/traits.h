@@ -66,6 +66,13 @@ struct make_narrower { typedef T type; };
 template <int N> struct make_narrower<ap_int<N> > { typedef ap_int<N-1> type; };
 template <int N> struct make_narrower<ap_uint<N> > { typedef ap_uint<N-1> type; };
 
+// Make concatenated ap datatype
+template <typename T, typename U>
+struct make_concat {};
+
+template <int M, int N> struct make_concat<ap_int<M>, ap_int<N> > { typedef ap_int<M+N> type; };
+template <int M, int N> struct make_concat<ap_uint<M>, ap_uint<N> > { typedef ap_uint<M+N> type; };
+
 // Find max allowed value (for ap_uint<N>)
 template <typename T>
 struct find_ap_int_max_allowed {};
@@ -105,58 +112,45 @@ using iter_difference_t = typename iterator_traits<T>::difference_type;
 // Range access
 template <typename T, unsigned int N>
 T* stl_begin(T (&arr)[N]) {
+
+#pragma HLS INLINE
+
   return arr;
 }
 
 template <typename T, unsigned int N>
 T* stl_end(T (&arr)[N]) {
+
+#pragma HLS INLINE
+
   return arr + N;
 }
 
 // Increment or decrement
 template <typename RandomAccessIt>
-void stl_advance(RandomAccessIt& it, iter_difference_t<RandomAccessIt> n) {
-  it += n;
-}
-
-template <typename RandomAccessIt>
-iter_difference_t<RandomAccessIt> stl_distance(RandomAccessIt first, RandomAccessIt last) {
-  return last - first;
-}
-
-template <typename RandomAccessIt>
 RandomAccessIt stl_next(RandomAccessIt it, iter_difference_t<RandomAccessIt> n) {
-  stl_advance(it, n);
+
+#pragma HLS INLINE
+
+  it += n;
   return it;
 }
 
 template <typename RandomAccessIt>
 RandomAccessIt stl_prev(RandomAccessIt it, iter_difference_t<RandomAccessIt> n) {
-  stl_advance(it, -n);
+
+#pragma HLS INLINE
+
+  it -= n;
   return it;
 }
 
-// _____________________________________________________________________________
-// Mock implementation of C++ algorithm functions for use in the HLS project
+template <typename RandomAccessIt>
+iter_difference_t<RandomAccessIt> stl_distance(RandomAccessIt first, RandomAccessIt last) {
 
-template <typename InputIt, typename OutputIt>
-void stl_copy(InputIt first, InputIt last, OutputIt result) {
-  for (; first != last; ++first, ++result) {
+#pragma HLS INLINE
 
-#pragma HLS UNROLL
-
-    *result = *first;
-  }
-}
-
-template <typename ForwardIt, typename T>
-void stl_fill(ForwardIt first, ForwardIt last, const T& value) {
-  for (; first != last; ++first) {
-
-#pragma HLS UNROLL
-
-    *first = value;
-  }
+  return last - first;
 }
 
 }  // namespace emtf

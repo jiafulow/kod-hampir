@@ -42,16 +42,18 @@ void pooling_activate_op(const T_IN& in0, T_OUT& out) {
 
 //#pragma HLS INLINE
 
+  const unsigned int N = (1u << num_emtf_img_rows);
+
 #if !defined(__SYNTHESIS__)
   static bool initialized = false;
-  static int lookup_table[1u << num_emtf_img_rows];
+  static int lookup_table[N];
 #else
   bool initialized = false;
-  int lookup_table[1u << num_emtf_img_rows];
+  int lookup_table[N];
 #endif
 
   if (!initialized) {
-    details::init_table_op(lookup_table, details::get_pattern_activation_op<Zone>());
+    details::init_table_op<N>(lookup_table, details::get_pattern_activation_op<Zone>());
     initialized = true;
   }
 
@@ -123,11 +125,11 @@ void pooling_col_op(
 
 //#pragma HLS INLINE
 
-  int pattern_col_start_table[num_emtf_patterns][num_emtf_img_rows];
-  details::init_2d_table_op(pattern_col_start_table, details::get_pattern_col_start_op<Zone>());
+  int pattern_col_start_table[num_emtf_patterns * num_emtf_img_rows];
+  details::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(pattern_col_start_table, details::get_pattern_col_start_op<Zone>());
 
-  int pattern_col_stop_table[num_emtf_patterns][num_emtf_img_rows];
-  details::init_2d_table_op(pattern_col_stop_table, details::get_pattern_col_stop_op<Zone>());
+  int pattern_col_stop_table[num_emtf_patterns * num_emtf_img_rows];
+  details::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(pattern_col_stop_table, details::get_pattern_col_stop_op<Zone>());
 
   pooling_accumulation_t pooling_accumulations[num_emtf_patterns];
   pooling_activation_t pooling_activations[num_emtf_patterns];
@@ -142,14 +144,14 @@ void pooling_col_op(
 
     // Check pattern windows in each row
     pooling_accumulate_op(
-        patch_row_0.range(pattern_col_stop_table[patt][0], pattern_col_start_table[patt][0]),
-        patch_row_1.range(pattern_col_stop_table[patt][1], pattern_col_start_table[patt][1]),
-        patch_row_2.range(pattern_col_stop_table[patt][2], pattern_col_start_table[patt][2]),
-        patch_row_3.range(pattern_col_stop_table[patt][3], pattern_col_start_table[patt][3]),
-        patch_row_4.range(pattern_col_stop_table[patt][4], pattern_col_start_table[patt][4]),
-        patch_row_5.range(pattern_col_stop_table[patt][5], pattern_col_start_table[patt][5]),
-        patch_row_6.range(pattern_col_stop_table[patt][6], pattern_col_start_table[patt][6]),
-        patch_row_7.range(pattern_col_stop_table[patt][7], pattern_col_start_table[patt][7]),
+        patch_row_0.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 0], pattern_col_start_table[(patt * num_emtf_img_rows) + 0]),
+        patch_row_1.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 1], pattern_col_start_table[(patt * num_emtf_img_rows) + 1]),
+        patch_row_2.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 2], pattern_col_start_table[(patt * num_emtf_img_rows) + 2]),
+        patch_row_3.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 3], pattern_col_start_table[(patt * num_emtf_img_rows) + 3]),
+        patch_row_4.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 4], pattern_col_start_table[(patt * num_emtf_img_rows) + 4]),
+        patch_row_5.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 5], pattern_col_start_table[(patt * num_emtf_img_rows) + 5]),
+        patch_row_6.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 6], pattern_col_start_table[(patt * num_emtf_img_rows) + 6]),
+        patch_row_7.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 7], pattern_col_start_table[(patt * num_emtf_img_rows) + 7]),
         pooling_accumulations[patt]
     );
 

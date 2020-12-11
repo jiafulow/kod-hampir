@@ -331,19 +331,19 @@ void trkbuilding_match_ph_op(
   const int N = num_segments_round;
 
   int segment_id_table[N];
-  details::init_table_op(segment_id_table, details::get_site_segment_id_op<Site>());
+  details::init_table_op<N>(segment_id_table, details::get_site_segment_id_op<Site>());
 
-  int pattern_col_start_table[num_emtf_zones][num_emtf_patterns];
-  details::init_2d_table_op(pattern_col_start_table, details::get_site_pattern_col_start_op<Site>());
+  int pattern_col_start_table[num_emtf_zones * num_emtf_patterns];
+  details::init_2d_table_op<num_emtf_zones, num_emtf_patterns>(pattern_col_start_table, details::get_site_pattern_col_start_op<Site>());
 
-  int pattern_col_mid_table[num_emtf_zones][num_emtf_patterns];
-  details::init_2d_table_op(pattern_col_mid_table, details::get_site_pattern_col_mid_op<Site>());
+  int pattern_col_mid_table[num_emtf_zones * num_emtf_patterns];
+  details::init_2d_table_op<num_emtf_zones, num_emtf_patterns>(pattern_col_mid_table, details::get_site_pattern_col_mid_op<Site>());
 
-  int pattern_col_stop_table[num_emtf_zones][num_emtf_patterns];
-  details::init_2d_table_op(pattern_col_stop_table, details::get_site_pattern_col_stop_op<Site>());
+  int pattern_col_stop_table[num_emtf_zones * num_emtf_patterns];
+  details::init_2d_table_op<num_emtf_zones, num_emtf_patterns>(pattern_col_stop_table, details::get_site_pattern_col_stop_op<Site>());
 
   int pattern_col_pad_table[num_emtf_zones];
-  details::init_table_op(pattern_col_pad_table, details::get_site_pattern_col_pad_op<Site>());
+  details::init_table_op<num_emtf_zones>(pattern_col_pad_table, details::get_site_pattern_col_pad_op<Site>());
 
   // Find segments matched to the pattern
   trkbuilding_seg_t trkbuilding_ph_seg[N];
@@ -356,9 +356,9 @@ void trkbuilding_match_ph_op(
   const trkbuilding_ph_diff_t invalid_marker_ph_diff = find_ap_int_max_allowed<trkbuilding_ph_diff_t>::value;
 
   const trkbuilding_col_t col_patt = curr_trk_col + static_cast<trkbuilding_col_t>(details::chamber_img_joined_col_start);
-  const trkbuilding_col_t col_start = col_patt + pattern_col_start_table[curr_trk_zone][curr_trk_patt];
-  const trkbuilding_col_t col_mid = col_patt + pattern_col_mid_table[curr_trk_zone][curr_trk_patt];
-  const trkbuilding_col_t col_stop = col_patt + pattern_col_stop_table[curr_trk_zone][curr_trk_patt];
+  const trkbuilding_col_t col_start = col_patt + pattern_col_start_table[(curr_trk_zone * num_emtf_patterns) + curr_trk_patt];
+  const trkbuilding_col_t col_mid = col_patt + pattern_col_mid_table[(curr_trk_zone * num_emtf_patterns) + curr_trk_patt];
+  const trkbuilding_col_t col_stop = col_patt + pattern_col_stop_table[(curr_trk_zone * num_emtf_patterns) + curr_trk_patt];
   const trkbuilding_col_t col_pad = pattern_col_pad_table[curr_trk_zone];
 
   // Loop over segments (incl those in fake chambers)
@@ -639,18 +639,18 @@ void trkbuilding_op(
 
   // Loop over sites manually
   {
-    trkbuilding_match_ph_op<m_zone_any_site_0_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[0], curr_trk_seg_v_from_ph[0]);
-    trkbuilding_match_ph_op<m_zone_any_site_1_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[1], curr_trk_seg_v_from_ph[1]);
-    trkbuilding_match_ph_op<m_zone_any_site_2_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[2], curr_trk_seg_v_from_ph[2]);
-    trkbuilding_match_ph_op<m_zone_any_site_3_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[3], curr_trk_seg_v_from_ph[3]);
-    trkbuilding_match_ph_op<m_zone_any_site_4_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[4], curr_trk_seg_v_from_ph[4]);
-    trkbuilding_match_ph_op<m_zone_any_site_5_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[5], curr_trk_seg_v_from_ph[5]);
-    trkbuilding_match_ph_op<m_zone_any_site_6_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[6], curr_trk_seg_v_from_ph[6]);
-    trkbuilding_match_ph_op<m_zone_any_site_7_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[7], curr_trk_seg_v_from_ph[7]);
-    trkbuilding_match_ph_op<m_zone_any_site_8_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[8], curr_trk_seg_v_from_ph[8]);
-    trkbuilding_match_ph_op<m_zone_any_site_9_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[9], curr_trk_seg_v_from_ph[9]);
-    trkbuilding_match_ph_op<m_zone_any_site_10_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[10], curr_trk_seg_v_from_ph[10]);
-    trkbuilding_match_ph_op<m_zone_any_site_11_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[11], curr_trk_seg_v_from_ph[11]);
+    trkbuilding_match_ph_op<m_site_0_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[0], curr_trk_seg_v_from_ph[0]);
+    trkbuilding_match_ph_op<m_site_1_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[1], curr_trk_seg_v_from_ph[1]);
+    trkbuilding_match_ph_op<m_site_2_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[2], curr_trk_seg_v_from_ph[2]);
+    trkbuilding_match_ph_op<m_site_3_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[3], curr_trk_seg_v_from_ph[3]);
+    trkbuilding_match_ph_op<m_site_4_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[4], curr_trk_seg_v_from_ph[4]);
+    trkbuilding_match_ph_op<m_site_5_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[5], curr_trk_seg_v_from_ph[5]);
+    trkbuilding_match_ph_op<m_site_6_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[6], curr_trk_seg_v_from_ph[6]);
+    trkbuilding_match_ph_op<m_site_7_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[7], curr_trk_seg_v_from_ph[7]);
+    trkbuilding_match_ph_op<m_site_8_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[8], curr_trk_seg_v_from_ph[8]);
+    trkbuilding_match_ph_op<m_site_9_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[9], curr_trk_seg_v_from_ph[9]);
+    trkbuilding_match_ph_op<m_site_10_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[10], curr_trk_seg_v_from_ph[10]);
+    trkbuilding_match_ph_op<m_site_11_tag>(emtf_phi, seg_zones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg[11], curr_trk_seg_v_from_ph[11]);
   }
 
   // Set phi_median
