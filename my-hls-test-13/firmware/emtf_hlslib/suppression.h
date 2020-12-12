@@ -18,10 +18,10 @@ void suppression_op(
 
 #pragma HLS INLINE
 
-  typedef pooling_activation_t data_t;
+  typedef trk_qual_t data_t;
 
-  constexpr unsigned int bits_lo = 0;
-  constexpr unsigned int bits_hi = (data_t::width - 1);
+  constexpr int bits_lo = 0;
+  constexpr int bits_hi = (data_t::width - 1);
 
   // Loop over columns
   LOOP_COL: for (unsigned col = 0; col < num_emtf_img_cols; col++) {
@@ -40,7 +40,7 @@ void suppression_op(
     const bool suppress = (qc <= ql || qc < qr);
 
     // Output
-    suppression_out[col] = suppress ? suppression_out_t(0) : suppression_in[col];
+    suppression_out[col] = suppress ? static_cast<suppression_in_t>(0) : suppression_in[col];
   }  // end loop over columns
 }
 

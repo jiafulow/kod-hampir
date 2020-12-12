@@ -33,8 +33,8 @@ void pooling_accumulate_op(
 // Function to apply activation
 template <typename Zone, typename T_IN, typename T_OUT>
 void pooling_activate_op(const T_IN& in0, T_OUT& out) {
-  static_assert(is_same<T_IN, pooling_accumulation_t>::value, "T_IN type check failed");
-  static_assert(is_same<T_OUT, pooling_activation_t>::value, "T_OUT type check failed");
+  static_assert(is_same<T_IN, dio_row_accum_t>::value, "T_IN type check failed");
+  static_assert(is_same<T_OUT, trk_qual_t>::value, "T_OUT type check failed");
 
 #pragma HLS PIPELINE II=pooling_config::target_ii
 
@@ -58,13 +58,13 @@ void pooling_activate_op(const T_IN& in0, T_OUT& out) {
   }
 
   // Lookup
-  out = (T_OUT) lookup_table[in0];
+  out = static_cast<T_OUT>(lookup_table[in0]);
 }
 
 // Function to find max activation, keeping pattern number
 template <typename T_IN, typename T_OUT>
 void pooling_reduce_argmax_op(const T_IN in0[num_emtf_patterns], T_OUT& out) {
-  static_assert(is_same<T_IN, pooling_activation_t>::value, "T_IN type check failed");
+  static_assert(is_same<T_IN, trk_qual_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, pooling_out_t>::value, "T_OUT type check failed");
 
 #pragma HLS PIPELINE II=pooling_config::target_ii
@@ -73,9 +73,9 @@ void pooling_reduce_argmax_op(const T_IN in0[num_emtf_patterns], T_OUT& out) {
 
 #pragma HLS INLINE
 
-  typedef pooling_patt_t idx_t;
-  typedef pooling_activation_t data_t;
-  using pair_t = details::argsort_pair<idx_t, data_t>;
+  typedef trk_patt_t idx_t;  // encodes 0..6
+  typedef trk_qual_t data_t;
+  typedef details::argsort_pair<idx_t, data_t> pair_t;
 
   // Stage 0: concatenate index and data.
   const pair_t tmp_0_0(idx_t(0), in0[0]);
@@ -131,11 +131,11 @@ void pooling_col_op(
   int pattern_col_stop_table[num_emtf_patterns * num_emtf_img_rows];
   details::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(pattern_col_stop_table, details::get_pattern_col_stop_op<Zone>());
 
-  pooling_accumulation_t pooling_accumulations[num_emtf_patterns];
-  pooling_activation_t pooling_activations[num_emtf_patterns];
+  dio_row_accum_t accumulations[num_emtf_patterns];
+  trk_qual_t activations[num_emtf_patterns];
 
-#pragma HLS ARRAY_PARTITION variable=pooling_accumulations complete dim=0
-#pragma HLS ARRAY_PARTITION variable=pooling_activations complete dim=0
+#pragma HLS ARRAY_PARTITION variable=accumulations complete dim=0
+#pragma HLS ARRAY_PARTITION variable=activations complete dim=0
 
   // Loop over patterns
   LOOP_PATT: for (unsigned patt = 0; patt < num_emtf_patterns; patt++) {
@@ -152,15 +152,15 @@ void pooling_col_op(
         patch_row_5.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 5], pattern_col_start_table[(patt * num_emtf_img_rows) + 5]),
         patch_row_6.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 6], pattern_col_start_table[(patt * num_emtf_img_rows) + 6]),
         patch_row_7.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 7], pattern_col_start_table[(patt * num_emtf_img_rows) + 7]),
-        pooling_accumulations[patt]
+        accumulations[patt]
     );
 
     // Activation
-    pooling_activate_op<Zone>(pooling_accumulations[patt], pooling_activations[patt]);
+    pooling_activate_op<Zone>(accumulations[patt], activations[patt]);
   }  // end loop over patterns
 
   // Find max activation
-  pooling_reduce_argmax_op(pooling_activations, pooling_out_col_j);
+  pooling_reduce_argmax_op(activations, pooling_out_col_j);
 }
 
 // _____________________________________________________________________________

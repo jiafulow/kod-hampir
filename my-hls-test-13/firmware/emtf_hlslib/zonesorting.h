@@ -4,7 +4,7 @@
 namespace emtf {
 
 template <typename T_IN, typename T_OUT>
-void zonesorting_preprocess_eight_op(const pooling_col_t col, const T_IN in0[8], T_OUT out[4]) {
+void zonesorting_preprocess_eight_op(const trk_col_t col, const T_IN in0[8], T_OUT out[4]) {
   static_assert(is_same<T_IN, zonesorting_in_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, zonesorting_out_t>::value, "T_OUT type check failed");
 
@@ -14,12 +14,12 @@ void zonesorting_preprocess_eight_op(const pooling_col_t col, const T_IN in0[8],
 
 #pragma HLS INLINE
 
-  typedef ap_uint<3> idx_t;  // 0..7
-  typedef pooling_activation_t data_t;
-  using pair_t = details::argsort_pair<idx_t, data_t>;
+  typedef ap_uint<details::ceil_log2<7>::value> idx_t;  // encodes 0..7
+  typedef trk_qual_t data_t;
+  typedef details::argsort_pair<idx_t, data_t> pair_t;
 
-  constexpr unsigned int bits_lo = 0;
-  constexpr unsigned int bits_hi = (data_t::width - 1);
+  constexpr int bits_lo = 0;
+  constexpr int bits_hi = (data_t::width - 1);
 
   // Stage 0: implement mux for each pair of cols, concatenate index and data.
   const pair_t tmp_0_0_0(idx_t(0), in0[0].range(bits_hi, bits_lo));
@@ -31,10 +31,10 @@ void zonesorting_preprocess_eight_op(const pooling_col_t col, const T_IN in0[8],
   const pair_t tmp_0_3_0(idx_t(6), in0[6].range(bits_hi, bits_lo));
   const pair_t tmp_0_3_1(idx_t(7), in0[7].range(bits_hi, bits_lo));
 
-  const pair_t tmp_0_0 = (tmp_0_0_0.second > 0) ? tmp_0_0_0 : tmp_0_0_1;
-  const pair_t tmp_0_1 = (tmp_0_1_0.second > 0) ? tmp_0_1_0 : tmp_0_1_1;
-  const pair_t tmp_0_2 = (tmp_0_2_0.second > 0) ? tmp_0_2_0 : tmp_0_2_1;
-  const pair_t tmp_0_3 = (tmp_0_3_0.second > 0) ? tmp_0_3_0 : tmp_0_3_1;
+  const pair_t tmp_0_0 = (tmp_0_0_0.second != 0) ? tmp_0_0_0 : tmp_0_0_1;
+  const pair_t tmp_0_1 = (tmp_0_1_0.second != 0) ? tmp_0_1_0 : tmp_0_1_1;
+  const pair_t tmp_0_2 = (tmp_0_2_0.second != 0) ? tmp_0_2_0 : tmp_0_2_1;
+  const pair_t tmp_0_3 = (tmp_0_3_0.second != 0) ? tmp_0_3_0 : tmp_0_3_1;
 
   // The following implements the bubble sorting network, which is a stable sort algo.
   // There are 4 wires (0,1,2,3 from top to bottom), and there are 5 stages (not counting
@@ -81,10 +81,10 @@ void zonesorting_preprocess_eight_op(const pooling_col_t col, const T_IN in0[8],
   const idx_t idx2 = tmp_4_2.first;
   const idx_t idx3 = tmp_3_3.first;
 
-  out[0] = (pooling_col_t(col + idx0), in0[idx0]);
-  out[1] = (pooling_col_t(col + idx1), in0[idx1]);
-  out[2] = (pooling_col_t(col + idx2), in0[idx2]);
-  out[3] = (pooling_col_t(col + idx3), in0[idx3]);
+  out[0] = (trk_col_t(col + idx0), in0[idx0]);
+  out[1] = (trk_col_t(col + idx1), in0[idx1]);
+  out[2] = (trk_col_t(col + idx2), in0[idx2]);
+  out[3] = (trk_col_t(col + idx3), in0[idx3]);
 }
 
 template <typename T_IN, typename T_OUT>
@@ -97,12 +97,12 @@ void zonesorting_merge_eight_op(const T_IN in0[8], T_OUT out[4]) {
 
 #pragma HLS INLINE
 
-  typedef ap_uint<3> idx_t;  // 0..7
-  typedef pooling_activation_t data_t;
-  using pair_t = details::argsort_pair<idx_t, data_t>;
+  typedef ap_uint<details::ceil_log2<7>::value> idx_t;  // encodes 0..7
+  typedef trk_qual_t data_t;
+  typedef details::argsort_pair<idx_t, data_t> pair_t;
 
-  constexpr unsigned int bits_lo = 0;
-  constexpr unsigned int bits_hi = (data_t::width - 1);
+  constexpr int bits_lo = 0;
+  constexpr int bits_hi = (data_t::width - 1);
 
   // The following implements the odd-even merge sorting network, which is *not* a stable sort algo.
   // There are 8 wires (0..7 from top to bottom), and there are 3 stages (not counting

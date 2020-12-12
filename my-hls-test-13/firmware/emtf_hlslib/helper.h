@@ -80,7 +80,7 @@
     std::cout << "], value: ["; \
     for (unsigned i = 0; i < pooling_config::n_out; i++) { \
       if (pooling_0_out[i]) \
-        std::cout << pooling_0_out[i].range(pooling_activation_t::width - 1, 0) << ", "; \
+        std::cout << pooling_0_out[i].range(trk_qual_t::width - 1, 0) << ", "; \
     } \
     std::cout << "]" << std::endl; \
     std::cout << "Printing 'suppression_0_out' non-zero elements:" << std::endl; \
@@ -92,27 +92,27 @@
     std::cout << "], value: ["; \
     for (unsigned i = 0; i < suppression_config::n_out; i++) { \
       if (suppression_0_out[i]) \
-        std::cout << suppression_0_out[i].range(pooling_activation_t::width - 1, 0) << ", "; \
+        std::cout << suppression_0_out[i].range(trk_qual_t::width - 1, 0) << ", "; \
     } \
     std::cout << "]" << std::endl; \
     std::cout << "Printing 'zonesorting_0_out', 'zonesorting_1_out', 'zonesorting_2_out' all elements:" << std::endl; \
     std::cout << "value: ["; \
     for (unsigned i = 0; i < zonesorting_config::n_out; i++) { \
-      std::cout << zonesorting_0_out[i].range(pooling_activation_t::width - 1, 0) << ", "; \
+      std::cout << zonesorting_0_out[i].range(trk_qual_t::width - 1, 0) << ", "; \
     } \
     std::cout << "], value: ["; \
     for (unsigned i = 0; i < zonesorting_config::n_out; i++) { \
-      std::cout << zonesorting_1_out[i].range(pooling_activation_t::width - 1, 0) << ", "; \
+      std::cout << zonesorting_1_out[i].range(trk_qual_t::width - 1, 0) << ", "; \
     } \
     std::cout << "], value: ["; \
     for (unsigned i = 0; i < zonesorting_config::n_out; i++) { \
-      std::cout << zonesorting_2_out[i].range(pooling_activation_t::width - 1, 0) << ", "; \
+      std::cout << zonesorting_2_out[i].range(trk_qual_t::width - 1, 0) << ", "; \
     } \
     std::cout << "]" << std::endl; \
     std::cout << "Printing 'zonemerging_0_out' all elements:" << std::endl; \
     std::cout << "value: ["; \
     for (unsigned i = 0; i < zonemerging_config::n_out; i++) { \
-      std::cout << zonemerging_0_out[i].range(pooling_activation_t::width - 1, 0) << ", "; \
+      std::cout << zonemerging_0_out[i].range(trk_qual_t::width - 1, 0) << ", "; \
     } \
     std::cout << "]" << std::endl; \
     std::cout << "Printing 'trk_seg', 'trk_seg_v' first-track elements:" << std::endl; \

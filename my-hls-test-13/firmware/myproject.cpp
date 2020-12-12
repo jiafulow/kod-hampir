@@ -18,6 +18,7 @@ void myproject(
 #pragma HLS ARRAY_PARTITION variable=out complete dim=0
 
   // Unpack from in0
+  // Note: the following are currently unused and will be synthesized away - emtf_qual2, emtf_time, seg_fr, seg_dl, seg_bx.
   emtf_phi_t    emtf_phi    [model_config::n_in];
   emtf_bend_t   emtf_bend   [model_config::n_in];
   emtf_theta1_t emtf_theta1 [model_config::n_in];
@@ -68,6 +69,18 @@ void myproject(
 
   // This macro is defined in emtf_hlslib/helper.h
   PRINT_TOP_FN_ARRAYS_IN0
+
+  // Check assumptions
+  constexpr int num_trk_cols_with_safety = (((80 * 64) / emtf_img_col_factor) + (max_emtf_img_col_pad * 2));
+  static_assert(trk_qual_t::width == max_emtf_pattern_activation_log2, "trk_qual_t type check failed");
+  static_assert(trk_patt_t::width == details::ceil_log2<num_emtf_patterns>::value, "trk_patt_t type check failed");
+  static_assert(trk_col_t::width == details::ceil_log2<num_trk_cols_with_safety>::value, "trk_col_t type check failed");
+  static_assert(trk_zone_t::width == details::ceil_log2<num_emtf_zones>::value, "trk_zone_t type check failed");
+  static_assert(trk_tzone_t::width == details::ceil_log2<num_emtf_timezones>::value, "trk_tzone_t type check failed");
+  static_assert(trk_seg_t::width == details::ceil_log2<num_emtf_chambers * num_emtf_segments>::value, "trk_seg_t type check failed");
+  static_assert(trk_seg_v_t::width == num_emtf_sites, "trk_seg_v_t type check failed");
+  static_assert(trk_feat_t::width == emtf_phi_t::width, "trk_feat_t type check failed");
+  static_assert(trk_valid_t::width == 1, "trk_valid_t type check failed");
 
   // Intermediate arrays (for layers 0..4)
   zoning_out_t      zoning_0_out      [zoning_config::n_out];
@@ -139,14 +152,14 @@ void myproject(
 #pragma HLS ARRAY_PARTITION variable=trk_col complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_zone complete dim=0
 
-  constexpr unsigned int in1_0_bits_lo = 0;
-  constexpr unsigned int in1_0_bits_hi = (in1_0_bits_lo + trk_qual_t::width - 1);
-  constexpr unsigned int in1_1_bits_lo = (in1_0_bits_hi + 1);
-  constexpr unsigned int in1_1_bits_hi = (in1_1_bits_lo + trk_patt_t::width - 1);
-  constexpr unsigned int in1_2_bits_lo = (in1_1_bits_hi + 1);
-  constexpr unsigned int in1_2_bits_hi = (in1_2_bits_lo + trk_col_t::width - 1);
-  constexpr unsigned int in1_3_bits_lo = (in1_2_bits_hi + 1);
-  constexpr unsigned int in1_3_bits_hi = (in1_3_bits_lo + trk_zone_t::width - 1);
+  constexpr int in1_0_bits_lo = 0;
+  constexpr int in1_0_bits_hi = (in1_0_bits_lo + trk_qual_t::width - 1);
+  constexpr int in1_1_bits_lo = (in1_0_bits_hi + 1);
+  constexpr int in1_1_bits_hi = (in1_1_bits_lo + trk_patt_t::width - 1);
+  constexpr int in1_2_bits_lo = (in1_1_bits_hi + 1);
+  constexpr int in1_2_bits_hi = (in1_2_bits_lo + trk_col_t::width - 1);
+  constexpr int in1_3_bits_lo = (in1_2_bits_hi + 1);
+  constexpr int in1_3_bits_hi = (in1_3_bits_lo + trk_zone_t::width - 1);
 
   // Loop over in1
   LOOP_IN1: for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) {

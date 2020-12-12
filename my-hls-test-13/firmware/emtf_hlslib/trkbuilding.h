@@ -3,11 +3,11 @@
 
 namespace emtf {
 
-template <typename T0, typename T1, typename T_OUT>
-void trkbuilding_reduce_argmin_ph_diff_op(const T0 in0[4], const T1 in1[4], T_OUT& out, bool& vld, m_20deg_chamber_tag) {
-  static_assert(is_same<T0, trkbuilding_seg_t>::value, "T0 type check failed");
-  static_assert(is_same<T1, trkbuilding_ph_diff_t>::value, "T1 type check failed");
-  static_assert(is_same<T_OUT, T0>::value, "T_OUT type check failed");
+template <typename T_IN0, typename T_IN1, typename T_OUT>
+void trkbuilding_reduce_argmin_ph_diff_op(const T_IN0 in0[4], const T_IN1 in1[4], T_OUT& out, bool& vld, m_20deg_chamber_tag) {
+  static_assert(is_same<T_IN0, trk_seg_t>::value, "T_IN0 type check failed");
+  static_assert(is_same<T_IN1, dio_trk_ph_diff_t>::value, "T_IN1 type check failed");
+  static_assert(is_same<T_OUT, T_IN0>::value, "T_OUT type check failed");
 
 #pragma HLS PIPELINE II=trkbuilding_config::target_ii
 
@@ -15,9 +15,9 @@ void trkbuilding_reduce_argmin_ph_diff_op(const T0 in0[4], const T1 in1[4], T_OU
 
 #pragma HLS INLINE
 
-  typedef ap_uint<2> idx_t;  // 0..3
-  typedef T1 data_t;
-  using pair_t = details::argsort_pair<idx_t, data_t>;
+  typedef ap_uint<details::ceil_log2<3>::value> idx_t;  // encodes 0..3
+  typedef T_IN1 data_t;
+  typedef details::argsort_pair<idx_t, data_t> pair_t;
 
   // Stage 0: concatenate index and data
   const pair_t tmp_0_0(idx_t(0), in1[0]);
@@ -40,11 +40,11 @@ void trkbuilding_reduce_argmin_ph_diff_op(const T0 in0[4], const T1 in1[4], T_OU
   vld = (in1[idx] != invalid_marker);
 }
 
-template <typename T0, typename T1, typename T_OUT>
-void trkbuilding_reduce_argmin_ph_diff_op(const T0 in0[8], const T1 in1[8], T_OUT& out, bool& vld, m_10deg_chamber_tag) {
-  static_assert(is_same<T0, trkbuilding_seg_t>::value, "T0 type check failed");
-  static_assert(is_same<T1, trkbuilding_ph_diff_t>::value, "T1 type check failed");
-  static_assert(is_same<T_OUT, T0>::value, "T_OUT type check failed");
+template <typename T_IN0, typename T_IN1, typename T_OUT>
+void trkbuilding_reduce_argmin_ph_diff_op(const T_IN0 in0[8], const T_IN1 in1[8], T_OUT& out, bool& vld, m_10deg_chamber_tag) {
+  static_assert(is_same<T_IN0, trk_seg_t>::value, "T_IN0 type check failed");
+  static_assert(is_same<T_IN1, dio_trk_ph_diff_t>::value, "T_IN1 type check failed");
+  static_assert(is_same<T_OUT, T_IN0>::value, "T_OUT type check failed");
 
 #pragma HLS PIPELINE II=trkbuilding_config::target_ii
 
@@ -52,9 +52,9 @@ void trkbuilding_reduce_argmin_ph_diff_op(const T0 in0[8], const T1 in1[8], T_OU
 
 #pragma HLS INLINE
 
-  typedef ap_uint<3> idx_t;  // 0..7
-  typedef T1 data_t;
-  using pair_t = details::argsort_pair<idx_t, data_t>;
+  typedef ap_uint<details::ceil_log2<7>::value> idx_t;  // encodes 0..7
+  typedef T_IN1 data_t;
+  typedef details::argsort_pair<idx_t, data_t> pair_t;
 
   // Stage 0: concatenate index and data
   const pair_t tmp_0_0(idx_t(0), in1[0]);
@@ -87,11 +87,11 @@ void trkbuilding_reduce_argmin_ph_diff_op(const T0 in0[8], const T1 in1[8], T_OU
   vld = (in1[idx] != invalid_marker);
 }
 
-template <typename T0, typename T1, typename T_OUT>
-void trkbuilding_reduce_argmin_ph_diff_op(const T0 in0[12], const T1 in1[12], T_OUT& out, bool& vld, m_20deg_ext_chamber_tag) {
-  static_assert(is_same<T0, trkbuilding_seg_t>::value, "T0 type check failed");
-  static_assert(is_same<T1, trkbuilding_ph_diff_t>::value, "T1 type check failed");
-  static_assert(is_same<T_OUT, T0>::value, "T_OUT type check failed");
+template <typename T_IN0, typename T_IN1, typename T_OUT>
+void trkbuilding_reduce_argmin_ph_diff_op(const T_IN0 in0[12], const T_IN1 in1[12], T_OUT& out, bool& vld, m_20deg_ext_chamber_tag) {
+  static_assert(is_same<T_IN0, trk_seg_t>::value, "T_IN0 type check failed");
+  static_assert(is_same<T_IN1, dio_trk_ph_diff_t>::value, "T_IN1 type check failed");
+  static_assert(is_same<T_OUT, T_IN0>::value, "T_OUT type check failed");
 
 #pragma HLS PIPELINE II=trkbuilding_config::target_ii
 
@@ -99,9 +99,9 @@ void trkbuilding_reduce_argmin_ph_diff_op(const T0 in0[12], const T1 in1[12], T_
 
 #pragma HLS INLINE
 
-  typedef ap_uint<4> idx_t;  // 0..11
-  typedef T1 data_t;
-  using pair_t = details::argsort_pair<idx_t, data_t>;
+  typedef ap_uint<details::ceil_log2<11>::value> idx_t;  // encodes 0..11
+  typedef T_IN1 data_t;
+  typedef details::argsort_pair<idx_t, data_t> pair_t;
 
   // Stage 0: concatenate index and data
   const pair_t tmp_0_0(idx_t(0), in1[0]);
@@ -232,22 +232,29 @@ void trkbuilding_select_theta_op(const T_IN& in0, const T_IN& in1, const T_IN& t
 #pragma HLS INLINE
 
   typedef T_IN data_t;
+  typedef dio_trk_th_diff_t difference_t;
   const data_t invalid_marker_th = details::th_invalid;
-  const data_t th_window = details::th_window;
+  const difference_t invalid_marker_th_diff = find_ap_int_max_allowed<difference_t>::value;
+  const difference_t th_window = details::th_window;
 
   const data_t th_diff_tmp_0 = details::calc_abs_diff(in0, th_median);
   const data_t th_diff_tmp_1 = details::calc_abs_diff(in1, th_median);
-  const bool valid_tmp_0 = (in0 != invalid_marker_th) and (th_diff_tmp_0 < th_window);
-  const bool valid_tmp_1 = (in1 != invalid_marker_th) and (th_diff_tmp_1 < th_window);
+  const bool is_valid_th_diff_tmp_0 = (in0 != invalid_marker_th) and (th_diff_tmp_0 < invalid_marker_th_diff);
+  const bool is_valid_th_diff_tmp_1 = (in1 != invalid_marker_th) and (th_diff_tmp_1 < invalid_marker_th_diff);
+
+  const difference_t th_diff_0 = is_valid_th_diff_tmp_0 ? static_cast<difference_t>(th_diff_tmp_0) : invalid_marker_th_diff;
+  const difference_t th_diff_1 = is_valid_th_diff_tmp_1 ? static_cast<difference_t>(th_diff_tmp_1) : invalid_marker_th_diff;
+  const bool is_valid_th_diff_0 = is_valid_th_diff_tmp_0 and (th_diff_0 < th_window);
+  const bool is_valid_th_diff_1 = is_valid_th_diff_tmp_1 and (th_diff_1 < th_window);
 
   // Output
-  if (valid_tmp_0 and valid_tmp_1) {
-    out = (th_diff_tmp_0 < th_diff_tmp_1) ? in0 : in1;
+  if (is_valid_th_diff_0 and is_valid_th_diff_1) {
+    out = (th_diff_0 < th_diff_1) ? in0 : in1;
     vld = true;
-  } else if (valid_tmp_0) {
+  } else if (is_valid_th_diff_0) {
     out = in0;
     vld = true;
-  } else if (valid_tmp_1) {
+  } else if (is_valid_th_diff_1) {
     out = in1;
     vld = true;
   } else {
@@ -267,14 +274,19 @@ void trkbuilding_select_theta_op(const T_IN& in0, const T_IN& th_median, T_OUT& 
 #pragma HLS INLINE
 
   typedef T_IN data_t;
+  typedef dio_trk_th_diff_t difference_t;
   const data_t invalid_marker_th = details::th_invalid;
-  const data_t th_window = details::th_window;
+  const difference_t invalid_marker_th_diff = find_ap_int_max_allowed<difference_t>::value;
+  const difference_t th_window = details::th_window;
 
   const data_t th_diff_tmp_0 = details::calc_abs_diff(in0, th_median);
-  const bool valid_tmp_0 = (in0 != invalid_marker_th) and (th_diff_tmp_0 < th_window);
+  const bool is_valid_th_diff_tmp_0 = (in0 != invalid_marker_th) and (th_diff_tmp_0 < invalid_marker_th_diff);
+
+  const difference_t th_diff_0 = is_valid_th_diff_tmp_0 ? static_cast<difference_t>(th_diff_tmp_0) : invalid_marker_th_diff;
+  const bool is_valid_th_diff_0 = is_valid_th_diff_tmp_0 and (th_diff_0 < th_window);
 
   // Output
-  if (valid_tmp_0) {
+  if (is_valid_th_diff_0) {
     out = in0;
     vld = true;
   } else {
@@ -283,8 +295,10 @@ void trkbuilding_select_theta_op(const T_IN& in0, const T_IN& th_median, T_OUT& 
   }
 }
 
-template <int N>
-void trkbuilding_pack_booleans_op(const bool in0[N], ap_uint<N>& out) {
+template <unsigned int N, typename T_IN, typename T_OUT>
+void trkbuilding_pack_booleans_op(const T_IN (&in0)[N], T_OUT& out) {
+  static_assert(is_same<T_IN, bool>::value, "T_IN type check failed");
+  static_assert(is_same<T_OUT, ap_uint<N> >::value, "T_OUT type check failed");
 
 #pragma HLS PIPELINE II=trkbuilding_config::target_ii
 
@@ -328,7 +342,8 @@ void trkbuilding_match_ph_op(
   const int num_chambers = details::num_chambers_traits<chamber_category>::value;
   const int num_chambers_round = details::ceil_mul4<num_chambers>::value;
   const int num_segments_round = num_chambers_round * num_emtf_segments;
-  const int N = num_segments_round;
+  const unsigned int N = num_segments_round;
+  emtf_assert(N == 8 || N == 16 || N == 24);
 
   int segment_id_table[N];
   details::init_table_op<N>(segment_id_table, details::get_site_segment_id_op<Site>());
@@ -346,35 +361,36 @@ void trkbuilding_match_ph_op(
   details::init_table_op<num_emtf_zones>(pattern_col_pad_table, details::get_site_pattern_col_pad_op<Site>());
 
   // Find segments matched to the pattern
-  trkbuilding_seg_t trkbuilding_ph_seg[N];
-  trkbuilding_ph_diff_t trkbuilding_ph_diff[N];
+  trk_seg_t site_ph_seg[N];
+  dio_trk_ph_diff_t site_ph_diff[N];
 
-#pragma HLS ARRAY_PARTITION variable=trkbuilding_ph_seg complete dim=0
-#pragma HLS ARRAY_PARTITION variable=trkbuilding_ph_diff complete dim=0
+#pragma HLS ARRAY_PARTITION variable=site_ph_seg complete dim=0
+#pragma HLS ARRAY_PARTITION variable=site_ph_diff complete dim=0
 
-  const trkbuilding_seg_t invalid_marker_ph_seg = model_config::n_in;
-  const trkbuilding_ph_diff_t invalid_marker_ph_diff = find_ap_int_max_allowed<trkbuilding_ph_diff_t>::value;
+  const trk_seg_t invalid_marker_ph_seg = model_config::n_in;
+  const dio_trk_ph_diff_t invalid_marker_ph_diff = find_ap_int_max_allowed<dio_trk_ph_diff_t>::value;
 
-  const trkbuilding_col_t col_patt = curr_trk_col + static_cast<trkbuilding_col_t>(details::chamber_img_joined_col_start);
-  const trkbuilding_col_t col_start = col_patt + pattern_col_start_table[(curr_trk_zone * num_emtf_patterns) + curr_trk_patt];
-  const trkbuilding_col_t col_mid = col_patt + pattern_col_mid_table[(curr_trk_zone * num_emtf_patterns) + curr_trk_patt];
-  const trkbuilding_col_t col_stop = col_patt + pattern_col_stop_table[(curr_trk_zone * num_emtf_patterns) + curr_trk_patt];
-  const trkbuilding_col_t col_pad = pattern_col_pad_table[curr_trk_zone];
+  const trk_col_t col_patt = curr_trk_col + static_cast<trk_col_t>(details::chamber_img_joined_col_start);
+  const trk_col_t col_start = col_patt + pattern_col_start_table[(curr_trk_zone * num_emtf_patterns) + curr_trk_patt];
+  const trk_col_t col_mid = col_patt + pattern_col_mid_table[(curr_trk_zone * num_emtf_patterns) + curr_trk_patt];
+  const trk_col_t col_stop = col_patt + pattern_col_stop_table[(curr_trk_zone * num_emtf_patterns) + curr_trk_patt];
+  const trk_col_t col_pad = pattern_col_pad_table[curr_trk_zone];
 
   // Loop over segments (incl those in fake chambers)
   for (unsigned i = 0; i < N; i++) {
 
 #pragma HLS UNROLL
 
-    const trkbuilding_seg_t iseg = segment_id_table[i];
+    const trk_seg_t iseg = segment_id_table[i];
     const bool is_valid_seg = (iseg != invalid_marker_ph_seg);
 
     // Keep track of segment id
-    trkbuilding_ph_seg[i] = iseg;
+    site_ph_seg[i] = iseg;
 
     if (is_valid_seg) {
-      const trkbuilding_col_t col = (emtf_phi[iseg] >> 4);
-      const trkbuilding_col_t padded_col = col + col_pad;
+      constexpr int bits_to_shift = emtf_img_col_factor_log2;
+      const trk_col_t col = (emtf_phi[iseg] >> bits_to_shift);
+      const trk_col_t padded_col = col + col_pad;
       const bool is_valid_col = (
           (seg_valid[iseg] == 1) and \
           (seg_zones[iseg][(num_emtf_zones - 1) - curr_trk_zone] == 1) and \
@@ -385,34 +401,35 @@ void trkbuilding_match_ph_op(
         // Calculate abs difference
         const emtf_phi_t ph_seg = emtf_phi[iseg];
         const emtf_phi_t ph_patt_tmp = details::calc_rectified_diff(col_mid, col_pad);
-        const emtf_phi_t ph_patt = (ph_patt_tmp << 4) + (1 << 3);
+        const emtf_phi_t ph_patt = (ph_patt_tmp << bits_to_shift) + (1u << (bits_to_shift - 1));
+        emtf_assert(((ph_patt >> bits_to_shift) + col_pad) == col_mid);
+
         const emtf_phi_t ph_diff = details::calc_abs_diff(ph_seg, ph_patt);
-        assert(((ph_patt >> 4) + col_pad) == col_mid);
         const bool is_valid_ph_diff = (ph_diff < invalid_marker_ph_diff);
-        trkbuilding_ph_diff[i] = is_valid_ph_diff ? static_cast<trkbuilding_ph_diff_t>(ph_diff) : invalid_marker_ph_diff;
+        site_ph_diff[i] = is_valid_ph_diff ? static_cast<dio_trk_ph_diff_t>(ph_diff) : invalid_marker_ph_diff;
       } else {
         // Invalid segment
-        trkbuilding_ph_diff[i] = invalid_marker_ph_diff;
+        site_ph_diff[i] = invalid_marker_ph_diff;
       }
     } else {
       // Invalid segment id
-      trkbuilding_ph_diff[i] = invalid_marker_ph_diff;
+      site_ph_diff[i] = invalid_marker_ph_diff;
     }
   }  // end loop over segments
 
   // Select an area (40 deg = 2x 20 deg chambers, 4x 10 deg chambers, or 6x 20 deg ext chambers)
-  const bool vld_area_0 = (col_patt < static_cast<trkbuilding_col_t>(details::chamber_ph_cover_20deg[0]));
-  const bool vld_area_1 = (col_patt < static_cast<trkbuilding_col_t>(details::chamber_ph_cover_20deg[1]));
-  const bool vld_area_2 = (col_patt < static_cast<trkbuilding_col_t>(details::chamber_ph_cover_20deg[2]));
+  const bool vld_area_0 = (col_patt < static_cast<trk_col_t>(details::chamber_ph_cover_20deg[0]));
+  const bool vld_area_1 = (col_patt < static_cast<trk_col_t>(details::chamber_ph_cover_20deg[1]));
+  const bool vld_area_2 = (col_patt < static_cast<trk_col_t>(details::chamber_ph_cover_20deg[2]));
 
-  const trkbuilding_area_t area = vld_area_0 ? 0 : (vld_area_1 ? 1 : (vld_area_2 ? 2 : num_emtf_img_areas));
-  assert(area != num_emtf_img_areas);
+  const int area = vld_area_0 ? 0 : (vld_area_1 ? 1 : (vld_area_2 ? 2 : num_emtf_img_areas));
+  const int area_start = area * (N / (num_emtf_img_areas + 1));
+  emtf_assert(area != num_emtf_img_areas);
 
   // Select min activation
-  const int area_start = area * (N / (num_emtf_img_areas + 1));
   trkbuilding_reduce_argmin_ph_diff_op(
-      stl_next(trkbuilding_ph_seg, area_start),
-      stl_next(trkbuilding_ph_diff, area_start),
+      stl_next(site_ph_seg, area_start),
+      stl_next(site_ph_diff, area_start),
       curr_trk_seg_site_i,
       curr_trk_seg_v_site_i,
       chamber_category()
@@ -492,7 +509,7 @@ void trkbuilding_match_th_op(
   trkbuilding_reduce_median_theta_op(theta_values_s1, theta_median_tmp_1);
 
   theta_median = (theta_median_tmp_0 != invalid_marker_th) ? theta_median_tmp_0 : theta_median_tmp_1;
-  assert(theta_median != invalid_marker_th);
+  emtf_assert(theta_median != invalid_marker_th);
 
   // Find the most compatible theta values, also apply theta window cut
   trkbuilding_select_theta_op(theta_value_0_0, theta_value_0_1, theta_median, emtf_theta_best[0], curr_trk_seg_v_from_th[0]);
@@ -585,7 +602,7 @@ void trkbuilding_extract_features_op(
   curr_trk_feat[k++] = details::take_value_if(curr_trk_seg_v[3], emtf_qual1[curr_trk_seg[3]]);
   curr_trk_feat[k++] = details::take_value_if(curr_trk_seg_v[4], emtf_qual1[curr_trk_seg[4]]);
   curr_trk_feat[k++] = details::take_value_if(curr_trk_seg_v[11], emtf_qual1[curr_trk_seg[11]]);
-  assert(k == num_emtf_features);
+  emtf_assert(k == num_emtf_features);
 }
 
 // _____________________________________________________________________________
@@ -654,8 +671,11 @@ void trkbuilding_op(
   }
 
   // Set phi_median
-  const emtf_phi_t col_patt = curr_trk_col + static_cast<trkbuilding_col_t>(details::chamber_img_joined_col_start);
-  phi_median = (col_patt << 4) + (1 << 3);
+  {
+    constexpr int bits_to_shift = emtf_img_col_factor_log2;
+    const emtf_phi_t col_patt = curr_trk_col + static_cast<trk_col_t>(details::chamber_img_joined_col_start);
+    phi_median = (col_patt << bits_to_shift) + (1u << (bits_to_shift - 1));
+  }
 
   // Find theta_median, select best theta values (closest to theta_median)
   trkbuilding_match_th_op(emtf_theta1, emtf_theta2, curr_trk_seg, curr_trk_seg_v_from_ph, theta_median, emtf_theta_best, curr_trk_seg_v_from_th);
@@ -705,6 +725,7 @@ void trkbuilding_layer(
   static_assert(trkbuilding_config::n_out == num_emtf_tracks, "trkbuilding_config::n_out check failed");
   static_assert(num_emtf_sites == 12, "num_emtf_sites must be 12");
   static_assert(num_emtf_features == 36, "num_emtf_features must be 36");
+  static_assert(num_emtf_img_areas == 3, "num_emtf_areas must be 3");
 
   typedef m_timezone_0_tag Timezone;  // default timezone
 

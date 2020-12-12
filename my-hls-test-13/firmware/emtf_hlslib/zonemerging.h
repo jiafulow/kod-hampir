@@ -15,18 +15,18 @@ void zonemerging_preprocess_twelve_op(const T_IN in0[4], const T_IN in1[4], cons
 #pragma HLS INLINE
 
   // Output (incl zone number)
-  out[0] = (pooling_zone_t(0), in0[0]);
-  out[1] = (pooling_zone_t(0), in0[1]);
-  out[2] = (pooling_zone_t(0), in0[2]);
-  out[3] = (pooling_zone_t(0), in0[3]);
-  out[4] = (pooling_zone_t(1), in1[0]);
-  out[5] = (pooling_zone_t(1), in1[1]);
-  out[6] = (pooling_zone_t(1), in1[2]);
-  out[7] = (pooling_zone_t(1), in1[3]);
-  out[8] = (pooling_zone_t(2), in2[0]);
-  out[9] = (pooling_zone_t(2), in2[1]);
-  out[10] = (pooling_zone_t(2), in2[2]);
-  out[11] = (pooling_zone_t(2), in2[3]);
+  out[0] = (trk_zone_t(0), in0[0]);
+  out[1] = (trk_zone_t(0), in0[1]);
+  out[2] = (trk_zone_t(0), in0[2]);
+  out[3] = (trk_zone_t(0), in0[3]);
+  out[4] = (trk_zone_t(1), in1[0]);
+  out[5] = (trk_zone_t(1), in1[1]);
+  out[6] = (trk_zone_t(1), in1[2]);
+  out[7] = (trk_zone_t(1), in1[3]);
+  out[8] = (trk_zone_t(2), in2[0]);
+  out[9] = (trk_zone_t(2), in2[1]);
+  out[10] = (trk_zone_t(2), in2[2]);
+  out[11] = (trk_zone_t(2), in2[3]);
 }
 
 template <typename T_IN, typename T_OUT>
@@ -39,12 +39,12 @@ void zonemerging_merge_twelve_op(const T_IN in0[12], T_OUT out[4]) {
 
 #pragma HLS INLINE
 
-  typedef ap_uint<4> idx_t;  // 0..11
-  typedef pooling_activation_t data_t;
-  using pair_t = details::argsort_pair<idx_t, data_t>;
+  typedef ap_uint<details::ceil_log2<11>::value> idx_t;  // encodes 0..11
+  typedef trk_qual_t data_t;
+  typedef details::argsort_pair<idx_t, data_t> pair_t;
 
-  constexpr unsigned int bits_lo = 0;
-  constexpr unsigned int bits_hi = (data_t::width - 1);
+  constexpr int bits_lo = 0;
+  constexpr int bits_hi = (data_t::width - 1);
 
   // See zonesorting_merge_eight_op() for explanations. To merge 3 blocks of 4, it merges the
   // first two blocks, then merges the result with the last block.

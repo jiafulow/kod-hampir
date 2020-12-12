@@ -17,25 +17,26 @@ void duperemoval_preprocess_op(
 
 #pragma HLS INLINE
 
+  // Consider 5 sites for duplicate removal: ME1, ME2, ME3, ME4, ME0
+  //
+  // site (out) | site (in)
+  // -----------|-------------------------------------------
+  // ME1        | ME1/1, GE1/1, ME1/2, RE1/2
+  // ME2        | ME2, GE2/1, RE2/2
+  // ME3        | ME3, RE3
+  // ME4        | ME4, RE4
+  // ME0        | ME0
+
   // Loop over tracks
   for (unsigned itrk = 0; itrk < duperemoval_config::n_in; itrk++) {
 
 #pragma HLS UNROLL
 
-    // Consider 5 sites for duplicate removal: ME1, ME2, ME3, ME4, ME0
     auto trk_seg_rhs = stl_next(trk_seg, itrk * num_emtf_sites);
     const trk_seg_v_t& vld_rhs = trk_seg_v[itrk];
 
     auto trk_seg_lhs = stl_next(trk_seg_rm, itrk * num_emtf_sites_rm);
     trk_seg_v_t& vld_lhs = trk_seg_v_rm[itrk];
-
-    // site (out) | site (in)
-    // -----------|-------------------------------------------
-    // ME1        | ME1/1, GE1/1, ME1/2, RE1/2
-    // ME2        | ME2, GE2/1, RE2/2
-    // ME3        | ME3, RE3
-    // ME4        | ME4, RE4
-    // ME0        | ME0
 
     int k = 0;
     trk_seg_lhs[k++] = vld_rhs[0] ? trk_seg_rhs[0] : (vld_rhs[9] ? trk_seg_rhs[9] : (vld_rhs[1] ? trk_seg_rhs[1] : trk_seg_rhs[5]));
@@ -43,7 +44,7 @@ void duperemoval_preprocess_op(
     trk_seg_lhs[k++] = vld_rhs[3] ? trk_seg_rhs[3] : trk_seg_rhs[7];
     trk_seg_lhs[k++] = vld_rhs[4] ? trk_seg_rhs[4] : trk_seg_rhs[8];
     trk_seg_lhs[k++] = trk_seg_rhs[11];
-    assert(k == num_emtf_sites_rm);
+    emtf_assert(k == num_emtf_sites_rm);
 
     int l = 0;
     vld_lhs[l++] = vld_rhs[0] or vld_rhs[9] or vld_rhs[1] or vld_rhs[5];
@@ -51,7 +52,7 @@ void duperemoval_preprocess_op(
     vld_lhs[l++] = vld_rhs[3] or vld_rhs[7];
     vld_lhs[l++] = vld_rhs[4] or vld_rhs[8];
     vld_lhs[l++] = vld_rhs[11];
-    assert(l == num_emtf_sites_rm);
+    emtf_assert(l == num_emtf_sites_rm);
   }
 }
 
@@ -60,7 +61,7 @@ void duperemoval_set_survivors_op(
     const trk_valid_t trk_valid[duperemoval_config::n_in],
     const trk_seg_t trk_seg_rm[duperemoval_config::n_in * num_emtf_sites_rm],
     const trk_seg_v_t trk_seg_v_rm[duperemoval_config::n_in],
-    duperemoval_survivor_t survivors[duperemoval_config::n_out]
+    dio_trk_accum_t survivors[duperemoval_config::n_out]
 ) {
 
 #pragma HLS PIPELINE II=duperemoval_config::target_ii
@@ -69,14 +70,16 @@ void duperemoval_set_survivors_op(
 
 #pragma HLS INLINE
 
-  duperemoval_survivor_t removal = 0;  // initialize
-
   // Find duplicates and mark them for removal
+
+  dio_trk_accum_t removal = 0;  // initialize
+
+  // Loop over pairs of tracks, and check 5 sites for each pair
   for (unsigned i = 0; i < (num_emtf_tracks - 1); i++) {
 
 #pragma HLS UNROLL
 
-    for (unsigned j = i + 1; j < num_emtf_tracks; j++) {
+    for (unsigned j = (i + 1); j < num_emtf_tracks; j++) {
 
 #pragma HLS UNROLL
 
@@ -110,7 +113,7 @@ void duperemoval_set_survivors_op(
 template <typename T=void>
 void duperemoval_set_features_op(
     const trk_feat_t trk_feat[duperemoval_config::n_in * num_emtf_features],
-    const duperemoval_survivor_t survivors[duperemoval_config::n_out],
+    const dio_trk_accum_t survivors[duperemoval_config::n_out],
     trk_feat_t trk_feat_rm[duperemoval_config::n_out * num_emtf_features],
     trk_valid_t trk_valid_rm[duperemoval_config::n_out]
 ) {
@@ -127,6 +130,7 @@ void duperemoval_set_features_op(
 #pragma HLS UNROLL
 
     trk_valid_rm[i] = (bool) survivors[i];
+    emtf_assert(survivors[i] == 0 || survivors[i] == 1 || survivors[i] == 2 || survivors[i] == 4 || survivors[i] == 8);
 
     if (trk_valid_rm[i]) {
 
@@ -134,7 +138,7 @@ void duperemoval_set_features_op(
 
 #pragma HLS UNROLL
 
-        if (survivors[i][j]) {  // only one survives
+        if (survivors[i][j]) {  // at most one survivor
 
           // Simple copy
           for (unsigned k = 0; k < num_emtf_features; k++) {
@@ -178,7 +182,7 @@ void duperemoval_op(
 
   trk_seg_t trk_seg_rm[duperemoval_config::n_in * num_emtf_sites_rm];
   trk_seg_v_t trk_seg_v_rm[duperemoval_config::n_in];
-  duperemoval_survivor_t survivors[duperemoval_config::n_out];
+  dio_trk_accum_t survivors[duperemoval_config::n_out];
 
 #pragma HLS ARRAY_PARTITION variable=trk_seg_rm complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_seg_v_rm complete dim=0

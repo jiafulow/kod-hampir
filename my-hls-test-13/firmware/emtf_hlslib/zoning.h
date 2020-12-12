@@ -23,7 +23,7 @@ void zoning_row_op(
 #pragma HLS INLINE
 
   typedef typename details::chamber_category_traits<Row>::chamber_category chamber_category;
-  const int N = details::num_chambers_traits<chamber_category>::value;
+  const unsigned int N = details::num_chambers_traits<chamber_category>::value;
   const int the_zone = details::zone_traits<Zone>::value;
   const int the_tzone = details::timezone_traits<Timezone>::value;
 
@@ -36,6 +36,7 @@ void zoning_row_op(
   int chamber_ph_cover_table[N];
   details::init_table_op<N>(chamber_ph_cover_table, details::get_chamber_ph_cover_op<chamber_category>());
 
+  // single-chamber image and N-chamber image
   typedef ap_uint<details::chamber_img_bw> chamber_img_t;
   typedef ap_uint<details::chamber_img_joined_bw> chamber_img_joined_t;
 
@@ -55,9 +56,9 @@ void zoning_row_op(
 
 #pragma HLS UNROLL
 
-      const zoning_seg_t iseg = (chamber_id_table[i] * num_emtf_segments) + j;
-      assert(chamber_id_table[i] < num_emtf_chambers);
-      assert(iseg < (num_emtf_chambers * num_emtf_segments));
+      const trk_seg_t iseg = (chamber_id_table[i] * num_emtf_segments) + j;
+      emtf_assert(chamber_id_table[i] < num_emtf_chambers);
+      emtf_assert(iseg < (num_emtf_chambers * num_emtf_segments));
 
       // Fill the chamber image. A pixel at (row, col) is set to 1 if a segment is present.
       // Use condition: (valid && is_same_zone && is_same_timezone)
@@ -66,10 +67,12 @@ void zoning_row_op(
           (seg_zones[iseg][(num_emtf_zones - 1) - the_zone] == 1) and \
           (seg_tzones[iseg][(num_emtf_timezones - 1) - the_tzone] == 1)
       ) {
-        // truncate last 4 bits (i.e. divide by 16), subtract offset
-        assert((emtf_phi[iseg] >> 4) >= chamber_ph_init_table[i]);
-        const zoning_col_t offset = chamber_ph_init_table[i];
-        const zoning_col_t col = (emtf_phi[iseg] >> 4) - offset;
+        // Truncate last 4 bits (i.e. divide by 16), subtract offset
+        constexpr int bits_to_shift = emtf_img_col_factor_log2;
+        const trk_col_t offset = chamber_ph_init_table[i];
+        const trk_col_t col = (emtf_phi[iseg] >> bits_to_shift) - offset;
+        emtf_assert((emtf_phi[iseg] >> bits_to_shift) >= chamber_ph_init_table[i]);
+        emtf_assert(col < chamber_img_t::width);
 
         //std::cout << "[DEBUG] chamber: " << chambers[i] << " segment: " << j << " emtf_phi: " << emtf_phi[iseg] << " col: " << col << " offset: " << offset << std::endl;
 
@@ -78,15 +81,15 @@ void zoning_row_op(
     }  // end loop over segments
 
     // Join chamber images
-    const zoning_col_t col_start_rhs = 0;
-    const zoning_col_t col_stop_rhs = (chamber_ph_cover_table[i] - chamber_ph_init_table[i]) - 1;
-    const zoning_col_t col_start_lhs = chamber_ph_init_table[i];
-    const zoning_col_t col_stop_lhs = col_start_lhs + col_stop_rhs - col_start_rhs;
+    const trk_col_t col_start_rhs = 0;
+    const trk_col_t col_stop_rhs = (chamber_ph_cover_table[i] - chamber_ph_init_table[i]) - 1;
+    const trk_col_t col_start_lhs = chamber_ph_init_table[i];
+    const trk_col_t col_stop_lhs = col_start_lhs + col_stop_rhs - col_start_rhs;
 
     //std::cout << "[DEBUG] start_l: " << col_start_lhs << " stop_l: " << col_stop_lhs << " start_r: " << col_start_rhs << " stop_r: " << col_stop_rhs << std::endl;
 
     // OR combined
-    assert((col_stop_lhs - col_start_lhs) == (col_stop_rhs - col_start_rhs));
+    emtf_assert((col_stop_lhs - col_start_lhs) == (col_stop_rhs - col_start_rhs));
     chamber_img_joined.range(col_stop_lhs, col_start_lhs) = (
         chamber_img_joined.range(col_stop_lhs, col_start_lhs) | chamber_img.range(col_stop_rhs, col_start_rhs)
     );
@@ -95,15 +98,15 @@ void zoning_row_op(
   zoning_out_row_i = 0;  // init as zero
 
   // Adjust the size of chamber_img_joined
-  const zoning_col_t col_start_rhs = details::chamber_img_joined_col_start;
-  const zoning_col_t col_stop_rhs = details::chamber_img_joined_col_stop;
-  const zoning_col_t col_start_lhs = 0;
-  const zoning_col_t col_stop_lhs = (zoning_out_t::width - 1);
+  const trk_col_t col_start_rhs = details::chamber_img_joined_col_start;
+  const trk_col_t col_stop_rhs = details::chamber_img_joined_col_stop;
+  const trk_col_t col_start_lhs = 0;
+  const trk_col_t col_stop_lhs = (zoning_out_t::width - 1);
 
   //std::cout << "[DEBUG] start_l: " << col_start_lhs << " stop_l: " << col_stop_lhs << " start_r: " << col_start_rhs << " stop_r: " << col_stop_rhs << std::endl;
 
   // Take selected columns of chamber_img_joined
-  assert((col_stop_lhs - col_start_lhs) == (col_stop_rhs - col_start_rhs));
+  emtf_assert((col_stop_lhs - col_start_lhs) == (col_stop_rhs - col_start_rhs));
   zoning_out_row_i = chamber_img_joined.range(col_stop_rhs, col_start_rhs);
 }
 

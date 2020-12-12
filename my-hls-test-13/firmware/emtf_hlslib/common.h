@@ -1,8 +1,12 @@
 #ifndef __EMTF_HLSLIB_COMMON_H__
 #define __EMTF_HLSLIB_COMMON_H__
 
+#ifndef __SYNTHESIS__
 #include <cassert>
-#include <cstdint>
+#define emtf_assert(expr) assert(expr)
+#else
+#define emtf_assert(expr) ((void)0)
+#endif
 
 namespace emtf {
 
@@ -44,6 +48,12 @@ constexpr int num_emtf_sites_rm = 5;    // per track
 constexpr int num_emtf_img_rows = 8;
 constexpr int num_emtf_img_cols = 288;
 constexpr int num_emtf_img_areas = 3;
+
+constexpr int emtf_img_col_factor = 16;
+constexpr int emtf_img_col_factor_log2 = 4;  // (1 << 4) = 16
+constexpr int max_emtf_img_col_pad = 36;
+constexpr int max_emtf_pattern_activation = 63;
+constexpr int max_emtf_pattern_activation_log2 = 6;  // (1 << 6) - 1 = 63
 
 }  // namespace emtf
 

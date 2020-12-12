@@ -11,30 +11,30 @@ namespace emtf {
 
 // Scoped enums
 enum struct SegmentDataType {
-  emtf_phi = 0,
-  emtf_bend = 1,
+  emtf_phi    = 0,
+  emtf_bend   = 1,
   emtf_theta1 = 2,
   emtf_theta2 = 3,
-  emtf_qual1 = 4,
-  emtf_qual2 = 5,
-  emtf_time = 6,
-  seg_zones = 7,
-  seg_tzones = 8,
-  seg_fr = 9,
-  seg_dl = 10,
-  seg_bx = 11,
-  seg_valid = 12
+  emtf_qual1  = 4,
+  emtf_qual2  = 5,
+  emtf_time   = 6,
+  seg_zones   = 7,
+  seg_tzones  = 8,
+  seg_fr      = 9,
+  seg_dl      = 10,
+  seg_bx      = 11,
+  seg_valid   = 12
 };
 
 enum struct TrackDataType {
-  trk_qual = 0,
-  trk_patt = 1,
-  trk_col = 2,
-  trk_zone = 3,
+  trk_qual  = 0,
+  trk_patt  = 1,
+  trk_col   = 2,
+  trk_zone  = 3,
   trk_tzone = 4,
-  trk_seg = 5,
+  trk_seg   = 5,
   trk_seg_v = 6,
-  trk_feat = 7,
+  trk_feat  = 7,
   trk_valid = 8
 };
 
@@ -66,41 +66,41 @@ template <> struct track_data_bw_traits<TrackDataType::trk_feat>  { static const
 template <> struct track_data_bw_traits<TrackDataType::trk_valid> { static const int value = 1; };
 
 // Is signed
-template <SegmentDataType T> struct segment_data_sign_traits {};
-template <> struct segment_data_sign_traits<SegmentDataType::emtf_phi>    { static const bool value = 0; };
-template <> struct segment_data_sign_traits<SegmentDataType::emtf_bend>   { static const bool value = 1; };
-template <> struct segment_data_sign_traits<SegmentDataType::emtf_theta1> { static const bool value = 0; };
-template <> struct segment_data_sign_traits<SegmentDataType::emtf_theta2> { static const bool value = 0; };
-template <> struct segment_data_sign_traits<SegmentDataType::emtf_qual1>  { static const bool value = 1; };
-template <> struct segment_data_sign_traits<SegmentDataType::emtf_qual2>  { static const bool value = 1; };
-template <> struct segment_data_sign_traits<SegmentDataType::emtf_time>   { static const bool value = 1; };
-template <> struct segment_data_sign_traits<SegmentDataType::seg_zones>   { static const bool value = 0; };
-template <> struct segment_data_sign_traits<SegmentDataType::seg_tzones>  { static const bool value = 0; };
-template <> struct segment_data_sign_traits<SegmentDataType::seg_fr>      { static const bool value = 0; };
-template <> struct segment_data_sign_traits<SegmentDataType::seg_dl>      { static const bool value = 0; };
-template <> struct segment_data_sign_traits<SegmentDataType::seg_bx>      { static const bool value = 1; };
-template <> struct segment_data_sign_traits<SegmentDataType::seg_valid>   { static const bool value = 0; };
+template <SegmentDataType T> struct segment_data_sg_traits {};
+template <> struct segment_data_sg_traits<SegmentDataType::emtf_phi>    { static const bool value = 0; };
+template <> struct segment_data_sg_traits<SegmentDataType::emtf_bend>   { static const bool value = 1; };
+template <> struct segment_data_sg_traits<SegmentDataType::emtf_theta1> { static const bool value = 0; };
+template <> struct segment_data_sg_traits<SegmentDataType::emtf_theta2> { static const bool value = 0; };
+template <> struct segment_data_sg_traits<SegmentDataType::emtf_qual1>  { static const bool value = 1; };
+template <> struct segment_data_sg_traits<SegmentDataType::emtf_qual2>  { static const bool value = 1; };
+template <> struct segment_data_sg_traits<SegmentDataType::emtf_time>   { static const bool value = 1; };
+template <> struct segment_data_sg_traits<SegmentDataType::seg_zones>   { static const bool value = 0; };
+template <> struct segment_data_sg_traits<SegmentDataType::seg_tzones>  { static const bool value = 0; };
+template <> struct segment_data_sg_traits<SegmentDataType::seg_fr>      { static const bool value = 0; };
+template <> struct segment_data_sg_traits<SegmentDataType::seg_dl>      { static const bool value = 0; };
+template <> struct segment_data_sg_traits<SegmentDataType::seg_bx>      { static const bool value = 1; };
+template <> struct segment_data_sg_traits<SegmentDataType::seg_valid>   { static const bool value = 0; };
 
-template <TrackDataType T> struct track_data_sign_traits {};
-template <> struct track_data_sign_traits<TrackDataType::trk_qual>  { static const bool value = 0; };
-template <> struct track_data_sign_traits<TrackDataType::trk_patt>  { static const bool value = 0; };
-template <> struct track_data_sign_traits<TrackDataType::trk_col>   { static const bool value = 0; };
-template <> struct track_data_sign_traits<TrackDataType::trk_zone>  { static const bool value = 0; };
-template <> struct track_data_sign_traits<TrackDataType::trk_tzone> { static const bool value = 0; };
-template <> struct track_data_sign_traits<TrackDataType::trk_seg>   { static const bool value = 0; };
-template <> struct track_data_sign_traits<TrackDataType::trk_seg_v> { static const bool value = 0; };
-template <> struct track_data_sign_traits<TrackDataType::trk_feat>  { static const bool value = 1; };
-template <> struct track_data_sign_traits<TrackDataType::trk_valid> { static const bool value = 0; };
+template <TrackDataType T> struct track_data_sg_traits {};
+template <> struct track_data_sg_traits<TrackDataType::trk_qual>  { static const bool value = 0; };
+template <> struct track_data_sg_traits<TrackDataType::trk_patt>  { static const bool value = 0; };
+template <> struct track_data_sg_traits<TrackDataType::trk_col>   { static const bool value = 0; };
+template <> struct track_data_sg_traits<TrackDataType::trk_zone>  { static const bool value = 0; };
+template <> struct track_data_sg_traits<TrackDataType::trk_tzone> { static const bool value = 0; };
+template <> struct track_data_sg_traits<TrackDataType::trk_seg>   { static const bool value = 0; };
+template <> struct track_data_sg_traits<TrackDataType::trk_seg_v> { static const bool value = 0; };
+template <> struct track_data_sg_traits<TrackDataType::trk_feat>  { static const bool value = 1; };
+template <> struct track_data_sg_traits<TrackDataType::trk_valid> { static const bool value = 0; };
 
 // Use bw and sign traits to select the ap datatype
 template <SegmentDataType T> struct select_segment_datatype {
   typedef typename make_ap_int_type<
-      segment_data_bw_traits<T>::value, segment_data_sign_traits<T>::value>::type type;
+      segment_data_bw_traits<T>::value, segment_data_sg_traits<T>::value>::type type;
 };
 
 template <TrackDataType T> struct select_track_datatype {
   typedef typename make_ap_int_type<
-      track_data_bw_traits<T>::value, track_data_sign_traits<T>::value>::type type;
+      track_data_bw_traits<T>::value, track_data_sg_traits<T>::value>::type type;
 };
 
 // Text replacement macro ("token pasting") used to define the ap datatype
@@ -160,30 +160,23 @@ typedef trk_feat_t model_out_t;
 // _____________________________________________________________________________
 // Layer typedefs
 
-typedef ap_uint<8>                 zoning_seg_t;            // bw: ceil(log2(num_emtf_chambers * num_emtf_segments))
-typedef ap_uint<9>                 zoning_col_t;            // bw: ceil(log2(80 / coarse_emtf_phi_scale) + coarse_emtf_phi_padding)
-typedef ap_uint<num_emtf_img_cols> zoning_out_t;            // bw: num_emtf_img_cols
-typedef ap_uint<num_emtf_img_rows> pooling_accumulation_t;  // bw: num_emtf_img_rows
-typedef ap_uint<6>                 pooling_activation_t;    // bw: accumulation bw - 2
-typedef ap_uint<3>                 pooling_patt_t;          // bw: ceil(log2(num_emtf_patterns))
-typedef ap_uint<9>                 pooling_col_t;           // bw: ceil(log2(num_emtf_img_cols))
-typedef ap_uint<2>                 pooling_zone_t;          // bw: ceil(log2(num_emtf_zones))
-typedef ap_uint<6+3>               pooling_out_t;           // bw: activation bw + patt bw
-typedef ap_uint<6+3+9>             zonesorting_out_t;       // bw: activation bw + patt bw + col bw
-typedef ap_uint<6+3+9+2>           zonemerging_out_t;       // bw: activation bw + patt bw + col bw + zone bw
-typedef ap_uint<8>                 trkbuilding_seg_t;       // bw: ceil(log2(num_emtf_chambers * num_emtf_segments))
-typedef ap_uint<8>                 trkbuilding_col_t;       // bw: ceil(log2(80 / coarse_emtf_phi_scale) + coarse_emtf_phi_padding)
-typedef ap_uint<2>                 trkbuilding_area_t;      // bw: ceil(log2(num_emtf_img_areas))
-typedef ap_uint<10>                trkbuilding_ph_diff_t;   // bw: ceil(log2(10 / emtf_phi_scale))
-typedef ap_uint<6>                 trkbuilding_th_diff_t;   // bw: ceil(log2(14 / emtf_theta_scale))
-typedef ap_uint<num_emtf_tracks>   duperemoval_survivor_t;  // bw: num_emtf_tracks
+// These do not appear in the layer interfaces
+typedef ap_uint<num_emtf_img_cols> dio_col_accum_t;
+typedef ap_uint<num_emtf_img_rows> dio_row_accum_t;
+typedef ap_uint<num_emtf_tracks>   dio_trk_accum_t;
+typedef ap_uint<11>                dio_trk_ph_diff_t;  // bw: ceil(log2(20 / 0.01667))
+typedef ap_uint<6>                 dio_trk_th_diff_t;  // bw: ceil(log2(14 / 0.28515625))
 
-// Synonyms
-typedef zoning_out_t               pooling_in_t;
-typedef pooling_out_t              suppression_in_t;
-typedef suppression_in_t           suppression_out_t;
-typedef suppression_out_t          zonesorting_in_t;
-typedef zonesorting_out_t          zonemerging_in_t;
+// These appear in the layer interfaces
+typedef dio_col_accum_t                                 zoning_out_t;
+typedef zoning_out_t                                    pooling_in_t;
+typedef make_concat<trk_qual_t, trk_patt_t>::type       pooling_out_t;
+typedef pooling_out_t                                   suppression_in_t;
+typedef suppression_in_t                                suppression_out_t;
+typedef suppression_out_t                               zonesorting_in_t;
+typedef make_concat<zonesorting_in_t, trk_col_t>::type  zonesorting_out_t;
+typedef zonesorting_out_t                               zonemerging_in_t;
+typedef make_concat<zonemerging_in_t, trk_zone_t>::type zonemerging_out_t;
 
 }  // namespace emtf
 
