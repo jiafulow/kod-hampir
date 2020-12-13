@@ -3,33 +3,6 @@
 
 namespace emtf {
 
-// Function to set accumulator value
-template <typename T0, typename T1, typename T2, typename T3,
-          typename T4, typename T5, typename T6, typename T7,
-          typename T_OUT>
-void pooling_accumulate_op(
-    const T0& in0, const T1& in1, const T2& in2, const T3& in3,
-    const T4& in4, const T5& in5, const T6& in6, const T7& in7,
-    T_OUT& out
-) {
-  static_assert(T_OUT::width == 8, "T_OUT type check failed");
-
-#pragma HLS PIPELINE II=pooling_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
-#pragma HLS INLINE
-
-  out[0] = (bool) in0;
-  out[1] = (bool) in1;
-  out[2] = (bool) in2;
-  out[3] = (bool) in3;
-  out[4] = (bool) in4;
-  out[5] = (bool) in5;
-  out[6] = (bool) in6;
-  out[7] = (bool) in7;
-}
-
 // Function to apply activation
 template <typename Zone, typename T_IN, typename T_OUT>
 void pooling_activate_op(const T_IN& in0, T_OUT& out) {
@@ -99,6 +72,21 @@ void pooling_reduce_argmax_op(const T_IN in0[num_emtf_patterns], T_OUT& out) {
   // Stage 3
   const pair_t tmp_3_0 = (tmp_2_0 >= tmp_2_1) ? tmp_2_0 : tmp_2_1;
 
+#pragma HLS DATA_PACK variable=tmp_0_0
+#pragma HLS DATA_PACK variable=tmp_0_1
+#pragma HLS DATA_PACK variable=tmp_0_2
+#pragma HLS DATA_PACK variable=tmp_0_3
+#pragma HLS DATA_PACK variable=tmp_0_4
+#pragma HLS DATA_PACK variable=tmp_0_5
+#pragma HLS DATA_PACK variable=tmp_0_6
+#pragma HLS DATA_PACK variable=tmp_1_0
+#pragma HLS DATA_PACK variable=tmp_1_1
+#pragma HLS DATA_PACK variable=tmp_1_2
+#pragma HLS DATA_PACK variable=tmp_1_3
+#pragma HLS DATA_PACK variable=tmp_2_0
+#pragma HLS DATA_PACK variable=tmp_2_1
+#pragma HLS DATA_PACK variable=tmp_3_0
+
   // Output (incl pattern number)
   out = (tmp_3_0.first, tmp_3_0.second);
 }
@@ -108,15 +96,77 @@ void pooling_reduce_argmax_op(const T_IN in0[num_emtf_patterns], T_OUT& out) {
 
 template <typename Zone>
 void pooling_col_op(
-    const typename details::select_pattern_col_patch_type<Zone, 0>::type patch_row_0,
-    const typename details::select_pattern_col_patch_type<Zone, 1>::type patch_row_1,
-    const typename details::select_pattern_col_patch_type<Zone, 2>::type patch_row_2,
-    const typename details::select_pattern_col_patch_type<Zone, 3>::type patch_row_3,
-    const typename details::select_pattern_col_patch_type<Zone, 4>::type patch_row_4,
-    const typename details::select_pattern_col_patch_type<Zone, 5>::type patch_row_5,
-    const typename details::select_pattern_col_patch_type<Zone, 6>::type patch_row_6,
-    const typename details::select_pattern_col_patch_type<Zone, 7>::type patch_row_7,
+    const typename details::select_pattern_col_patch_type<Zone, 0>::type& patch_row_0,
+    const typename details::select_pattern_col_patch_type<Zone, 1>::type& patch_row_1,
+    const typename details::select_pattern_col_patch_type<Zone, 2>::type& patch_row_2,
+    const typename details::select_pattern_col_patch_type<Zone, 3>::type& patch_row_3,
+    const typename details::select_pattern_col_patch_type<Zone, 4>::type& patch_row_4,
+    const typename details::select_pattern_col_patch_type<Zone, 5>::type& patch_row_5,
+    const typename details::select_pattern_col_patch_type<Zone, 6>::type& patch_row_6,
+    const typename details::select_pattern_col_patch_type<Zone, 7>::type& patch_row_7,
     pooling_out_t& pooling_out_col_j
+) {
+
+#pragma HLS PIPELINE II=pooling_config::target_ii
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE
+
+  int pattern_col_start_table[num_emtf_patterns * num_emtf_img_rows];
+  details::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(pattern_col_start_table, details::get_pattern_col_start_op<Zone>());
+
+  int pattern_col_stop_table[num_emtf_patterns * num_emtf_img_rows];
+  details::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(pattern_col_stop_table, details::get_pattern_col_stop_op<Zone>());
+
+  auto table_index_fn = [](unsigned patt, unsigned row) -> unsigned {
+
+#pragma HLS INLINE
+
+    return (patt * num_emtf_img_rows) + row;
+  };
+
+  trk_qual_t activations[num_emtf_patterns];
+
+#pragma HLS ARRAY_PARTITION variable=activations complete dim=0
+
+  // Loop over patterns
+  LOOP_PATT: for (unsigned patt = 0; patt < num_emtf_patterns; patt++) {
+
+#pragma HLS UNROLL
+
+    // Loop over rows manually
+    dio_row_accum_t preactivation = 0;  // init as zero
+
+    preactivation[0] = (bool) patch_row_0.range(pattern_col_stop_table[table_index_fn(patt, 0)], pattern_col_start_table[table_index_fn(patt, 0)]);
+    preactivation[1] = (bool) patch_row_1.range(pattern_col_stop_table[table_index_fn(patt, 1)], pattern_col_start_table[table_index_fn(patt, 1)]);
+    preactivation[2] = (bool) patch_row_2.range(pattern_col_stop_table[table_index_fn(patt, 2)], pattern_col_start_table[table_index_fn(patt, 2)]);
+    preactivation[3] = (bool) patch_row_3.range(pattern_col_stop_table[table_index_fn(patt, 3)], pattern_col_start_table[table_index_fn(patt, 3)]);
+    preactivation[4] = (bool) patch_row_4.range(pattern_col_stop_table[table_index_fn(patt, 4)], pattern_col_start_table[table_index_fn(patt, 4)]);
+    preactivation[5] = (bool) patch_row_5.range(pattern_col_stop_table[table_index_fn(patt, 5)], pattern_col_start_table[table_index_fn(patt, 5)]);
+    preactivation[6] = (bool) patch_row_6.range(pattern_col_stop_table[table_index_fn(patt, 6)], pattern_col_start_table[table_index_fn(patt, 6)]);
+    preactivation[7] = (bool) patch_row_7.range(pattern_col_stop_table[table_index_fn(patt, 7)], pattern_col_start_table[table_index_fn(patt, 7)]);
+
+    // Activation
+    pooling_activate_op<Zone>(preactivation, activations[patt]);
+  }  // end loop over patterns
+
+  // Find max activation
+  pooling_reduce_argmax_op(activations, pooling_out_col_j);
+}
+
+// Fusion of multiple pooling_col_op()
+template <typename Zone>
+void pooling_col_fused_op(
+    const typename details::select_pattern_col_fused_patch_type<Zone, 0>::type& patch_row_0,
+    const typename details::select_pattern_col_fused_patch_type<Zone, 1>::type& patch_row_1,
+    const typename details::select_pattern_col_fused_patch_type<Zone, 2>::type& patch_row_2,
+    const typename details::select_pattern_col_fused_patch_type<Zone, 3>::type& patch_row_3,
+    const typename details::select_pattern_col_fused_patch_type<Zone, 4>::type& patch_row_4,
+    const typename details::select_pattern_col_fused_patch_type<Zone, 5>::type& patch_row_5,
+    const typename details::select_pattern_col_fused_patch_type<Zone, 6>::type& patch_row_6,
+    const typename details::select_pattern_col_fused_patch_type<Zone, 7>::type& patch_row_7,
+    pooling_out_t pooling_out_col_fused_j[pooling_config::fusion_factor]
 ) {
 
 #pragma HLS PIPELINE II=pooling_config::target_ii
@@ -125,42 +175,34 @@ void pooling_col_op(
 
 //#pragma HLS INLINE
 
-  int pattern_col_start_table[num_emtf_patterns * num_emtf_img_rows];
-  details::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(pattern_col_start_table, details::get_pattern_col_start_op<Zone>());
+  typedef typename details::select_pattern_col_padding_type<Zone, 0>::type padding_row_0_t;
+  typedef typename details::select_pattern_col_padding_type<Zone, 1>::type padding_row_1_t;
+  typedef typename details::select_pattern_col_padding_type<Zone, 2>::type padding_row_2_t;
+  typedef typename details::select_pattern_col_padding_type<Zone, 3>::type padding_row_3_t;
+  typedef typename details::select_pattern_col_padding_type<Zone, 4>::type padding_row_4_t;
+  typedef typename details::select_pattern_col_padding_type<Zone, 5>::type padding_row_5_t;
+  typedef typename details::select_pattern_col_padding_type<Zone, 6>::type padding_row_6_t;
+  typedef typename details::select_pattern_col_padding_type<Zone, 7>::type padding_row_7_t;
 
-  int pattern_col_stop_table[num_emtf_patterns * num_emtf_img_rows];
-  details::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(pattern_col_stop_table, details::get_pattern_col_stop_op<Zone>());
+  const int fusion_factor = pooling_config::fusion_factor;
 
-  dio_row_accum_t accumulations[num_emtf_patterns];
-  trk_qual_t activations[num_emtf_patterns];
-
-#pragma HLS ARRAY_PARTITION variable=accumulations complete dim=0
-#pragma HLS ARRAY_PARTITION variable=activations complete dim=0
-
-  // Loop over patterns
-  LOOP_PATT: for (unsigned patt = 0; patt < num_emtf_patterns; patt++) {
+  // Loop over columns
+  LOOP_COL_2: for (unsigned col = 0; col < fusion_factor; col++) {
 
 #pragma HLS UNROLL
 
-    // Check pattern windows in each row
-    pooling_accumulate_op(
-        patch_row_0.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 0], pattern_col_start_table[(patt * num_emtf_img_rows) + 0]),
-        patch_row_1.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 1], pattern_col_start_table[(patt * num_emtf_img_rows) + 1]),
-        patch_row_2.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 2], pattern_col_start_table[(patt * num_emtf_img_rows) + 2]),
-        patch_row_3.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 3], pattern_col_start_table[(patt * num_emtf_img_rows) + 3]),
-        patch_row_4.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 4], pattern_col_start_table[(patt * num_emtf_img_rows) + 4]),
-        patch_row_5.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 5], pattern_col_start_table[(patt * num_emtf_img_rows) + 5]),
-        patch_row_6.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 6], pattern_col_start_table[(patt * num_emtf_img_rows) + 6]),
-        patch_row_7.range(pattern_col_stop_table[(patt * num_emtf_img_rows) + 7], pattern_col_start_table[(patt * num_emtf_img_rows) + 7]),
-        accumulations[patt]
+    pooling_col_op<Zone>(
+        patch_row_0.range(col + (padding_row_0_t::width * 2), col),
+        patch_row_1.range(col + (padding_row_1_t::width * 2), col),
+        patch_row_2.range(col + (padding_row_2_t::width * 2), col),
+        patch_row_3.range(col + (padding_row_3_t::width * 2), col),
+        patch_row_4.range(col + (padding_row_4_t::width * 2), col),
+        patch_row_5.range(col + (padding_row_5_t::width * 2), col),
+        patch_row_6.range(col + (padding_row_6_t::width * 2), col),
+        patch_row_7.range(col + (padding_row_7_t::width * 2), col),
+        pooling_out_col_fused_j[col]
     );
-
-    // Activation
-    pooling_activate_op<Zone>(accumulations[patt], activations[patt]);
-  }  // end loop over patterns
-
-  // Find max activation
-  pooling_reduce_argmax_op(activations, pooling_out_col_j);
+  }  // end loop over columns
 }
 
 // _____________________________________________________________________________
@@ -205,21 +247,23 @@ void pooling_op(
   const padded_row_6_t padded_row_6 = (padding_row_6_t(0), pooling_in[6], padding_row_6_t(0));
   const padded_row_7_t padded_row_7 = (padding_row_7_t(0), pooling_in[7], padding_row_7_t(0));
 
-  // Loop over columns
-  LOOP_COL: for (unsigned col = 0; col < num_emtf_img_cols; col++) {
+  const int fusion_factor = pooling_config::fusion_factor;
+
+  // Loop over columns with step size 8
+  LOOP_COL_1: for (unsigned col = 0; col < num_emtf_img_cols; col += fusion_factor) {
 
 #pragma HLS UNROLL
 
-    pooling_col_op<Zone>(
-        padded_row_0.range(col + (padding_row_0_t::width * 2), col),
-        padded_row_1.range(col + (padding_row_1_t::width * 2), col),
-        padded_row_2.range(col + (padding_row_2_t::width * 2), col),
-        padded_row_3.range(col + (padding_row_3_t::width * 2), col),
-        padded_row_4.range(col + (padding_row_4_t::width * 2), col),
-        padded_row_5.range(col + (padding_row_5_t::width * 2), col),
-        padded_row_6.range(col + (padding_row_6_t::width * 2), col),
-        padded_row_7.range(col + (padding_row_7_t::width * 2), col),
-        pooling_out[col]
+    pooling_col_fused_op<Zone>(
+        padded_row_0.range(col + (fusion_factor - 1) + (padding_row_0_t::width * 2), col),
+        padded_row_1.range(col + (fusion_factor - 1) + (padding_row_1_t::width * 2), col),
+        padded_row_2.range(col + (fusion_factor - 1) + (padding_row_2_t::width * 2), col),
+        padded_row_3.range(col + (fusion_factor - 1) + (padding_row_3_t::width * 2), col),
+        padded_row_4.range(col + (fusion_factor - 1) + (padding_row_4_t::width * 2), col),
+        padded_row_5.range(col + (fusion_factor - 1) + (padding_row_5_t::width * 2), col),
+        padded_row_6.range(col + (fusion_factor - 1) + (padding_row_6_t::width * 2), col),
+        padded_row_7.range(col + (fusion_factor - 1) + (padding_row_7_t::width * 2), col),
+        stl_next(pooling_out, col)
     );
   }  // end loop over columns
 }

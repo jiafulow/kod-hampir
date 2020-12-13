@@ -30,6 +30,9 @@ struct pooling_config {
   static const unsigned int n_in = zoning_config::n_out;
   static const unsigned int n_out = num_emtf_img_cols;
   static const int target_ii = 1;
+
+  // Used in the column loop
+  static const int fusion_factor = 1;
 };
 
 struct suppression_config {
@@ -79,6 +82,12 @@ struct duperemoval_config {
 
 // _____________________________________________________________________________
 // Various tags
+
+// Detector
+struct m_csc_detector_tag {};
+struct m_rpc_detector_tag {};
+struct m_gem_detector_tag {};
+struct m_me0_detector_tag {};
 
 // Chamber
 struct m_10deg_chamber_tag {};
@@ -261,6 +270,12 @@ template <typename Category, int I>
 struct select_pattern_col_patch_type {
   static const int pad = pattern_col_pad_traits<Category, I>::value;
   typedef ap_uint<1 + (pad * 2)> type;
+};
+
+template <typename Category, int I>
+struct select_pattern_col_fused_patch_type {
+  static const int pad = pattern_col_pad_traits<Category, I>::value;
+  typedef ap_uint<pooling_config::fusion_factor + (pad * 2)> type;
 };
 
 // Getter ops
