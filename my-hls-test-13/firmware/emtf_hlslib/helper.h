@@ -63,7 +63,7 @@
           std::cout << i << ", "; \
       } \
     } \
-    std::cout << "], col: ["; \
+    std::cout << "] col: ["; \
     for (unsigned i = 0; i < zoning_config::n_out; i++) { \
       for (unsigned j = 0; j < zoning_out_t::width; j++) { \
         if (zoning_0_out[i].test(j)) \
@@ -77,7 +77,7 @@
       if (pooling_0_out[i]) \
         std::cout << i << ", "; \
     } \
-    std::cout << "], value: ["; \
+    std::cout << "] value: ["; \
     for (unsigned i = 0; i < pooling_config::n_out; i++) { \
       if (pooling_0_out[i]) \
         std::cout << pooling_0_out[i].range(trk_qual_t::width - 1, 0) << ", "; \
@@ -89,7 +89,7 @@
       if (suppression_0_out[i]) \
         std::cout << i << ", "; \
     } \
-    std::cout << "], value: ["; \
+    std::cout << "] value: ["; \
     for (unsigned i = 0; i < suppression_config::n_out; i++) { \
       if (suppression_0_out[i]) \
         std::cout << suppression_0_out[i].range(trk_qual_t::width - 1, 0) << ", "; \
@@ -100,11 +100,11 @@
     for (unsigned i = 0; i < zonesorting_config::n_out; i++) { \
       std::cout << zonesorting_0_out[i].range(trk_qual_t::width - 1, 0) << ", "; \
     } \
-    std::cout << "], value: ["; \
+    std::cout << "] value: ["; \
     for (unsigned i = 0; i < zonesorting_config::n_out; i++) { \
       std::cout << zonesorting_1_out[i].range(trk_qual_t::width - 1, 0) << ", "; \
     } \
-    std::cout << "], value: ["; \
+    std::cout << "] value: ["; \
     for (unsigned i = 0; i < zonesorting_config::n_out; i++) { \
       std::cout << zonesorting_2_out[i].range(trk_qual_t::width - 1, 0) << ", "; \
     } \
@@ -120,7 +120,7 @@
     for (unsigned i = 0; i < num_emtf_sites; i++) { \
       std::cout << trk_seg[i] << ", "; \
     } \
-    std::cout << "], trk_seg_v: ["; \
+    std::cout << "] trk_seg_v: ["; \
     for (unsigned i = 0; i < num_emtf_sites; i++) { \
       std::cout << trk_seg_v[0][i] << ", "; \
     } \
@@ -130,7 +130,7 @@
     for (unsigned i = 0; i < num_emtf_features; i++) { \
       std::cout << trk_feat[i] << ", "; \
     } \
-    std::cout << "], trk_valid: ["; \
+    std::cout << "] trk_valid: ["; \
     for (unsigned i = 0; i < trk_valid_t::width; i++) { \
       std::cout << trk_valid[i] << ", "; \
     } \
@@ -140,7 +140,7 @@
     for (unsigned i = 0; i < num_emtf_features; i++) { \
       std::cout << trk_feat_rm[i] << ", "; \
     } \
-    std::cout << "], trk_valid_rm: ["; \
+    std::cout << "] trk_valid_rm: ["; \
     for (unsigned i = 0; i < trk_valid_t::width; i++) { \
       std::cout << trk_valid_rm[i] << ", "; \
     } \

@@ -43,6 +43,9 @@ struct zonesorting_config {
   static const unsigned int n_out = num_emtf_tracks;
   static const int target_ii = 1;
 
+  // Used in the column loop
+  static const int block_factor = 8;
+
   // Used for sorting stages
   static const unsigned int n_stage_0 = n_in / 2;
   static const unsigned int n_stage_1 = (n_stage_0 - 16) / 2;
@@ -573,6 +576,48 @@ T take_value_if(bool cond, const T& x) {
 #pragma HLS INLINE
 
   return cond ? x : static_cast<T>(0);
+}
+
+// Helper function to copy multiple values
+template <unsigned int N, typename T>
+void copy_n_values(const T in0[N], T out[N]) {
+
+#pragma HLS INLINE
+
+  for (unsigned i = 0; i < N; i++) {
+
+#pragma HLS UNROLL
+
+    out[i] = in0[i];
+  }
+}
+
+// Helper function to fill multiple values
+template <unsigned int N, typename T>
+void fill_n_values(T out[N], const T& value) {
+
+#pragma HLS INLINE
+
+  for (unsigned i = 0; i < N; i++) {
+
+#pragma HLS UNROLL
+
+    out[i] = value;
+  }
+}
+
+template <unsigned int N, typename T>
+void pack_boolean_values(const bool in0[N], T& out) {
+  static_assert(is_same<T, ap_uint<N> >::value, "T type check failed");
+
+#pragma HLS INLINE
+
+  for (unsigned i = 0; i < N; i++) {
+
+#pragma HLS UNROLL
+
+    out[i] = in0[i];
+  }
 }
 
 // Helper function to init a lookup table

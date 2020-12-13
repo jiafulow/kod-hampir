@@ -3,6 +3,7 @@
 
 namespace emtf {
 
+// Perform mux for each pair of cols, and sort each block of 4 cols
 template <typename T_IN, typename T_OUT>
 void zonesorting_preprocess_eight_op(const trk_col_t col, const T_IN in0[8], T_OUT out[4]) {
   static_assert(is_same<T_IN, zonesorting_in_t>::value, "T_IN type check failed");
@@ -87,6 +88,7 @@ void zonesorting_preprocess_eight_op(const trk_col_t col, const T_IN in0[8], T_O
   out[3] = (trk_col_t(col + idx3), in0[idx3]);
 }
 
+// Merge each pair of blocks (a block has 4 entries)
 template <typename T_IN, typename T_OUT>
 void zonesorting_merge_eight_op(const T_IN in0[8], T_OUT out[4]) {
   static_assert(is_same<T_IN, T_OUT>::value, "T_OUT type check failed");
@@ -189,8 +191,10 @@ void zonesorting_preprocess_stage_op(const T_IN in0[N_IN], T_OUT out[N_OUT]) {
 
 #pragma HLS INLINE
 
+  const int block_factor = zonesorting_config::block_factor;
+
   // Loop with step size 8
-  for (unsigned i = 0; i < N_IN; i += 8) {
+  LOOP_PREPR: for (unsigned i = 0; i < N_IN; i += block_factor) {
 
 #pragma HLS UNROLL
 
@@ -209,32 +213,14 @@ void zonesorting_merge_stage_op(const T_IN in0[N_IN], T_OUT out[N_OUT]) {
 
 #pragma HLS INLINE
 
+  const int block_factor = zonesorting_config::block_factor;
+
   // Loop with step size 8
-  for (unsigned i = 0; i < N_IN; i += 8) {
+  LOOP_MERGE: for (unsigned i = 0; i < N_IN; i += block_factor) {
 
 #pragma HLS UNROLL
 
     zonesorting_merge_eight_op(stl_next(in0, i), stl_next(out, i/2));
-  }
-}
-
-// A wrapper for merging (special case for stage 1)
-template <unsigned int N_IN, unsigned int N_OUT=N_IN, typename T_IN, typename T_OUT>
-void zonesorting_merge_stage_s1_op(const T_IN in0[N_IN], T_OUT out[N_OUT]) {
-  static_assert(is_same<T_IN, T_OUT>::value, "T_OUT type check failed");
-
-#pragma HLS PIPELINE II=zonesorting_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
-#pragma HLS INLINE
-
-  // Simple copy
-  for (unsigned i = 0; i < N_IN; i++) {
-
-#pragma HLS UNROLL
-
-    out[i] = in0[i];
   }
 }
 
@@ -281,9 +267,15 @@ void zonesorting_op(
   zonesorting_preprocess_stage_op<zonesorting_config::n_in>(zonesorting_in, stage_0_out);
 
   // Merge each pair of blocks.
-  // Note the special case for stage 1, where the last 16 cols are skipped, and simply copied to stage 3 output.
-  zonesorting_merge_stage_op<zonesorting_config::n_stage_0 - 16>(stage_0_out, stage_1_out);
-  zonesorting_merge_stage_s1_op<16>(stl_next(stage_0_out, zonesorting_config::n_stage_0 - 16), stl_next(stage_3_out, 16));
+  // Note the special case for merge stage 1, where the last 16 cols are skipped. Instead, they are copied to stage 3 output.
+  const int n_skipped_stage_0 = zonesorting_config::n_stage_0 - (zonesorting_config::n_stage_1 * 2);
+  emtf_assert(n_skipped_stage_0 == 16);  // 144 - 128
+  zonesorting_merge_stage_op<zonesorting_config::n_stage_0 - n_skipped_stage_0>(stage_0_out, stage_1_out);
+  details::copy_n_values<n_skipped_stage_0>(
+      stl_next(stage_0_out, zonesorting_config::n_stage_0 - n_skipped_stage_0),
+      stl_next(stage_3_out, n_skipped_stage_0)
+  );
+
   zonesorting_merge_stage_op<zonesorting_config::n_stage_1>(stage_1_out, stage_2_out);
   zonesorting_merge_stage_op<zonesorting_config::n_stage_2>(stage_2_out, stage_3_out);
   zonesorting_merge_stage_op<zonesorting_config::n_stage_3>(stage_3_out, stage_4_out);
@@ -307,6 +299,7 @@ void zonesorting_layer(
   // Check assumptions
   static_assert(zonesorting_config::n_in == num_emtf_img_cols, "zonesorting_config::n_in check failed");
   static_assert(zonesorting_config::n_out == num_emtf_tracks, "zonesorting_config::n_out check failed");
+  static_assert(zonesorting_config::block_factor == 8, "block_factor must be 8");
   static_assert((zonesorting_config::n_stage_0 % 8) == 0, "n_stage_0 must be divisible by 8");
   static_assert((zonesorting_config::n_stage_1 % 8) == 0, "n_stage_1 must be divisible by 8");
   static_assert((zonesorting_config::n_stage_2 % 8) == 0, "n_stage_2 must be divisible by 8");

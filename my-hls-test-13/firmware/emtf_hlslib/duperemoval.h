@@ -28,7 +28,7 @@ void duperemoval_preprocess_op(
   // ME0        | ME0
 
   // Loop over tracks
-  for (unsigned itrk = 0; itrk < duperemoval_config::n_in; itrk++) {
+  LOOP_TRK_1: for (unsigned itrk = 0; itrk < duperemoval_config::n_in; itrk++) {
 
 #pragma HLS UNROLL
 
@@ -46,13 +46,23 @@ void duperemoval_preprocess_op(
     trk_seg_lhs[k++] = trk_seg_rhs[11];
     emtf_assert(k == num_emtf_sites_rm);
 
-    int l = 0;
-    vld_lhs[l++] = vld_rhs[0] or vld_rhs[9] or vld_rhs[1] or vld_rhs[5];
-    vld_lhs[l++] = vld_rhs[2] or vld_rhs[10] or vld_rhs[6];
-    vld_lhs[l++] = vld_rhs[3] or vld_rhs[7];
-    vld_lhs[l++] = vld_rhs[4] or vld_rhs[8];
-    vld_lhs[l++] = vld_rhs[11];
-    emtf_assert(l == num_emtf_sites_rm);
+    int kk = 0;
+    vld_lhs[kk++] = vld_rhs[0] or vld_rhs[9] or vld_rhs[1] or vld_rhs[5];
+    vld_lhs[kk++] = vld_rhs[2] or vld_rhs[10] or vld_rhs[6];
+    vld_lhs[kk++] = vld_rhs[3] or vld_rhs[7];
+    vld_lhs[kk++] = vld_rhs[4] or vld_rhs[8];
+    vld_lhs[kk++] = vld_rhs[11];
+    emtf_assert(kk == num_emtf_sites_rm);
+
+    //std::cout << "[DEBUG] trk " << itrk << " seg: [";
+    //for (unsigned kkk = 0; kkk < num_emtf_sites; kkk++) {
+    //  std::cout << (vld_rhs[kkk] ? trk_seg_rhs[kkk] : static_cast<trk_seg_t>(model_config::n_in)) << ", ";
+    //}
+    //std::cout << "] seg (rm): [";
+    //for (unsigned kkk = 0; kkk < num_emtf_sites_rm; kkk++) {
+    //  std::cout << (vld_lhs[kkk] ? trk_seg_lhs[kkk] : static_cast<trk_seg_t>(model_config::n_in)) << ", ";
+    //}
+    //std::cout << "]" << std::endl;
   }
 }
 
@@ -72,18 +82,18 @@ void duperemoval_set_survivors_op(
 
   // Find duplicates and mark them for removal
 
-  dio_trk_accum_t removal = 0;  // initialize
+  dio_trk_accum_t removal = 0;  // init as zero
 
   // Loop over pairs of tracks, and check 5 sites for each pair
-  for (unsigned i = 0; i < (num_emtf_tracks - 1); i++) {
+  LOOP_TRK_2: for (unsigned i = 0; i < (num_emtf_tracks - 1); i++) {
 
 #pragma HLS UNROLL
 
-    for (unsigned j = (i + 1); j < num_emtf_tracks; j++) {
+    LOOP_TRK_2_1: for (unsigned j = (i + 1); j < num_emtf_tracks; j++) {
 
 #pragma HLS UNROLL
 
-      for (unsigned k = 0; k < num_emtf_sites_rm; k++) {
+      LOOP_TRK_2_1_1: for (unsigned k = 0; k < num_emtf_sites_rm; k++) {
 
 #pragma HLS UNROLL
 
@@ -97,11 +107,11 @@ void duperemoval_set_survivors_op(
   }
 
   // Determine indices for output after removal
-  for (unsigned i = 0, j = 0; j < num_emtf_tracks; j++) {
+  LOOP_TRK_3: for (unsigned i = 0, j = 0; j < num_emtf_tracks; j++) {
 
 #pragma HLS UNROLL
 
-    survivors[i] = 0;  // initialize
+    survivors[i] = 0;  // init as zero
 
     if (!removal[j]) {
       survivors[i][j] = 1;
@@ -125,38 +135,33 @@ void duperemoval_set_features_op(
 #pragma HLS INLINE
 
   // Multiplex to output
-  for (unsigned i = 0; i < num_emtf_tracks; i++) {
+  LOOP_TRK_4: for (unsigned i = 0; i < num_emtf_tracks; i++) {
 
 #pragma HLS UNROLL
 
     trk_valid_rm[i] = (bool) survivors[i];
-    emtf_assert(survivors[i] == 0 || survivors[i] == 1 || survivors[i] == 2 || survivors[i] == 4 || survivors[i] == 8);
+    emtf_assert((survivors[i] & (survivors[i]-1)) == 0);  // survivors[i] should be power of 2
 
     if (trk_valid_rm[i]) {
 
-      for (unsigned j = i; j < num_emtf_tracks; j++) {
+      LOOP_TRK_4_1: for (unsigned j = i; j < num_emtf_tracks; j++) {
 
 #pragma HLS UNROLL
 
         if (survivors[i][j]) {  // at most one survivor
-
-          // Simple copy
-          for (unsigned k = 0; k < num_emtf_features; k++) {
-
-#pragma HLS UNROLL
-
-            trk_feat_rm[(i * num_emtf_features) + k] = trk_feat[(j * num_emtf_features) + k];
-          }
+          // Copy to output.
+          details::copy_n_values<num_emtf_features>(
+              stl_next(trk_feat, j * num_emtf_features),
+              stl_next(trk_feat_rm, i * num_emtf_features)
+          );
         }
       }
     } else {
-      // Invalid track. Fill with zero
-      for (unsigned k = 0; k < num_emtf_features; k++) {
-
-#pragma HLS UNROLL
-
-        trk_feat_rm[(i * num_emtf_features) + k] = 0;
-      }
+      // Invalid track. Fill output with zero.
+      details::fill_n_values<num_emtf_features>(
+          stl_next(trk_feat_rm, i * num_emtf_features),
+          static_cast<trk_feat_t>(0)
+      );
     }
   }
 }
