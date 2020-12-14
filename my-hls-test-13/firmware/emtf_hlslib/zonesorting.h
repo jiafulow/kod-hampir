@@ -23,19 +23,32 @@ void zonesorting_preprocess_eight_op(const trk_col_t col, const T_IN in0[8], T_O
   constexpr int bits_hi = (data_t::width - 1);
 
   // Stage 0: implement mux for each pair of cols, concatenate index and data.
-  const pair_t tmp_0_0_0(idx_t(0), in0[0].range(bits_hi, bits_lo));
-  const pair_t tmp_0_0_1(idx_t(1), in0[1].range(bits_hi, bits_lo));
-  const pair_t tmp_0_1_0(idx_t(2), in0[2].range(bits_hi, bits_lo));
-  const pair_t tmp_0_1_1(idx_t(3), in0[3].range(bits_hi, bits_lo));
-  const pair_t tmp_0_2_0(idx_t(4), in0[4].range(bits_hi, bits_lo));
-  const pair_t tmp_0_2_1(idx_t(5), in0[5].range(bits_hi, bits_lo));
-  const pair_t tmp_0_3_0(idx_t(6), in0[6].range(bits_hi, bits_lo));
-  const pair_t tmp_0_3_1(idx_t(7), in0[7].range(bits_hi, bits_lo));
+  const pair_t tmp_f_0(idx_t(0), in0[0].range(bits_hi, bits_lo));
+  const pair_t tmp_f_1(idx_t(1), in0[1].range(bits_hi, bits_lo));
+  const pair_t tmp_f_2(idx_t(2), in0[2].range(bits_hi, bits_lo));
+  const pair_t tmp_f_3(idx_t(3), in0[3].range(bits_hi, bits_lo));
+  const pair_t tmp_f_4(idx_t(4), in0[4].range(bits_hi, bits_lo));
+  const pair_t tmp_f_5(idx_t(5), in0[5].range(bits_hi, bits_lo));
+  const pair_t tmp_f_6(idx_t(6), in0[6].range(bits_hi, bits_lo));
+  const pair_t tmp_f_7(idx_t(7), in0[7].range(bits_hi, bits_lo));
 
-  const pair_t tmp_0_0 = (tmp_0_0_0.second != 0) ? tmp_0_0_0 : tmp_0_0_1;
-  const pair_t tmp_0_1 = (tmp_0_1_0.second != 0) ? tmp_0_1_0 : tmp_0_1_1;
-  const pair_t tmp_0_2 = (tmp_0_2_0.second != 0) ? tmp_0_2_0 : tmp_0_2_1;
-  const pair_t tmp_0_3 = (tmp_0_3_0.second != 0) ? tmp_0_3_0 : tmp_0_3_1;
+  const pair_t tmp_0_0 = (tmp_f_0.second != 0) ? tmp_f_0 : tmp_f_1;
+  const pair_t tmp_0_1 = (tmp_f_2.second != 0) ? tmp_f_2 : tmp_f_3;
+  const pair_t tmp_0_2 = (tmp_f_4.second != 0) ? tmp_f_4 : tmp_f_5;
+  const pair_t tmp_0_3 = (tmp_f_6.second != 0) ? tmp_f_6 : tmp_f_7;
+
+#pragma HLS DATA_PACK variable=tmp_f_0
+#pragma HLS DATA_PACK variable=tmp_f_1
+#pragma HLS DATA_PACK variable=tmp_f_2
+#pragma HLS DATA_PACK variable=tmp_f_3
+#pragma HLS DATA_PACK variable=tmp_f_4
+#pragma HLS DATA_PACK variable=tmp_f_5
+#pragma HLS DATA_PACK variable=tmp_f_6
+#pragma HLS DATA_PACK variable=tmp_f_7
+#pragma HLS DATA_PACK variable=tmp_0_0
+#pragma HLS DATA_PACK variable=tmp_0_1
+#pragma HLS DATA_PACK variable=tmp_0_2
+#pragma HLS DATA_PACK variable=tmp_0_3
 
   // The following implements the bubble sorting network, which is a stable sort algo.
   // There are 4 wires (0,1,2,3 from top to bottom), and there are 5 stages (not counting
@@ -75,6 +88,19 @@ void zonesorting_preprocess_eight_op(const trk_col_t col, const T_IN in0[8], T_O
   // Stage 5
   const pair_t tmp_5_0 = (tmp_3_0 < tmp_4_1) ? tmp_4_1 : tmp_3_0;
   const pair_t tmp_5_1 = (tmp_3_0 < tmp_4_1) ? tmp_3_0 : tmp_4_1;
+
+#pragma HLS DATA_PACK variable=tmp_1_0
+#pragma HLS DATA_PACK variable=tmp_1_1
+#pragma HLS DATA_PACK variable=tmp_2_1
+#pragma HLS DATA_PACK variable=tmp_2_2
+#pragma HLS DATA_PACK variable=tmp_3_0
+#pragma HLS DATA_PACK variable=tmp_3_1
+#pragma HLS DATA_PACK variable=tmp_3_2
+#pragma HLS DATA_PACK variable=tmp_3_3
+#pragma HLS DATA_PACK variable=tmp_4_1
+#pragma HLS DATA_PACK variable=tmp_4_2
+#pragma HLS DATA_PACK variable=tmp_5_0
+#pragma HLS DATA_PACK variable=tmp_5_1
 
   // Output (incl column number)
   const idx_t idx0 = tmp_5_0.first;
@@ -165,6 +191,27 @@ void zonesorting_merge_eight_op(const T_IN in0[8], T_OUT out[4]) {
   //const pair_t tmp_3_4 = (tmp_2_3 < tmp_2_4) ? tmp_2_3 : tmp_2_4;  // unused
   //const pair_t tmp_3_5 = (tmp_2_5 < tmp_1_6) ? tmp_1_6 : tmp_2_5;  // unused
   //const pair_t tmp_3_6 = (tmp_2_5 < tmp_1_6) ? tmp_2_5 : tmp_1_6;  // unused
+
+#pragma HLS DATA_PACK variable=tmp_0_0
+#pragma HLS DATA_PACK variable=tmp_0_1
+#pragma HLS DATA_PACK variable=tmp_0_2
+#pragma HLS DATA_PACK variable=tmp_0_3
+#pragma HLS DATA_PACK variable=tmp_0_4
+#pragma HLS DATA_PACK variable=tmp_0_5
+#pragma HLS DATA_PACK variable=tmp_0_6
+#pragma HLS DATA_PACK variable=tmp_0_7
+#pragma HLS DATA_PACK variable=tmp_1_0
+#pragma HLS DATA_PACK variable=tmp_1_1
+#pragma HLS DATA_PACK variable=tmp_1_2
+#pragma HLS DATA_PACK variable=tmp_1_3
+#pragma HLS DATA_PACK variable=tmp_1_4
+#pragma HLS DATA_PACK variable=tmp_1_5
+#pragma HLS DATA_PACK variable=tmp_2_2
+#pragma HLS DATA_PACK variable=tmp_2_3
+#pragma HLS DATA_PACK variable=tmp_2_4
+#pragma HLS DATA_PACK variable=tmp_3_1
+#pragma HLS DATA_PACK variable=tmp_3_2
+#pragma HLS DATA_PACK variable=tmp_3_3
 
   // Output
   const idx_t idx0 = tmp_1_0.first;

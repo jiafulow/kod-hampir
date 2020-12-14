@@ -111,6 +111,43 @@ void zonemerging_merge_twelve_op(const T_IN in0[12], T_OUT out[4]) {
   //const pair_t tmp_6_5 = (tmp_5_5 < tmp_4_6) ? tmp_4_6 : tmp_5_5;  // unused
   //const pair_t tmp_6_6 = (tmp_5_5 < tmp_4_6) ? tmp_5_5 : tmp_4_6;  // unused
 
+#pragma HLS DATA_PACK variable=tmp_0_0
+#pragma HLS DATA_PACK variable=tmp_0_1
+#pragma HLS DATA_PACK variable=tmp_0_2
+#pragma HLS DATA_PACK variable=tmp_0_3
+#pragma HLS DATA_PACK variable=tmp_0_4
+#pragma HLS DATA_PACK variable=tmp_0_5
+#pragma HLS DATA_PACK variable=tmp_0_6
+#pragma HLS DATA_PACK variable=tmp_0_7
+#pragma HLS DATA_PACK variable=tmp_0_8
+#pragma HLS DATA_PACK variable=tmp_0_9
+#pragma HLS DATA_PACK variable=tmp_0_10
+#pragma HLS DATA_PACK variable=tmp_0_11
+#pragma HLS DATA_PACK variable=tmp_1_0
+#pragma HLS DATA_PACK variable=tmp_1_1
+#pragma HLS DATA_PACK variable=tmp_1_2
+#pragma HLS DATA_PACK variable=tmp_1_3
+#pragma HLS DATA_PACK variable=tmp_1_4
+#pragma HLS DATA_PACK variable=tmp_1_5
+#pragma HLS DATA_PACK variable=tmp_2_2
+#pragma HLS DATA_PACK variable=tmp_2_3
+#pragma HLS DATA_PACK variable=tmp_2_4
+#pragma HLS DATA_PACK variable=tmp_3_1
+#pragma HLS DATA_PACK variable=tmp_3_2
+#pragma HLS DATA_PACK variable=tmp_3_3
+#pragma HLS DATA_PACK variable=tmp_4_0
+#pragma HLS DATA_PACK variable=tmp_4_1
+#pragma HLS DATA_PACK variable=tmp_4_2
+#pragma HLS DATA_PACK variable=tmp_4_3
+#pragma HLS DATA_PACK variable=tmp_4_4
+#pragma HLS DATA_PACK variable=tmp_4_5
+#pragma HLS DATA_PACK variable=tmp_5_2
+#pragma HLS DATA_PACK variable=tmp_5_3
+#pragma HLS DATA_PACK variable=tmp_5_4
+#pragma HLS DATA_PACK variable=tmp_6_1
+#pragma HLS DATA_PACK variable=tmp_6_2
+#pragma HLS DATA_PACK variable=tmp_6_3
+
   // Output
   const idx_t idx0 = tmp_4_0.first;
   const idx_t idx1 = tmp_6_1.first;

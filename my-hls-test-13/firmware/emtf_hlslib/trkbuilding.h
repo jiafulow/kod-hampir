@@ -32,6 +32,14 @@ void trkbuilding_reduce_argmin_ph_diff_op(const T_IN0 in0[4], const T_IN1 in1[4]
   // Stage 2
   const pair_t tmp_2_0 = (tmp_1_0 < tmp_1_1) ? tmp_1_0 : tmp_1_1;
 
+#pragma HLS DATA_PACK variable=tmp_0_0
+#pragma HLS DATA_PACK variable=tmp_0_1
+#pragma HLS DATA_PACK variable=tmp_0_2
+#pragma HLS DATA_PACK variable=tmp_0_3
+#pragma HLS DATA_PACK variable=tmp_1_0
+#pragma HLS DATA_PACK variable=tmp_1_1
+#pragma HLS DATA_PACK variable=tmp_2_0
+
   // Output
   const idx_t idx = tmp_2_0.first;
   const data_t invalid_marker = find_ap_int_max_allowed<data_t>::value;
@@ -78,6 +86,22 @@ void trkbuilding_reduce_argmin_ph_diff_op(const T_IN0 in0[8], const T_IN1 in1[8]
 
   // Stage 3
   const pair_t tmp_3_0 = (tmp_2_0 < tmp_2_1) ? tmp_2_0 : tmp_2_1;
+
+#pragma HLS DATA_PACK variable=tmp_0_0
+#pragma HLS DATA_PACK variable=tmp_0_1
+#pragma HLS DATA_PACK variable=tmp_0_2
+#pragma HLS DATA_PACK variable=tmp_0_3
+#pragma HLS DATA_PACK variable=tmp_0_4
+#pragma HLS DATA_PACK variable=tmp_0_5
+#pragma HLS DATA_PACK variable=tmp_0_6
+#pragma HLS DATA_PACK variable=tmp_0_7
+#pragma HLS DATA_PACK variable=tmp_1_0
+#pragma HLS DATA_PACK variable=tmp_1_1
+#pragma HLS DATA_PACK variable=tmp_1_2
+#pragma HLS DATA_PACK variable=tmp_1_3
+#pragma HLS DATA_PACK variable=tmp_2_0
+#pragma HLS DATA_PACK variable=tmp_2_1
+#pragma HLS DATA_PACK variable=tmp_3_0
 
   // Output
   const idx_t idx = tmp_3_0.first;
@@ -136,6 +160,31 @@ void trkbuilding_reduce_argmin_ph_diff_op(const T_IN0 in0[12], const T_IN1 in1[1
 
   // Stage 4
   const pair_t tmp_4_0 = (tmp_3_0 < tmp_3_1) ? tmp_3_0 : tmp_3_1;
+
+#pragma HLS DATA_PACK variable=tmp_0_0
+#pragma HLS DATA_PACK variable=tmp_0_1
+#pragma HLS DATA_PACK variable=tmp_0_2
+#pragma HLS DATA_PACK variable=tmp_0_3
+#pragma HLS DATA_PACK variable=tmp_0_4
+#pragma HLS DATA_PACK variable=tmp_0_5
+#pragma HLS DATA_PACK variable=tmp_0_6
+#pragma HLS DATA_PACK variable=tmp_0_7
+#pragma HLS DATA_PACK variable=tmp_0_8
+#pragma HLS DATA_PACK variable=tmp_0_9
+#pragma HLS DATA_PACK variable=tmp_0_10
+#pragma HLS DATA_PACK variable=tmp_0_11
+#pragma HLS DATA_PACK variable=tmp_1_0
+#pragma HLS DATA_PACK variable=tmp_1_1
+#pragma HLS DATA_PACK variable=tmp_1_2
+#pragma HLS DATA_PACK variable=tmp_1_3
+#pragma HLS DATA_PACK variable=tmp_1_4
+#pragma HLS DATA_PACK variable=tmp_1_5
+#pragma HLS DATA_PACK variable=tmp_2_0
+#pragma HLS DATA_PACK variable=tmp_2_1
+#pragma HLS DATA_PACK variable=tmp_2_2
+#pragma HLS DATA_PACK variable=tmp_3_0
+#pragma HLS DATA_PACK variable=tmp_3_1
+#pragma HLS DATA_PACK variable=tmp_4_0
 
   // Output
   const idx_t idx = tmp_4_0.first;
