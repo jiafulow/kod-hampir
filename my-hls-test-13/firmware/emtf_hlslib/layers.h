@@ -47,13 +47,14 @@ struct zonesorting_config {
   static const int target_ii = 1;
 
   // Used in the column loop
-  static const int block_factor = 8;
+  static const int batch_size = 8;
 
   // Used for sorting stages
-  static const unsigned int n_stage_0 = n_in / 2;
-  static const unsigned int n_stage_1 = (n_stage_0 - 16) / 2;
+  static const unsigned int n_skipped_stage_0 = 16;
+  static const unsigned int n_stage_0 = (n_in / 2) - n_skipped_stage_0;
+  static const unsigned int n_stage_1 = n_stage_0 / 2;
   static const unsigned int n_stage_2 = n_stage_1 / 2;
-  static const unsigned int n_stage_3 = (n_stage_2 / 2) + 16;
+  static const unsigned int n_stage_3 = (n_stage_2 / 2) + n_skipped_stage_0;
   static const unsigned int n_stage_4 = n_stage_3 / 2;
   static const unsigned int n_stage_5 = n_stage_4 / 2;
   static const unsigned int n_stage_6 = n_stage_5 / 2;
@@ -83,11 +84,12 @@ struct duperemoval_config {
 // _____________________________________________________________________________
 // Various tags
 
-// Detector
-struct m_csc_detector_tag {};
-struct m_rpc_detector_tag {};
-struct m_gem_detector_tag {};
-struct m_me0_detector_tag {};
+// Subsystem
+struct m_dt_subsystem_tag {};
+struct m_csc_subsystem_tag {};
+struct m_rpc_subsystem_tag {};
+struct m_gem_subsystem_tag {};
+struct m_me0_subsystem_tag {};
 
 // Chamber
 struct m_10deg_chamber_tag {};
@@ -150,6 +152,9 @@ struct m_site_8_tag : m_zone_any_tag {};
 struct m_site_9_tag : m_zone_any_tag {};
 struct m_site_10_tag : m_zone_any_tag {};
 struct m_site_11_tag : m_zone_any_tag {};
+
+// HLS directives
+struct m_inline_directive {};
 
 // _____________________________________________________________________________
 // Utilities
