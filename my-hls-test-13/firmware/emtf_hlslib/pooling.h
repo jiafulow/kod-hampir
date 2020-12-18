@@ -15,7 +15,7 @@ void pooling_activate_op(const T_IN& in0, T_OUT& out) {
 
 //#pragma HLS INLINE
 
-  const unsigned int N = (1u << num_emtf_img_rows);
+  const unsigned int N = (1u << T_IN::width);
 
 #if !defined(__SYNTHESIS__)
   static bool initialized = false;
@@ -31,6 +31,7 @@ void pooling_activate_op(const T_IN& in0, T_OUT& out) {
   }
 
   // Lookup
+  emtf_assert(in0 < N);
   out = static_cast<T_OUT>(lookup_table[in0]);
 }
 
@@ -44,51 +45,48 @@ void pooling_reduce_argmax_op(const T_IN in0[num_emtf_patterns], T_OUT& out) {
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
-#pragma HLS INLINE
+//#pragma HLS INLINE
 
   typedef trk_patt_t idx_t;  // encodes 0..6
   typedef trk_qual_t data_t;
   typedef details::argsort_pair<idx_t, data_t> pair_t;
 
-  // Stage 0: concatenate index and data.
-  const pair_t tmp_0_0(idx_t(0), in0[0]);
-  const pair_t tmp_0_1(idx_t(1), in0[1]);
-  const pair_t tmp_0_2(idx_t(2), in0[2]);
-  const pair_t tmp_0_3(idx_t(3), in0[3]);
-  const pair_t tmp_0_4(idx_t(4), in0[4]);
-  const pair_t tmp_0_5(idx_t(5), in0[5]);
-  const pair_t tmp_0_6(idx_t(6), in0[6]);
+  // Binary tree structure
+  const unsigned int N = details::ceil_mul4<num_emtf_patterns>::value;  // round up to 8
+  const unsigned int num_nodes = (2 * N) - 1;  // only works if N is multiple of 2
+  const unsigned int num_nodes_last = N;  // last level
+  const unsigned int num_nodes_above_last = N - 1;
 
-  // Stage 1
-  const pair_t tmp_1_0 = tmp_0_0;
-  const pair_t tmp_1_1 = (tmp_0_1 >= tmp_0_2) ? tmp_0_1 : tmp_0_2;
-  const pair_t tmp_1_2 = (tmp_0_3 >= tmp_0_4) ? tmp_0_3 : tmp_0_4;
-  const pair_t tmp_1_3 = (tmp_0_5 >= tmp_0_6) ? tmp_0_5 : tmp_0_6;
+  pair_t nodes[num_nodes];
 
-  // Stage 2
-  const pair_t tmp_2_0 = (tmp_1_0 >= tmp_1_1) ? tmp_1_0 : tmp_1_1;
-  const pair_t tmp_2_1 = (tmp_1_2 >= tmp_1_3) ? tmp_1_2 : tmp_1_3;
+#pragma HLS DATA_PACK variable=nodes
 
-  // Stage 3
-  const pair_t tmp_3_0 = (tmp_2_0 >= tmp_2_1) ? tmp_2_0 : tmp_2_1;
+#pragma HLS ARRAY_PARTITION variable=nodes complete dim=0
 
-#pragma HLS DATA_PACK variable=tmp_0_0
-#pragma HLS DATA_PACK variable=tmp_0_1
-#pragma HLS DATA_PACK variable=tmp_0_2
-#pragma HLS DATA_PACK variable=tmp_0_3
-#pragma HLS DATA_PACK variable=tmp_0_4
-#pragma HLS DATA_PACK variable=tmp_0_5
-#pragma HLS DATA_PACK variable=tmp_0_6
-#pragma HLS DATA_PACK variable=tmp_1_0
-#pragma HLS DATA_PACK variable=tmp_1_1
-#pragma HLS DATA_PACK variable=tmp_1_2
-#pragma HLS DATA_PACK variable=tmp_1_3
-#pragma HLS DATA_PACK variable=tmp_2_0
-#pragma HLS DATA_PACK variable=tmp_2_1
-#pragma HLS DATA_PACK variable=tmp_3_0
+  // Fetch input
+  // Note that in0[0] is inserted twice to round up to 8
+  nodes[(num_nodes - 1) - 0] = pair_t(idx_t(6), in0[6]);
+  nodes[(num_nodes - 1) - 1] = pair_t(idx_t(5), in0[5]);
+  nodes[(num_nodes - 1) - 2] = pair_t(idx_t(4), in0[4]);
+  nodes[(num_nodes - 1) - 3] = pair_t(idx_t(3), in0[3]);
+  nodes[(num_nodes - 1) - 4] = pair_t(idx_t(2), in0[2]);
+  nodes[(num_nodes - 1) - 5] = pair_t(idx_t(1), in0[1]);
+  nodes[(num_nodes - 1) - 6] = pair_t(idx_t(0), in0[0]);
+  nodes[(num_nodes - 1) - 7] = pair_t(idx_t(0), in0[0]);
 
-  // Output (incl pattern number)
-  out = (tmp_3_0.first, tmp_3_0.second);
+  // Binary-tree reduce
+  LOOP_NOD: for (unsigned i = 0; i < num_nodes_above_last; i++) {
+
+#pragma HLS UNROLL
+
+    const unsigned int node_index = (num_nodes_above_last - 1) - i;
+    const unsigned int child_l_index = (2 * node_index) + 1;
+    const unsigned int child_r_index = (2 * node_index) + 2;
+    nodes[node_index] = (nodes[child_l_index] >= nodes[child_r_index]) ? nodes[child_l_index] : nodes[child_r_index];
+  }
+
+  // Output
+  out = (nodes[0].first, nodes[0].second);
 }
 
 // _____________________________________________________________________________
@@ -96,14 +94,7 @@ void pooling_reduce_argmax_op(const T_IN in0[num_emtf_patterns], T_OUT& out) {
 
 template <typename Zone>
 void pooling_col_op(
-    const typename details::select_pattern_col_patch_type<Zone, 0>::type& patch_row_0,
-    const typename details::select_pattern_col_patch_type<Zone, 1>::type& patch_row_1,
-    const typename details::select_pattern_col_patch_type<Zone, 2>::type& patch_row_2,
-    const typename details::select_pattern_col_patch_type<Zone, 3>::type& patch_row_3,
-    const typename details::select_pattern_col_patch_type<Zone, 4>::type& patch_row_4,
-    const typename details::select_pattern_col_patch_type<Zone, 5>::type& patch_row_5,
-    const typename details::select_pattern_col_patch_type<Zone, 6>::type& patch_row_6,
-    const typename details::select_pattern_col_patch_type<Zone, 7>::type& patch_row_7,
+    const dio_row_accum_t preactivations_col_j[num_emtf_patterns],
     pooling_out_t& pooling_out_col_j
 ) {
 
@@ -111,51 +102,25 @@ void pooling_col_op(
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
-#pragma HLS INLINE
+//#pragma HLS INLINE
 
-  int pattern_col_start_table[num_emtf_patterns * num_emtf_img_rows];
-  details::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(pattern_col_start_table, details::get_pattern_col_start_op<Zone>());
+  trk_qual_t activations_col_j[num_emtf_patterns];
 
-  int pattern_col_stop_table[num_emtf_patterns * num_emtf_img_rows];
-  details::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(pattern_col_stop_table, details::get_pattern_col_stop_op<Zone>());
-
-  auto table_index_fn = [](unsigned patt, unsigned row) -> unsigned {
-
-#pragma HLS INLINE
-
-    return (patt * num_emtf_img_rows) + row;
-  };
-
-  trk_qual_t activations[num_emtf_patterns];
-
-#pragma HLS ARRAY_PARTITION variable=activations complete dim=0
+#pragma HLS ARRAY_PARTITION variable=activations_col_j complete dim=0
 
   // Loop over patterns
-  LOOP_PATT: for (unsigned patt = 0; patt < num_emtf_patterns; patt++) {
+  LOOP_PATT_2: for (unsigned patt = 0; patt < num_emtf_patterns; patt++) {
 
 #pragma HLS UNROLL
 
-    // Loop over rows manually
-    dio_row_accum_t preactivation = 0;  // init as zero
-
-    preactivation[0] = (bool) patch_row_0.range(pattern_col_stop_table[table_index_fn(patt, 0)], pattern_col_start_table[table_index_fn(patt, 0)]);
-    preactivation[1] = (bool) patch_row_1.range(pattern_col_stop_table[table_index_fn(patt, 1)], pattern_col_start_table[table_index_fn(patt, 1)]);
-    preactivation[2] = (bool) patch_row_2.range(pattern_col_stop_table[table_index_fn(patt, 2)], pattern_col_start_table[table_index_fn(patt, 2)]);
-    preactivation[3] = (bool) patch_row_3.range(pattern_col_stop_table[table_index_fn(patt, 3)], pattern_col_start_table[table_index_fn(patt, 3)]);
-    preactivation[4] = (bool) patch_row_4.range(pattern_col_stop_table[table_index_fn(patt, 4)], pattern_col_start_table[table_index_fn(patt, 4)]);
-    preactivation[5] = (bool) patch_row_5.range(pattern_col_stop_table[table_index_fn(patt, 5)], pattern_col_start_table[table_index_fn(patt, 5)]);
-    preactivation[6] = (bool) patch_row_6.range(pattern_col_stop_table[table_index_fn(patt, 6)], pattern_col_start_table[table_index_fn(patt, 6)]);
-    preactivation[7] = (bool) patch_row_7.range(pattern_col_stop_table[table_index_fn(patt, 7)], pattern_col_start_table[table_index_fn(patt, 7)]);
-
-    // Activation
-    pooling_activate_op<Zone>(preactivation, activations[patt]);
+    // Activation at (col, patt)
+    pooling_activate_op<Zone>(preactivations_col_j[patt], activations_col_j[patt]);
   }  // end loop over patterns
 
   // Find max activation
-  pooling_reduce_argmax_op(activations, pooling_out_col_j);
+  pooling_reduce_argmax_op(activations_col_j, pooling_out_col_j);
 }
 
-// Fusion of multiple pooling_col_op()
 template <typename Zone>
 void pooling_col_fused_op(
     const typename details::select_pattern_col_fused_patch_type<Zone, 0>::type& patch_row_0,
@@ -175,16 +140,41 @@ void pooling_col_fused_op(
 
 //#pragma HLS INLINE
 
-  typedef typename details::select_pattern_col_padding_type<Zone, 0>::type padding_row_0_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 1>::type padding_row_1_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 2>::type padding_row_2_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 3>::type padding_row_3_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 4>::type padding_row_4_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 5>::type padding_row_5_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 6>::type padding_row_6_t;
-  typedef typename details::select_pattern_col_padding_type<Zone, 7>::type padding_row_7_t;
+  int pattern_col_start_table[num_emtf_patterns * num_emtf_img_rows];
+  details::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(pattern_col_start_table, details::get_pattern_col_start_op<Zone>());
+
+  int pattern_col_stop_table[num_emtf_patterns * num_emtf_img_rows];
+  details::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(pattern_col_stop_table, details::get_pattern_col_stop_op<Zone>());
 
   const int fusion_factor = pooling_config::fusion_factor;
+
+  dio_row_accum_t preactivations[fusion_factor * num_emtf_patterns];
+
+#pragma HLS ARRAY_PARTITION variable=preactivations complete dim=0
+
+  // Loop over patterns
+  LOOP_PATT_1: for (unsigned patt = 0; patt < num_emtf_patterns; patt++) {
+
+#pragma HLS UNROLL
+
+    // Loop over columns
+    LOOP_COL_1: for (unsigned col = 0; col < fusion_factor; col++) {
+
+#pragma HLS UNROLL
+
+      // Preactivation at (col, patt)
+      const unsigned int table_index = (patt * num_emtf_img_rows);
+      auto& preactivation = preactivations[(col * num_emtf_patterns) + patt];
+      preactivation[0] = (bool) patch_row_0.range(col + pattern_col_stop_table[table_index + 0], col + pattern_col_start_table[table_index + 0]);
+      preactivation[1] = (bool) patch_row_1.range(col + pattern_col_stop_table[table_index + 1], col + pattern_col_start_table[table_index + 1]);
+      preactivation[2] = (bool) patch_row_2.range(col + pattern_col_stop_table[table_index + 2], col + pattern_col_start_table[table_index + 2]);
+      preactivation[3] = (bool) patch_row_3.range(col + pattern_col_stop_table[table_index + 3], col + pattern_col_start_table[table_index + 3]);
+      preactivation[4] = (bool) patch_row_4.range(col + pattern_col_stop_table[table_index + 4], col + pattern_col_start_table[table_index + 4]);
+      preactivation[5] = (bool) patch_row_5.range(col + pattern_col_stop_table[table_index + 5], col + pattern_col_start_table[table_index + 5]);
+      preactivation[6] = (bool) patch_row_6.range(col + pattern_col_stop_table[table_index + 6], col + pattern_col_start_table[table_index + 6]);
+      preactivation[7] = (bool) patch_row_7.range(col + pattern_col_stop_table[table_index + 7], col + pattern_col_start_table[table_index + 7]);
+    }  // end loop over columns
+  }  // end loop over patterns
 
   // Loop over columns
   LOOP_COL_2: for (unsigned col = 0; col < fusion_factor; col++) {
@@ -192,14 +182,7 @@ void pooling_col_fused_op(
 #pragma HLS UNROLL
 
     pooling_col_op<Zone>(
-        patch_row_0.range(col + (padding_row_0_t::width * 2), col),
-        patch_row_1.range(col + (padding_row_1_t::width * 2), col),
-        patch_row_2.range(col + (padding_row_2_t::width * 2), col),
-        patch_row_3.range(col + (padding_row_3_t::width * 2), col),
-        patch_row_4.range(col + (padding_row_4_t::width * 2), col),
-        patch_row_5.range(col + (padding_row_5_t::width * 2), col),
-        patch_row_6.range(col + (padding_row_6_t::width * 2), col),
-        patch_row_7.range(col + (padding_row_7_t::width * 2), col),
+        stl_next(preactivations, col * num_emtf_patterns),
         pooling_out_col_fused_j[col]
     );
   }  // end loop over columns
@@ -249,8 +232,8 @@ void pooling_op(
 
   const int fusion_factor = pooling_config::fusion_factor;
 
-  // Loop over columns with step size 8
-  LOOP_COL_1: for (unsigned col = 0; col < num_emtf_img_cols; col += fusion_factor) {
+  // Loop over columns with certain step size
+  LOOP_COL_FUSED: for (unsigned col = 0; col < num_emtf_img_cols; col += fusion_factor) {
 
 #pragma HLS UNROLL
 
