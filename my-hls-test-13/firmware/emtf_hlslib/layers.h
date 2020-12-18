@@ -259,6 +259,25 @@ template <int I> struct pattern_col_pad_traits<m_zone_0_tag, I> { static const i
 template <int I> struct pattern_col_pad_traits<m_zone_1_tag, I> { static const int value = pattern_col_pad_zone_1[I]; };
 template <int I> struct pattern_col_pad_traits<m_zone_2_tag, I> { static const int value = pattern_col_pad_zone_2[I]; };
 
+// Helper class to round up to the nearest multiple of 4
+template <unsigned int N>
+struct ceil_mul4 {
+  static const unsigned int value = ((N + 4 - 1) / 4) * 4;
+};
+
+template <typename Category>
+struct site_num_segments_traits {
+  static const int num_chambers = num_chambers_traits<Category>::value;
+  static const int num_chambers_round = ceil_mul4<num_chambers>::value;
+  static const int value = num_chambers_round * num_emtf_segments;
+};
+
+template <typename Category>
+struct area_num_segments_traits {
+  static const int site_num_segments = site_num_segments_traits<Category>::value;
+  static const int value = site_num_segments / ((num_emtf_img_areas + 1) / 2);
+};
+
 template <typename Category, int I>
 struct select_pattern_col_padding_type {
   static const int pad = pattern_col_pad_traits<Category, I>::value;
@@ -532,12 +551,6 @@ struct ceil_log2 {
   static const unsigned int value = (N > 0) ? (1 + floor_log2<N - 1>::value) : 0;
 };
 
-// Helper class to round up to the nearest multiple of 4
-template <unsigned int N>
-struct ceil_mul4 {
-  static const unsigned int value = ((N + 3) / 4) * 4;
-};
-
 // Helper class for argsort
 template <typename T, typename U>
 struct argsort_pair {
@@ -545,13 +558,29 @@ struct argsort_pair {
   typedef U second_type;
   T first;
   U second;
-  argsort_pair(T a, U b) : first(a), second(b) {}
+  argsort_pair() : first(), second() {}
+  argsort_pair(const T& a, const U& b) : first(a), second(b) {}
+  argsort_pair(const argsort_pair<T, U>& p) : first(p.first), second(p.second) {}
 
   inline bool operator <(const argsort_pair& o) const {
 
 #pragma HLS INLINE
 
     return second < o.second;
+  }
+
+  inline bool operator <=(const argsort_pair& o) const {
+
+#pragma HLS INLINE
+
+    return second <= o.second;
+  }
+
+  inline bool operator >(const argsort_pair& o) const {
+
+#pragma HLS INLINE
+
+    return second > o.second;
   }
 
   inline bool operator >=(const argsort_pair& o) const {
@@ -626,9 +655,10 @@ void fill_n_values(T out[N], const T& value) {
   }
 }
 
-template <unsigned int N, typename T>
-void pack_boolean_values(const bool in0[N], T& out) {
-  static_assert(is_same<T, ap_uint<N> >::value, "T type check failed");
+template <unsigned int N, typename T_IN, typename T_OUT>
+void pack_boolean_values(const T_IN (&in0)[N], T_OUT& out) {
+  static_assert(is_same<T_IN, ap_uint<1> >::value, "T_IN type check failed");
+  static_assert(is_same<T_OUT, ap_uint<N> >::value, "T_OUT type check failed");
 
 #pragma HLS INLINE
 

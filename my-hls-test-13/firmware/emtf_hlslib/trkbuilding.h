@@ -3,10 +3,16 @@
 
 namespace emtf {
 
-template <typename T_IN0, typename T_IN1, typename T_OUT>
-void trkbuilding_reduce_argmin_ph_diff_op(const T_IN0 in0[4], const T_IN1 in1[4], T_OUT& out, bool& vld, m_20deg_chamber_tag) {
+template <typename T_IN0, typename T_IN1, typename T_OUT, typename Category>
+void trkbuilding_reduce_argmin_ph_diff_op(
+    const T_IN0 in0[details::area_num_segments_traits<Category>::value],
+    const T_IN1 in1[details::area_num_segments_traits<Category>::value],
+    T_OUT& out,
+    bool_t& vld,
+    Category
+) {
   static_assert(is_same<T_IN0, trk_seg_t>::value, "T_IN0 type check failed");
-  static_assert(is_same<T_IN1, dio_trk_ph_diff_t>::value, "T_IN1 type check failed");
+  static_assert(is_same<T_IN1, dio_ph_diff_t>::value, "T_IN1 type check failed");
   static_assert(is_same<T_OUT, T_IN0>::value, "T_OUT type check failed");
 
 #pragma HLS PIPELINE II=trkbuilding_config::target_ii
@@ -15,181 +21,53 @@ void trkbuilding_reduce_argmin_ph_diff_op(const T_IN0 in0[4], const T_IN1 in1[4]
 
 #pragma HLS INLINE
 
-  typedef ap_uint<details::ceil_log2<3>::value> idx_t;  // encodes 0..3
+  const unsigned int N = details::area_num_segments_traits<Category>::value;
+  typedef ap_uint<details::ceil_log2<N-1>::value> idx_t;  // encodes 0..N-1
   typedef T_IN1 data_t;
   typedef details::argsort_pair<idx_t, data_t> pair_t;
+  emtf_assert(N == 4 or N == 8 or N == 12);
 
-  // Stage 0: concatenate index and data
-  const pair_t tmp_0_0(idx_t(0), in1[0]);
-  const pair_t tmp_0_1(idx_t(1), in1[1]);
-  const pair_t tmp_0_2(idx_t(2), in1[2]);
-  const pair_t tmp_0_3(idx_t(3), in1[3]);
+  // Binary tree structure
+  const unsigned int num_nodes = (2 * N) - 1;  // only works if N is multiple of 2
+  const unsigned int num_nodes_last = N;  // last level
+  const unsigned int num_nodes_above_last = N - 1;
 
-  // Stage 1
-  const pair_t tmp_1_0 = (tmp_0_0 < tmp_0_1) ? tmp_0_0 : tmp_0_1;
-  const pair_t tmp_1_1 = (tmp_0_2 < tmp_0_3) ? tmp_0_2 : tmp_0_3;
+  pair_t nodes[num_nodes];
 
-  // Stage 2
-  const pair_t tmp_2_0 = (tmp_1_0 < tmp_1_1) ? tmp_1_0 : tmp_1_1;
+#pragma HLS DATA_PACK variable=nodes
 
-#pragma HLS DATA_PACK variable=tmp_0_0
-#pragma HLS DATA_PACK variable=tmp_0_1
-#pragma HLS DATA_PACK variable=tmp_0_2
-#pragma HLS DATA_PACK variable=tmp_0_3
-#pragma HLS DATA_PACK variable=tmp_1_0
-#pragma HLS DATA_PACK variable=tmp_1_1
-#pragma HLS DATA_PACK variable=tmp_2_0
+#pragma HLS ARRAY_PARTITION variable=nodes complete dim=0
 
-  // Output
-  const idx_t idx = tmp_2_0.first;
-  const data_t invalid_marker = find_ap_int_max_allowed<data_t>::value;
+  LOOP_REGION: {
 
-  out = in0[idx];
-  vld = (in1[idx] != invalid_marker);
-}
+#pragma HLS LOOP_MERGE
 
-template <typename T_IN0, typename T_IN1, typename T_OUT>
-void trkbuilding_reduce_argmin_ph_diff_op(const T_IN0 in0[8], const T_IN1 in1[8], T_OUT& out, bool& vld, m_10deg_chamber_tag) {
-  static_assert(is_same<T_IN0, trk_seg_t>::value, "T_IN0 type check failed");
-  static_assert(is_same<T_IN1, dio_trk_ph_diff_t>::value, "T_IN1 type check failed");
-  static_assert(is_same<T_OUT, T_IN0>::value, "T_OUT type check failed");
+    // Fetch input
+    LOOP_NOD_1: for (unsigned i = 0; i < num_nodes_last; i++) {
 
-#pragma HLS PIPELINE II=trkbuilding_config::target_ii
+#pragma HLS UNROLL
 
-#pragma HLS INTERFACE ap_ctrl_none port=return
+      const unsigned int node_index = (num_nodes - 1) - i;
+      const unsigned int j = (num_nodes_last - 1) - i;
+      nodes[node_index] = pair_t(idx_t(j), in1[j]);
+    }
 
-#pragma HLS INLINE
+    // Binary-tree reduce
+    LOOP_NOD_2: for (unsigned i = 0; i < num_nodes_above_last; i++) {
 
-  typedef ap_uint<details::ceil_log2<7>::value> idx_t;  // encodes 0..7
-  typedef T_IN1 data_t;
-  typedef details::argsort_pair<idx_t, data_t> pair_t;
+#pragma HLS UNROLL
 
-  // Stage 0: concatenate index and data
-  const pair_t tmp_0_0(idx_t(0), in1[0]);
-  const pair_t tmp_0_1(idx_t(1), in1[1]);
-  const pair_t tmp_0_2(idx_t(2), in1[2]);
-  const pair_t tmp_0_3(idx_t(3), in1[3]);
-  const pair_t tmp_0_4(idx_t(4), in1[4]);
-  const pair_t tmp_0_5(idx_t(5), in1[5]);
-  const pair_t tmp_0_6(idx_t(6), in1[6]);
-  const pair_t tmp_0_7(idx_t(7), in1[7]);
+      const unsigned int node_index = (num_nodes_above_last - 1) - i;
+      const unsigned int child_l_index = (2 * node_index) + 1;
+      const unsigned int child_r_index = (2 * node_index) + 2;
+      nodes[node_index] = (nodes[child_l_index] <= nodes[child_r_index]) ? nodes[child_l_index] : nodes[child_r_index];
 
-  // Stage 1
-  const pair_t tmp_1_0 = (tmp_0_0 < tmp_0_1) ? tmp_0_0 : tmp_0_1;
-  const pair_t tmp_1_1 = (tmp_0_2 < tmp_0_3) ? tmp_0_2 : tmp_0_3;
-  const pair_t tmp_1_2 = (tmp_0_4 < tmp_0_5) ? tmp_0_4 : tmp_0_5;
-  const pair_t tmp_1_3 = (tmp_0_6 < tmp_0_7) ? tmp_0_6 : tmp_0_7;
-
-  // Stage 2
-  const pair_t tmp_2_0 = (tmp_1_0 < tmp_1_1) ? tmp_1_0 : tmp_1_1;
-  const pair_t tmp_2_1 = (tmp_1_2 < tmp_1_3) ? tmp_1_2 : tmp_1_3;
-
-  // Stage 3
-  const pair_t tmp_3_0 = (tmp_2_0 < tmp_2_1) ? tmp_2_0 : tmp_2_1;
-
-#pragma HLS DATA_PACK variable=tmp_0_0
-#pragma HLS DATA_PACK variable=tmp_0_1
-#pragma HLS DATA_PACK variable=tmp_0_2
-#pragma HLS DATA_PACK variable=tmp_0_3
-#pragma HLS DATA_PACK variable=tmp_0_4
-#pragma HLS DATA_PACK variable=tmp_0_5
-#pragma HLS DATA_PACK variable=tmp_0_6
-#pragma HLS DATA_PACK variable=tmp_0_7
-#pragma HLS DATA_PACK variable=tmp_1_0
-#pragma HLS DATA_PACK variable=tmp_1_1
-#pragma HLS DATA_PACK variable=tmp_1_2
-#pragma HLS DATA_PACK variable=tmp_1_3
-#pragma HLS DATA_PACK variable=tmp_2_0
-#pragma HLS DATA_PACK variable=tmp_2_1
-#pragma HLS DATA_PACK variable=tmp_3_0
+    }
+  }  // end loop region
 
   // Output
-  const idx_t idx = tmp_3_0.first;
+  const idx_t idx = nodes[0].first;
   const data_t invalid_marker = find_ap_int_max_allowed<data_t>::value;
-
-  out = in0[idx];
-  vld = (in1[idx] != invalid_marker);
-}
-
-template <typename T_IN0, typename T_IN1, typename T_OUT>
-void trkbuilding_reduce_argmin_ph_diff_op(const T_IN0 in0[12], const T_IN1 in1[12], T_OUT& out, bool& vld, m_20deg_ext_chamber_tag) {
-  static_assert(is_same<T_IN0, trk_seg_t>::value, "T_IN0 type check failed");
-  static_assert(is_same<T_IN1, dio_trk_ph_diff_t>::value, "T_IN1 type check failed");
-  static_assert(is_same<T_OUT, T_IN0>::value, "T_OUT type check failed");
-
-#pragma HLS PIPELINE II=trkbuilding_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
-#pragma HLS INLINE
-
-  typedef ap_uint<details::ceil_log2<11>::value> idx_t;  // encodes 0..11
-  typedef T_IN1 data_t;
-  typedef details::argsort_pair<idx_t, data_t> pair_t;
-
-  // Stage 0: concatenate index and data
-  const pair_t tmp_0_0(idx_t(0), in1[0]);
-  const pair_t tmp_0_1(idx_t(1), in1[1]);
-  const pair_t tmp_0_2(idx_t(2), in1[2]);
-  const pair_t tmp_0_3(idx_t(3), in1[3]);
-  const pair_t tmp_0_4(idx_t(4), in1[4]);
-  const pair_t tmp_0_5(idx_t(5), in1[5]);
-  const pair_t tmp_0_6(idx_t(6), in1[6]);
-  const pair_t tmp_0_7(idx_t(7), in1[7]);
-  const pair_t tmp_0_8(idx_t(8), in1[8]);
-  const pair_t tmp_0_9(idx_t(9), in1[9]);
-  const pair_t tmp_0_10(idx_t(10), in1[10]);
-  const pair_t tmp_0_11(idx_t(11), in1[11]);
-
-  // Stage 1
-  const pair_t tmp_1_0 = (tmp_0_0 < tmp_0_1) ? tmp_0_0 : tmp_0_1;
-  const pair_t tmp_1_1 = (tmp_0_2 < tmp_0_3) ? tmp_0_2 : tmp_0_3;
-  const pair_t tmp_1_2 = (tmp_0_4 < tmp_0_5) ? tmp_0_4 : tmp_0_5;
-  const pair_t tmp_1_3 = (tmp_0_6 < tmp_0_7) ? tmp_0_6 : tmp_0_7;
-  const pair_t tmp_1_4 = (tmp_0_8 < tmp_0_9) ? tmp_0_8 : tmp_0_9;
-  const pair_t tmp_1_5 = (tmp_0_10 < tmp_0_11) ? tmp_0_10 : tmp_0_11;
-
-  // Stage 2
-  const pair_t tmp_2_0 = (tmp_1_0 < tmp_1_1) ? tmp_1_0 : tmp_1_1;
-  const pair_t tmp_2_1 = (tmp_1_2 < tmp_1_3) ? tmp_1_2 : tmp_1_3;
-  const pair_t tmp_2_2 = (tmp_1_4 < tmp_1_5) ? tmp_1_4 : tmp_1_5;
-
-  // Stage 3
-  const pair_t tmp_3_0 = (tmp_2_0 < tmp_2_1) ? tmp_2_0 : tmp_2_1;
-  const pair_t tmp_3_1 = tmp_2_2;
-
-  // Stage 4
-  const pair_t tmp_4_0 = (tmp_3_0 < tmp_3_1) ? tmp_3_0 : tmp_3_1;
-
-#pragma HLS DATA_PACK variable=tmp_0_0
-#pragma HLS DATA_PACK variable=tmp_0_1
-#pragma HLS DATA_PACK variable=tmp_0_2
-#pragma HLS DATA_PACK variable=tmp_0_3
-#pragma HLS DATA_PACK variable=tmp_0_4
-#pragma HLS DATA_PACK variable=tmp_0_5
-#pragma HLS DATA_PACK variable=tmp_0_6
-#pragma HLS DATA_PACK variable=tmp_0_7
-#pragma HLS DATA_PACK variable=tmp_0_8
-#pragma HLS DATA_PACK variable=tmp_0_9
-#pragma HLS DATA_PACK variable=tmp_0_10
-#pragma HLS DATA_PACK variable=tmp_0_11
-#pragma HLS DATA_PACK variable=tmp_1_0
-#pragma HLS DATA_PACK variable=tmp_1_1
-#pragma HLS DATA_PACK variable=tmp_1_2
-#pragma HLS DATA_PACK variable=tmp_1_3
-#pragma HLS DATA_PACK variable=tmp_1_4
-#pragma HLS DATA_PACK variable=tmp_1_5
-#pragma HLS DATA_PACK variable=tmp_2_0
-#pragma HLS DATA_PACK variable=tmp_2_1
-#pragma HLS DATA_PACK variable=tmp_2_2
-#pragma HLS DATA_PACK variable=tmp_3_0
-#pragma HLS DATA_PACK variable=tmp_3_1
-#pragma HLS DATA_PACK variable=tmp_4_0
-
-  // Output
-  const idx_t idx = tmp_4_0.first;
-  const data_t invalid_marker = find_ap_int_max_allowed<data_t>::value;
-
   out = in0[idx];
   vld = (in1[idx] != invalid_marker);
 }
@@ -207,41 +85,36 @@ void trkbuilding_reduce_median_of_three_op(const T_IN& in0, const T_IN& in1, con
   typedef T_IN data_t;
   const data_t invalid_marker_th = details::th_invalid;
 
-  // See zonesorting_preprocess_eight_op() for explanations. The bubble sorting netowrk here
-  // only has 3 wires (0,1,2 from top to bottom), and there are 3 stages.
+  const bool vld0 = (in0 != invalid_marker_th);
+  const bool vld1 = (in1 != invalid_marker_th);
+  const bool vld2 = (in2 != invalid_marker_th);
 
-  // Stage 1: compare-swap if (wire[i] < wire[j]) swap(wire[j], wire[i])
-  const data_t tmp_1_0_0 = (in0 < in1) ? in1 : in0;
-  const data_t tmp_1_1_0 = (in0 < in1) ? in0 : in1;
-  const data_t tmp_1_0_1 = (in1 < in2) ? in2 : in1;
-  const data_t tmp_1_1_1 = (in1 < in2) ? in1 : in2;
-  const data_t tmp_1_0_2 = (in2 < in0) ? in0 : in2;
-  const data_t tmp_1_1_2 = (in2 < in0) ? in2 : in0;
-
-  // Stage 2
-  const data_t tmp_2_1 = (tmp_1_1_0 < in2) ? in2 : tmp_1_1_0;
-  const data_t tmp_2_2 = (tmp_1_1_0 < in2) ? tmp_1_1_0 : in2;  // unused
-
-  // Stage 3
-  const data_t tmp_3_0 = (tmp_1_0_0 < tmp_2_1) ? tmp_2_1 : tmp_1_0_0;  // unused
-  const data_t tmp_3_1 = (tmp_1_0_0 < tmp_2_1) ? tmp_1_0_0 : tmp_2_1;
+  // Choose b if (a <= b <= c) or (a > b > c) or when a & c are invalid
+  const bool sel0 = vld0 and (
+      ((not vld2 or (in2 <= in0)) and (vld1 and (in0 <= in1))) or \
+      ((vld2 and not (in2 <= in0)) and (not vld1 or not (in0 <= in1))) or \
+      (not vld2 and not vld1)
+  );
+  const bool sel1 = vld1 and (
+      ((not vld0 or (in0 <= in1)) and (vld2 and (in1 <= in2))) or \
+      ((vld0 and not (in0 <= in1)) and (not vld2 or not (in1 <= in2))) or \
+      (not vld0 and not vld2)
+  );
+  const bool sel2 = vld2 and (
+      ((not vld1 or (in1 <= in2)) and (vld0 and (in2 <= in0))) or \
+      ((vld1 and not (in1 <= in2)) and (not vld0 or not (in2 <= in0))) or \
+      (not vld1 and not vld0)
+  );
 
   // Output
-  ap_uint<3> valid_flag = 0;
-  valid_flag[0] = (in0 != invalid_marker_th);
-  valid_flag[1] = (in1 != invalid_marker_th);
-  valid_flag[2] = (in2 != invalid_marker_th);
-
-  switch (valid_flag) {
-    case 0: { out = invalid_marker_th; break; }
-    case 1: { out = in0; break; }
-    case 2: { out = in1; break; }
-    case 3: { out = tmp_1_0_0; break; }
-    case 4: { out = in2; break; }
-    case 5: { out = tmp_1_0_2; break; }
-    case 6: { out = tmp_1_0_1; break; }
-    case 7: { out = tmp_3_1; break; }
-    default: { out = invalid_marker_th; break; }
+  if (sel1) {
+    out = in1;
+  } else if (sel0) {
+    out = in0;
+  } else if (sel2) {
+    out = in2;
+  } else {
+    out = invalid_marker_th;
   }
 }
 
@@ -271,7 +144,7 @@ void trkbuilding_reduce_median_theta_op(const T_IN in0[9], T_OUT& out) {
 }
 
 template <typename T_IN, typename T_OUT>
-void trkbuilding_select_theta_op(const T_IN& in0, const T_IN& in1, const T_IN& th_median, T_OUT& out, bool& vld) {
+void trkbuilding_select_theta_op(const T_IN& in0, const T_IN& in1, const T_IN& th_median, T_OUT& out, bool_t& vld) {
   static_assert(is_same<T_IN, T_OUT>::value, "T_OUT type check failed");
 
 #pragma HLS PIPELINE II=trkbuilding_config::target_ii
@@ -281,29 +154,26 @@ void trkbuilding_select_theta_op(const T_IN& in0, const T_IN& in1, const T_IN& t
 #pragma HLS INLINE
 
   typedef T_IN data_t;
-  typedef dio_trk_th_diff_t difference_t;
+  typedef dio_th_diff_t difference_t;
   const data_t invalid_marker_th = details::th_invalid;
   const difference_t invalid_marker_th_diff = find_ap_int_max_allowed<difference_t>::value;
   const difference_t th_window = details::th_window;
 
   const data_t th_diff_tmp_0 = details::calc_abs_diff(in0, th_median);
   const data_t th_diff_tmp_1 = details::calc_abs_diff(in1, th_median);
-  const bool is_valid_th_diff_tmp_0 = (in0 != invalid_marker_th) and (th_diff_tmp_0 < invalid_marker_th_diff);
-  const bool is_valid_th_diff_tmp_1 = (in1 != invalid_marker_th) and (th_diff_tmp_1 < invalid_marker_th_diff);
-
-  const difference_t th_diff_0 = is_valid_th_diff_tmp_0 ? static_cast<difference_t>(th_diff_tmp_0) : invalid_marker_th_diff;
-  const difference_t th_diff_1 = is_valid_th_diff_tmp_1 ? static_cast<difference_t>(th_diff_tmp_1) : invalid_marker_th_diff;
-  const bool is_valid_th_diff_0 = is_valid_th_diff_tmp_0 and (th_diff_0 < th_window);
-  const bool is_valid_th_diff_1 = is_valid_th_diff_tmp_1 and (th_diff_1 < th_window);
+  const difference_t th_diff_0 = (th_diff_tmp_0 < invalid_marker_th_diff) ? static_cast<difference_t>(th_diff_tmp_0) : invalid_marker_th_diff;
+  const difference_t th_diff_1 = (th_diff_tmp_1 < invalid_marker_th_diff) ? static_cast<difference_t>(th_diff_tmp_1) : invalid_marker_th_diff;
+  const bool vld0 = (in0 != invalid_marker_th) and (th_diff_0 < th_window);
+  const bool vld1 = (in1 != invalid_marker_th) and (th_diff_1 < th_window);
 
   // Output
-  if (is_valid_th_diff_0 and is_valid_th_diff_1) {
+  if (vld0 and vld1) {
     out = (th_diff_0 < th_diff_1) ? in0 : in1;
     vld = true;
-  } else if (is_valid_th_diff_0) {
+  } else if (vld0) {
     out = in0;
     vld = true;
-  } else if (is_valid_th_diff_1) {
+  } else if (vld1) {
     out = in1;
     vld = true;
   } else {
@@ -313,7 +183,7 @@ void trkbuilding_select_theta_op(const T_IN& in0, const T_IN& in1, const T_IN& t
 }
 
 template <typename T_IN, typename T_OUT>
-void trkbuilding_select_theta_op(const T_IN& in0, const T_IN& th_median, T_OUT& out, bool& vld) {
+void trkbuilding_select_theta_op(const T_IN& in0, const T_IN& th_median, T_OUT& out, bool_t& vld) {
   static_assert(is_same<T_IN, T_OUT>::value, "T_OUT type check failed");
 
 #pragma HLS PIPELINE II=trkbuilding_config::target_ii
@@ -323,19 +193,17 @@ void trkbuilding_select_theta_op(const T_IN& in0, const T_IN& th_median, T_OUT& 
 #pragma HLS INLINE
 
   typedef T_IN data_t;
-  typedef dio_trk_th_diff_t difference_t;
+  typedef dio_th_diff_t difference_t;
   const data_t invalid_marker_th = details::th_invalid;
   const difference_t invalid_marker_th_diff = find_ap_int_max_allowed<difference_t>::value;
   const difference_t th_window = details::th_window;
 
   const data_t th_diff_tmp_0 = details::calc_abs_diff(in0, th_median);
-  const bool is_valid_th_diff_tmp_0 = (in0 != invalid_marker_th) and (th_diff_tmp_0 < invalid_marker_th_diff);
-
-  const difference_t th_diff_0 = is_valid_th_diff_tmp_0 ? static_cast<difference_t>(th_diff_tmp_0) : invalid_marker_th_diff;
-  const bool is_valid_th_diff_0 = is_valid_th_diff_tmp_0 and (th_diff_0 < th_window);
+  const difference_t th_diff_0 = (th_diff_tmp_0 < invalid_marker_th_diff) ? static_cast<difference_t>(th_diff_tmp_0) : invalid_marker_th_diff;
+  const bool vld0 = (in0 != invalid_marker_th) and (th_diff_0 < th_window);
 
   // Output
-  if (is_valid_th_diff_0) {
+  if (vld0) {
     out = in0;
     vld = true;
   } else {
@@ -360,7 +228,7 @@ void trkbuilding_match_ph_op(
     const trk_zone_t& curr_trk_zone,
     const trk_tzone_t& curr_trk_tzone,
     trk_seg_t& curr_trk_seg_site_i,
-    bool& curr_trk_seg_v_site_i
+    bool_t& curr_trk_seg_v_site_i
 ) {
 
 #pragma HLS PIPELINE II=trkbuilding_config::target_ii
@@ -370,11 +238,8 @@ void trkbuilding_match_ph_op(
 #pragma HLS INLINE
 
   typedef typename details::chamber_category_traits<Site>::chamber_category chamber_category;
-  const int num_chambers = details::num_chambers_traits<chamber_category>::value;
-  const int num_chambers_round = details::ceil_mul4<num_chambers>::value;
-  const int num_segments_round = num_chambers_round * num_emtf_segments;
-  const unsigned int N = num_segments_round;
-  emtf_assert(N == 8 || N == 16 || N == 24);
+  const unsigned int N = details::site_num_segments_traits<chamber_category>::value;
+  emtf_assert(N == 8 or N == 16 or N == 24);
 
   int segment_id_table[N];
   details::init_table_op<N>(segment_id_table, details::get_site_segment_id_op<Site>());
@@ -393,13 +258,13 @@ void trkbuilding_match_ph_op(
 
   // Find segments matched to the pattern
   trk_seg_t site_ph_seg[N];
-  dio_trk_ph_diff_t site_ph_diff[N];
+  dio_ph_diff_t site_ph_diff[N];
 
 #pragma HLS ARRAY_PARTITION variable=site_ph_seg complete dim=0
 #pragma HLS ARRAY_PARTITION variable=site_ph_diff complete dim=0
 
   const trk_seg_t invalid_marker_ph_seg = model_config::n_in;
-  const dio_trk_ph_diff_t invalid_marker_ph_diff = find_ap_int_max_allowed<dio_trk_ph_diff_t>::value;
+  const dio_ph_diff_t invalid_marker_ph_diff = find_ap_int_max_allowed<dio_ph_diff_t>::value;
 
   const trk_col_t col_patt = curr_trk_col + static_cast<trk_col_t>(details::chamber_img_joined_col_start);
   const trk_col_t col_start = col_patt + pattern_col_start_table[(curr_trk_zone * num_emtf_patterns) + curr_trk_patt];
@@ -431,14 +296,11 @@ void trkbuilding_match_ph_op(
 
       if (is_valid_col) {
         // Calculate abs difference
-        const emtf_phi_t ph_seg = emtf_phi[iseg];
         const emtf_phi_t ph_patt_tmp = details::calc_rectified_diff(col_mid, col_pad);
         const emtf_phi_t ph_patt = (ph_patt_tmp << bits_to_shift) + (1u << (bits_to_shift - 1));
         emtf_assert(((ph_patt >> bits_to_shift) + col_pad) == col_mid);
-
-        const emtf_phi_t ph_diff = details::calc_abs_diff(ph_seg, ph_patt);
-        const bool is_valid_ph_diff = (ph_diff < invalid_marker_ph_diff);
-        site_ph_diff[i] = is_valid_ph_diff ? static_cast<dio_trk_ph_diff_t>(ph_diff) : invalid_marker_ph_diff;
+        const emtf_phi_t ph_diff_tmp = details::calc_abs_diff(emtf_phi[iseg], ph_patt);
+        site_ph_diff[i] = (ph_diff_tmp < invalid_marker_ph_diff) ? static_cast<dio_ph_diff_t>(ph_diff_tmp) : invalid_marker_ph_diff;
       } else {
         // Invalid segment
         site_ph_diff[i] = invalid_marker_ph_diff;
@@ -489,10 +351,10 @@ void trkbuilding_match_th_op(
     const emtf_theta1_t emtf_theta1[model_config::n_in],
     const emtf_theta2_t emtf_theta2[model_config::n_in],
     const trk_seg_t curr_trk_seg[num_emtf_sites],
-    const bool curr_trk_seg_v_from_ph[num_emtf_sites],
+    const bool_t curr_trk_seg_v_from_ph[num_emtf_sites],
     emtf_theta1_t& theta_median,
     emtf_theta1_t emtf_theta_best[num_emtf_sites],
-    bool curr_trk_seg_v_from_th[num_emtf_sites]
+    bool_t curr_trk_seg_v_from_th[num_emtf_sites]
 ) {
 
 #pragma HLS PIPELINE II=trkbuilding_config::target_ii
@@ -702,8 +564,8 @@ void trkbuilding_op(
 
   const trk_tzone_t curr_trk_tzone = details::timezone_traits<Timezone>::value;
 
-  bool curr_trk_seg_v_from_ph[num_emtf_sites];
-  bool curr_trk_seg_v_from_th[num_emtf_sites];
+  bool_t curr_trk_seg_v_from_ph[num_emtf_sites];
+  bool_t curr_trk_seg_v_from_th[num_emtf_sites];
   emtf_theta_t emtf_theta_best[num_emtf_sites];
 
 #pragma HLS ARRAY_PARTITION variable=curr_trk_seg_v_from_ph complete dim=0
@@ -742,8 +604,8 @@ void trkbuilding_op(
   trkbuilding_match_th_op(emtf_theta1, emtf_theta2, curr_trk_seg, curr_trk_seg_v_from_ph, theta_median, emtf_theta_best, curr_trk_seg_v_from_th);
 
   // Set segment valid flag and track valid flag
-  details::pack_boolean_values<num_emtf_sites>(curr_trk_seg_v_from_th, curr_trk_seg_v);
-  curr_trk_valid = (bool) curr_trk_seg_v;
+  details::pack_boolean_values(curr_trk_seg_v_from_th, curr_trk_seg_v);
+  curr_trk_valid = (bool) curr_trk_seg_v;  // or-reduced
 
   // Extract features
   trkbuilding_extract_features_op(emtf_phi, emtf_bend, emtf_qual1, emtf_qual2, emtf_time, phi_median, theta_median, emtf_theta_best, curr_trk_seg, curr_trk_seg_v, curr_trk_feat);

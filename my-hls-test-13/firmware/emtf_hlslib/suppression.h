@@ -37,7 +37,8 @@ void suppression_op(
     const data_t qr = rightmost ? data_t(0) : suppression_in[col + 1].range(bits_hi, bits_lo);
 
     // Suppress if not local maximum
-    const bool suppress = (qc <= ql || qc < qr);
+    // Use condition: (qc <= ql || qc < qr)
+    const bool suppress = (qc <= ql) or (qc < qr);
 
     // Output
     suppression_out[col] = suppress ? static_cast<suppression_in_t>(0) : suppression_in[col];
