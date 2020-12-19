@@ -125,6 +125,16 @@
       std::cout << trk_seg_v[0][i] << ", "; \
     } \
     std::cout << "]" << std::endl; \
+    std::cout << "Printing 'trk_seg', 'trk_seg_v' second-track elements:" << std::endl; \
+    std::cout << "trk_seg: ["; \
+    for (unsigned i = 0; i < num_emtf_sites; i++) { \
+      std::cout << trk_seg[(1 * num_emtf_sites) + i] << ", "; \
+    } \
+    std::cout << "] trk_seg_v: ["; \
+    for (unsigned i = 0; i < num_emtf_sites; i++) { \
+      std::cout << trk_seg_v[1][i] << ", "; \
+    } \
+    std::cout << "]" << std::endl; \
     std::cout << "Printing 'trk_feat', 'trk_valid' first-track elements:" << std::endl; \
     std::cout << "trk_feat: ["; \
     for (unsigned i = 0; i < num_emtf_features; i++) { \

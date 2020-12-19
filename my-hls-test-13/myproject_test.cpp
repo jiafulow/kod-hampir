@@ -18,40 +18,61 @@ int main(int argc, char **argv) {
   // Perform sanity check
   sanity_check();
 
-  // Create Event & Result from 'tb_data' text files
-  Event evt;
-  read_tb_data("tb_data/event_0.txt", evt);
-  Result res;
-  read_tb_data("tb_data/result_0.txt", res);
+  int err = 0;
+  std::string clr_info = "\033[1;34m";   // blue
+  std::string clr_error = "\033[1;31m";  // red
+  std::string clr_reset = "\033[0m";     // no format
 
-  // Create FPGAEvent & FPGAResult
-  const FPGAEvent fw_evt(evt);
-  const FPGAResult fw_res(res);
+  std::vector<int> event_list = {0};
+  //std::vector<int> event_list = {
+  //    0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+  //    10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+  //    20, 21, 22, 23, 24, 25, 26, 27, 28, 29
+  //};
 
-  // Prepare input and output
-  emtf::model_in_t in0[emtf::model_config::n_in];
-  emtf::model_out_t out[emtf::model_config::n_out];
-  copy_array(fw_evt.data, in0);
-  init_array_as_zeros(out);
+  // Loop over events
+  for (auto ievt : event_list) {
+    std::cout << clr_info << "Processing event " << ievt << clr_reset << std::endl;
 
-  // Call the top function !!
-  myproject(in0, out);
+    // Create Event & Result from 'tb_data' text files
+    Event evt;
+    std::stringstream filename;
+    filename << "tb_data/event_" << ievt << ".txt";
+    read_tb_data(filename.str(), evt);
 
-  // Compare with the expectation
-  int err = count_mismatches(std::begin(out), std::end(out), std::begin(fw_res.data));
+    Result res;
+    filename.str("");
+    filename << "tb_data/result_" << ievt << ".txt";
+    read_tb_data(filename.str(), res);
 
-  // Print error info
-  if (err) {
-    std::string clr_error = "\033[1;31m";  // red
-    std::string clr_reset = "\033[0m";     // reset
-    std::cout << clr_error << "FAILED!" << clr_reset << std::endl;
-    std::cout << "Got:" << std::endl;
-    print_array(out);
-    std::cout << std::endl;
-    std::cout << "Expected:" << std::endl;
-    print_array(fw_res.data);
-    std::cout << std::endl;
-    std::cout << "Mismatches: " << err << std::endl;
+    // Create FPGAEvent & FPGAResult
+    const FPGAEvent fw_evt(evt);
+    const FPGAResult fw_res(res);
+
+    // Prepare input and output
+    emtf::model_in_t in0[emtf::model_config::n_in];
+    emtf::model_out_t out[emtf::model_config::n_out];
+    copy_array(fw_evt.data, in0);
+    init_array_as_zeros(out);
+
+    // Call the top function !!
+    myproject(in0, out);
+
+    // Compare with the expectation
+    int ievt_err = count_mismatches(std::begin(out), std::end(out), std::begin(fw_res.data));
+    err += ievt_err;
+
+    // Print error info
+    if (ievt_err) {
+      std::cout << clr_error << "FAILED!" << clr_reset << std::endl;
+      std::cout << "Got:" << std::endl;
+      print_array(out);
+      std::cout << std::endl;
+      std::cout << "Expected:" << std::endl;
+      print_array(fw_res.data);
+      std::cout << std::endl;
+      std::cout << "Mismatches: " << err << std::endl;
+    }
   }
 
   // Return 0 only if the results are correct
