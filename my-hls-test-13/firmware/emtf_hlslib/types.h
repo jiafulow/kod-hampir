@@ -167,6 +167,7 @@ typedef ap_uint<num_emtf_img_rows> dio_row_accum_t;
 typedef ap_uint<num_emtf_tracks>   dio_trk_accum_t;
 typedef ap_uint<11>                dio_ph_diff_t;  // bw: ceil(log2(20 / 0.01667))
 typedef ap_uint<6>                 dio_th_diff_t;  // bw: ceil(log2(14 / 0.28515625))
+typedef dio_trk_accum_t            dio_survivor_t;
 
 // These appear in the layer interfaces
 typedef dio_col_accum_t                                 zoning_out_t;
