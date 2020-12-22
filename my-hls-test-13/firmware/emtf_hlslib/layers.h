@@ -32,7 +32,7 @@ struct pooling_config {
   static const int target_ii = 1;
 
   // Used in the column loop
-  static const int fusion_factor = 1;
+  static const int fusion_factor = 8;
 };
 
 struct suppression_config {
@@ -297,9 +297,29 @@ struct select_pattern_col_patch_type {
 };
 
 template <typename Category, int I>
-struct select_pattern_col_fused_patch_type {
+struct select_pattern_fused_col_patch_type {
   static const int pad = pattern_col_pad_traits<Category, I>::value;
   typedef ap_uint<pooling_config::fusion_factor + (pad * 2)> type;
+};
+
+template <typename Category>
+struct select_pattern_preactivation_type {
+  typedef ap_uint<dio_row_accum_t::width> type;
+};
+
+template <typename Category>
+struct select_pattern_fused_preactivation_type {
+  typedef ap_uint<pooling_config::fusion_factor * dio_row_accum_t::width> type;
+};
+
+template <typename Category>
+struct select_pattern_activation_type {
+  typedef ap_uint<trk_qual_t::width> type;
+};
+
+template <typename Category>
+struct select_pattern_fused_activation_type {
+  typedef ap_uint<pooling_config::fusion_factor * trk_qual_t::width> type;
 };
 
 // Getter ops
@@ -560,34 +580,34 @@ struct argsort_pair {
   U second;
   argsort_pair() : first(), second() {}
   argsort_pair(const T& a, const U& b) : first(a), second(b) {}
-  argsort_pair(const argsort_pair<T, U>& p) : first(p.first), second(p.second) {}
+  argsort_pair(const argsort_pair& p) : first(p.first), second(p.second) {}
 
-  inline bool operator <(const argsort_pair& o) const {
+  friend bool operator <(const argsort_pair& lhs, const argsort_pair& rhs) {
 
 #pragma HLS INLINE
 
-    return second < o.second;
+    return lhs.second < rhs.second;
   }
 
-  inline bool operator <=(const argsort_pair& o) const {
+  friend bool operator <=(const argsort_pair& lhs, const argsort_pair& rhs) {
 
 #pragma HLS INLINE
 
-    return second <= o.second;
+    return lhs.second <= rhs.second;
   }
 
-  inline bool operator >(const argsort_pair& o) const {
+  friend bool operator >(const argsort_pair& lhs, const argsort_pair& rhs) {
 
 #pragma HLS INLINE
 
-    return second > o.second;
+    return lhs.second > rhs.second;
   }
 
-  inline bool operator >=(const argsort_pair& o) const {
+  friend bool operator >=(const argsort_pair& lhs, const argsort_pair& rhs) {
 
 #pragma HLS INLINE
 
-    return second >= o.second;
+    return lhs.second >= rhs.second;
   }
 };
 
@@ -618,13 +638,22 @@ U calc_signed_diff(const T& lhs, const T& rhs) {
   return (static_cast<U>(lhs) - static_cast<U>(rhs));
 }
 
-// Helper function to suppress value if condition is false
+// Helper function to choose value based on condition
 template <typename T>
-T take_value_if(bool cond, const T& x) {
+T choose_value_if(bool cond, const T& a, const T& b) {
 
 #pragma HLS INLINE
 
-  return cond ? x : static_cast<T>(0);
+  return cond ? a : b;
+}
+
+// Helper function to suppress value if condition is false
+template <typename T>
+T take_value_if(bool cond, const T& a) {
+
+#pragma HLS INLINE
+
+  return cond ? a : static_cast<T>(0);
 }
 
 // Helper function to copy multiple values
