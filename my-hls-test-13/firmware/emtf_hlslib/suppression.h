@@ -58,6 +58,8 @@ void suppression_layer(
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
+#pragma HLS LATENCY max=suppression_config::target_lat
+
   // Check assumptions
   static_assert(suppression_config::n_in == num_emtf_img_cols, "suppression_config::n_in check failed");
   static_assert(suppression_config::n_out == num_emtf_img_cols, "suppression_config::n_out check failed");

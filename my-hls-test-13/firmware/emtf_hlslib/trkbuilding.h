@@ -61,6 +61,7 @@ void trkbuilding_reduce_argmin_ph_diff_op(
       const unsigned int node_index = (num_nodes_io - 1) - i;
       const unsigned int child_l_index = (2 * node_index) + 1;
       const unsigned int child_r_index = (2 * node_index) + 2;
+      emtf_assert((child_l_index < num_nodes) && (child_r_index < num_nodes));
       nodes[node_index] = (nodes[child_l_index] <= nodes[child_r_index]) ? nodes[child_l_index] : nodes[child_r_index];
     }
   }  // end loop region
@@ -70,6 +71,22 @@ void trkbuilding_reduce_argmin_ph_diff_op(
   const data_t invalid_marker = find_ap_int_max_allowed<data_t>::value;
   out = in0[idx];
   vld = (nodes[0].second != invalid_marker);
+}
+
+template <typename T_IN, typename T_OUT>
+void trkbuilding_select_phi_median_op(const T_IN& in0, T_OUT& out) {
+  static_assert(is_same<T_IN, trk_col_t>::value, "T_IN0 type check failed");
+  static_assert(is_same<T_OUT, emtf_phi_t>::value, "T_OUT type check failed");
+
+#pragma HLS PIPELINE II=trkbuilding_config::target_ii
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+//#pragma HLS INLINE
+
+  constexpr int bits_to_shift = emtf_img_col_factor_log2;
+  const trk_col_t col = in0 + static_cast<trk_col_t>(details::chamber_img_joined_col_start);
+  out = (static_cast<emtf_phi_t>(col) << bits_to_shift) + (1u << (bits_to_shift - 1));
 }
 
 template <typename T_IN, typename T_OUT>
@@ -382,10 +399,8 @@ void trkbuilding_match_ph_op(
   trkbuilding_match_ph_site_op<m_site_10_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[10], curr_trk_seg_v_from_ph[10]);
   trkbuilding_match_ph_site_op<m_site_11_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[11], curr_trk_seg_v_from_ph[11]);
 
-  // Set phi_median
-  constexpr int bits_to_shift = emtf_img_col_factor_log2;
-  const trk_col_t col_patt = curr_trk_col + static_cast<trk_col_t>(details::chamber_img_joined_col_start);
-  phi_median = (static_cast<emtf_phi_t>(col_patt) << bits_to_shift) + (1u << (bits_to_shift - 1));
+  // Find phi_median
+  trkbuilding_select_phi_median_op(curr_trk_col, phi_median);
 }
 
 template <typename T=void>
@@ -659,7 +674,7 @@ void trkbuilding_layer(
     trk_valid_t         trk_valid      [trkbuilding_config::n_out]
 ) {
 
-#pragma HLS PIPELINE II=trkbuilding_config::target_ii
+#pragma HLS PIPELINE II=trkbuilding_config::layer_target_ii
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
@@ -675,7 +690,9 @@ void trkbuilding_layer(
   // Loop over tracks
   LOOP_TRK: for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) {
 
-#pragma HLS UNROLL
+#pragma HLS UNROLL factor=trkbuilding_config::unroll_factor
+
+#pragma HLS ALLOCATION instances=trkbuilding_select_phi_median_op limit=trkbuilding_config::unroll_factor function
 
     auto curr_trk_seg = stl_next(trk_seg, itrk * num_emtf_sites);
     auto curr_trk_feat = stl_next(trk_feat, itrk * num_emtf_features);

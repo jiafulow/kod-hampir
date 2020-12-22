@@ -14,7 +14,11 @@ namespace emtf {
 struct model_config {
   static const unsigned int n_in = num_emtf_chambers * num_emtf_segments;
   static const unsigned int n_out = num_emtf_tracks * num_emtf_features;
-  static const int target_ii = 1;
+
+  // Set target clock freq to 4 times the input freq (= 4 x 40MHz)
+  // Consume 1 input every input clock cycle, or every 4 target clock cycle
+  static const int target_clock = num_emtf_tracks;  // in unit of 40MHz
+  static const int target_ii = target_clock;
 };
 
 // _____________________________________________________________________________
@@ -23,28 +27,33 @@ struct model_config {
 struct zoning_config {
   static const unsigned int n_in = 0;
   static const unsigned int n_out = num_emtf_img_rows;
-  static const int target_ii = 1;
+  static const int target_ii = model_config::target_ii;
 };
 
 struct pooling_config {
   static const unsigned int n_in = zoning_config::n_out;
   static const unsigned int n_out = num_emtf_img_cols;
-  static const int target_ii = 1;
+  static const int target_ii = model_config::target_ii;
 
   // Used in the column loop
   static const int fusion_factor = 8;
+
+  // Specific target ii
+  static const int activation_target_ii = 1;
+  static const int reduction_target_ii = 1;
 };
 
 struct suppression_config {
   static const unsigned int n_in = pooling_config::n_out;
   static const unsigned int n_out = n_in;
-  static const int target_ii = 1;
+  static const int target_ii = model_config::target_ii;
+  static const int target_lat = 0;
 };
 
 struct zonesorting_config {
   static const unsigned int n_in = suppression_config::n_out;
   static const unsigned int n_out = num_emtf_tracks;
-  static const int target_ii = 1;
+  static const int target_ii = model_config::target_ii;
 
   // Used in the column loop
   static const int batch_size = 8;
@@ -63,7 +72,7 @@ struct zonesorting_config {
 struct zonemerging_config {
   static const unsigned int n_in = zonesorting_config::n_out;
   static const unsigned int n_out = n_in;
-  static const int target_ii = 1;
+  static const int target_ii = model_config::target_ii;
 
   // Used for sorting stages
   static const unsigned int n_stage_0 = n_in * num_emtf_zones;
@@ -72,13 +81,16 @@ struct zonemerging_config {
 struct trkbuilding_config {
   static const unsigned int n_in = zonemerging_config::n_out;
   static const unsigned int n_out = n_in;
+  static const int layer_target_ii = model_config::target_ii;
   static const int target_ii = 1;
+  static const int reuse_factor = layer_target_ii / target_ii;
+  static const int unroll_factor = n_in / reuse_factor;
 };
 
 struct duperemoval_config {
   static const unsigned int n_in = trkbuilding_config::n_out;
   static const unsigned int n_out = n_in;
-  static const int target_ii = 1;
+  static const int target_ii = model_config::target_ii;
 };
 
 // _____________________________________________________________________________

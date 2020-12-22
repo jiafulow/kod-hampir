@@ -9,7 +9,7 @@ void pooling_activate_op(const T_IN& in0, T_OUT& out) {
   static_assert(is_same<T_IN, dio_row_accum_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, trk_qual_t>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=pooling_config::target_ii
+#pragma HLS PIPELINE II=pooling_config::activation_target_ii
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
@@ -41,7 +41,7 @@ void pooling_reduce_argmax_op(const T_IN in0[num_emtf_patterns], T_OUT& out) {
   static_assert(is_same<T_IN, trk_qual_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, pooling_out_t>::value, "T_OUT type check failed");
 
-#pragma HLS PIPELINE II=pooling_config::target_ii
+#pragma HLS PIPELINE II=pooling_config::reduction_target_ii
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
@@ -85,6 +85,7 @@ void pooling_reduce_argmax_op(const T_IN in0[num_emtf_patterns], T_OUT& out) {
     const unsigned int node_index = (num_nodes_io - 1) - i;
     const unsigned int child_l_index = (2 * node_index) + 1;
     const unsigned int child_r_index = (2 * node_index) + 2;
+    emtf_assert((child_l_index < num_nodes) && (child_r_index < num_nodes));
     nodes[node_index] = (nodes[child_l_index] >= nodes[child_r_index]) ? nodes[child_l_index] : nodes[child_r_index];
   }
 
