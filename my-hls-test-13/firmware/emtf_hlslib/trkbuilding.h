@@ -19,18 +19,19 @@ void trkbuilding_reduce_argmin_ph_diff_op(
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
-#pragma HLS INLINE
+//#pragma HLS INLINE
 
   const unsigned int N = details::area_num_segments_traits<Category>::value;
+  emtf_assert(N == 4 or N == 8 or N == 12);
+
   typedef ap_uint<details::ceil_log2<N-1>::value> idx_t;  // encodes 0..N-1
   typedef T_IN1 data_t;
   typedef details::argsort_pair<idx_t, data_t> pair_t;
-  emtf_assert(N == 4 or N == 8 or N == 12);
 
-  // Binary tree structure
-  const unsigned int num_nodes = (2 * N) - 1;  // only works if N is multiple of 2
-  const unsigned int num_nodes_last = N;  // last level
-  const unsigned int num_nodes_above_last = N - 1;
+  // Binary tree structure (N must be an even number)
+  const unsigned int num_nodes_in = N;
+  const unsigned int num_nodes_io = N - 1;
+  const unsigned int num_nodes = num_nodes_in + num_nodes_io;
 
   pair_t nodes[num_nodes];
 
@@ -43,25 +44,24 @@ void trkbuilding_reduce_argmin_ph_diff_op(
 #pragma HLS LOOP_MERGE
 
     // Fetch input
-    LOOP_NOD_1: for (unsigned i = 0; i < num_nodes_last; i++) {
+    LOOP_NOD_1: for (unsigned i = 0; i < num_nodes_in; i++) {
 
 #pragma HLS UNROLL
 
       const unsigned int node_index = (num_nodes - 1) - i;
-      const unsigned int j = (num_nodes_last - 1) - i;
-      nodes[node_index] = pair_t(idx_t(j), in1[j]);
+      const unsigned int node_index_in = (num_nodes_in - 1) - i;
+      nodes[node_index] = pair_t(idx_t(node_index_in), in1[node_index_in]);
     }
 
     // Binary-tree reduce
-    LOOP_NOD_2: for (unsigned i = 0; i < num_nodes_above_last; i++) {
+    LOOP_NOD_2: for (unsigned i = 0; i < num_nodes_io; i++) {
 
 #pragma HLS UNROLL
 
-      const unsigned int node_index = (num_nodes_above_last - 1) - i;
+      const unsigned int node_index = (num_nodes_io - 1) - i;
       const unsigned int child_l_index = (2 * node_index) + 1;
       const unsigned int child_r_index = (2 * node_index) + 2;
       nodes[node_index] = (nodes[child_l_index] <= nodes[child_r_index]) ? nodes[child_l_index] : nodes[child_r_index];
-
     }
   }  // end loop region
 
@@ -69,7 +69,7 @@ void trkbuilding_reduce_argmin_ph_diff_op(
   const idx_t idx = nodes[0].first;
   const data_t invalid_marker = find_ap_int_max_allowed<data_t>::value;
   out = in0[idx];
-  vld = (in1[idx] != invalid_marker);
+  vld = (nodes[0].second != invalid_marker);
 }
 
 template <typename T_IN, typename T_OUT>
@@ -217,7 +217,7 @@ void trkbuilding_select_theta_op(const T_IN& in0, const T_IN& th_median, T_OUT& 
 // Find the best matches in phi.
 
 template <typename Site>
-void trkbuilding_match_ph_op(
+void trkbuilding_match_ph_site_op(
     const emtf_phi_t emtf_phi[model_config::n_in],
     const seg_zones_t seg_zones[model_config::n_in],
     const seg_tzones_t seg_tzones[model_config::n_in],
@@ -347,6 +347,48 @@ void trkbuilding_match_ph_op(
 }
 
 template <typename T=void>
+void trkbuilding_match_ph_op(
+    const emtf_phi_t emtf_phi[model_config::n_in],
+    const seg_zones_t seg_zones[model_config::n_in],
+    const seg_tzones_t seg_tzones[model_config::n_in],
+    const seg_valid_t seg_valid[model_config::n_in],
+    const trk_qual_t& curr_trk_qual,
+    const trk_patt_t& curr_trk_patt,
+    const trk_col_t& curr_trk_col,
+    const trk_zone_t& curr_trk_zone,
+    const trk_tzone_t& curr_trk_tzone,
+    emtf_phi_t& phi_median,
+    trk_seg_t curr_trk_seg[num_emtf_sites],
+    bool_t curr_trk_seg_v_from_ph[num_emtf_sites]
+) {
+
+#pragma HLS PIPELINE II=trkbuilding_config::target_ii
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE
+
+  // Loop over sites manually
+  trkbuilding_match_ph_site_op<m_site_0_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[0], curr_trk_seg_v_from_ph[0]);
+  trkbuilding_match_ph_site_op<m_site_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[1], curr_trk_seg_v_from_ph[1]);
+  trkbuilding_match_ph_site_op<m_site_2_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[2], curr_trk_seg_v_from_ph[2]);
+  trkbuilding_match_ph_site_op<m_site_3_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[3], curr_trk_seg_v_from_ph[3]);
+  trkbuilding_match_ph_site_op<m_site_4_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[4], curr_trk_seg_v_from_ph[4]);
+  trkbuilding_match_ph_site_op<m_site_5_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[5], curr_trk_seg_v_from_ph[5]);
+  trkbuilding_match_ph_site_op<m_site_6_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[6], curr_trk_seg_v_from_ph[6]);
+  trkbuilding_match_ph_site_op<m_site_7_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[7], curr_trk_seg_v_from_ph[7]);
+  trkbuilding_match_ph_site_op<m_site_8_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[8], curr_trk_seg_v_from_ph[8]);
+  trkbuilding_match_ph_site_op<m_site_9_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[9], curr_trk_seg_v_from_ph[9]);
+  trkbuilding_match_ph_site_op<m_site_10_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[10], curr_trk_seg_v_from_ph[10]);
+  trkbuilding_match_ph_site_op<m_site_11_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[11], curr_trk_seg_v_from_ph[11]);
+
+  // Set phi_median
+  constexpr int bits_to_shift = emtf_img_col_factor_log2;
+  const trk_col_t col_patt = curr_trk_col + static_cast<trk_col_t>(details::chamber_img_joined_col_start);
+  phi_median = (static_cast<emtf_phi_t>(col_patt) << bits_to_shift) + (1u << (bits_to_shift - 1));
+}
+
+template <typename T=void>
 void trkbuilding_match_th_op(
     const emtf_theta1_t emtf_theta1[model_config::n_in],
     const emtf_theta2_t emtf_theta2[model_config::n_in],
@@ -375,23 +417,23 @@ void trkbuilding_match_th_op(
   const emtf_theta_t invalid_marker_th = details::th_invalid;
 
   // Loop over the theta values manually
-  const emtf_theta_t theta_value_0_0 = curr_trk_seg_v_from_ph[0] ? emtf_theta1[curr_trk_seg[0]] : invalid_marker_th;
-  const emtf_theta_t theta_value_0_1 = curr_trk_seg_v_from_ph[0] ? emtf_theta2[curr_trk_seg[0]] : invalid_marker_th;
-  const emtf_theta_t theta_value_1_0 = curr_trk_seg_v_from_ph[1] ? emtf_theta1[curr_trk_seg[1]] : invalid_marker_th;
-  const emtf_theta_t theta_value_1_1 = curr_trk_seg_v_from_ph[1] ? emtf_theta2[curr_trk_seg[1]] : invalid_marker_th;
-  const emtf_theta_t theta_value_2_0 = curr_trk_seg_v_from_ph[2] ? emtf_theta1[curr_trk_seg[2]] : invalid_marker_th;
-  const emtf_theta_t theta_value_2_1 = curr_trk_seg_v_from_ph[2] ? emtf_theta2[curr_trk_seg[2]] : invalid_marker_th;
-  const emtf_theta_t theta_value_3_0 = curr_trk_seg_v_from_ph[3] ? emtf_theta1[curr_trk_seg[3]] : invalid_marker_th;
-  const emtf_theta_t theta_value_3_1 = curr_trk_seg_v_from_ph[3] ? emtf_theta2[curr_trk_seg[3]] : invalid_marker_th;
-  const emtf_theta_t theta_value_4_0 = curr_trk_seg_v_from_ph[4] ? emtf_theta1[curr_trk_seg[4]] : invalid_marker_th;
-  const emtf_theta_t theta_value_4_1 = curr_trk_seg_v_from_ph[4] ? emtf_theta2[curr_trk_seg[4]] : invalid_marker_th;
-  const emtf_theta_t theta_value_5_0 = curr_trk_seg_v_from_ph[5] ? emtf_theta1[curr_trk_seg[5]] : invalid_marker_th;
-  const emtf_theta_t theta_value_6_0 = curr_trk_seg_v_from_ph[6] ? emtf_theta1[curr_trk_seg[6]] : invalid_marker_th;
-  const emtf_theta_t theta_value_7_0 = curr_trk_seg_v_from_ph[7] ? emtf_theta1[curr_trk_seg[7]] : invalid_marker_th;
-  const emtf_theta_t theta_value_8_0 = curr_trk_seg_v_from_ph[8] ? emtf_theta1[curr_trk_seg[8]] : invalid_marker_th;
-  const emtf_theta_t theta_value_9_0 = curr_trk_seg_v_from_ph[9] ? emtf_theta1[curr_trk_seg[9]] : invalid_marker_th;
-  const emtf_theta_t theta_value_10_0 = curr_trk_seg_v_from_ph[10] ? emtf_theta1[curr_trk_seg[10]] : invalid_marker_th;
-  const emtf_theta_t theta_value_11_0 = curr_trk_seg_v_from_ph[11] ? emtf_theta1[curr_trk_seg[11]] : invalid_marker_th;
+  const emtf_theta_t& theta_value_0_0 = details::choose_value_if(curr_trk_seg_v_from_ph[0], emtf_theta1[curr_trk_seg[0]], invalid_marker_th);
+  const emtf_theta_t& theta_value_0_1 = details::choose_value_if(curr_trk_seg_v_from_ph[0], emtf_theta2[curr_trk_seg[0]], invalid_marker_th);
+  const emtf_theta_t& theta_value_1_0 = details::choose_value_if(curr_trk_seg_v_from_ph[1], emtf_theta1[curr_trk_seg[1]], invalid_marker_th);
+  const emtf_theta_t& theta_value_1_1 = details::choose_value_if(curr_trk_seg_v_from_ph[1], emtf_theta2[curr_trk_seg[1]], invalid_marker_th);
+  const emtf_theta_t& theta_value_2_0 = details::choose_value_if(curr_trk_seg_v_from_ph[2], emtf_theta1[curr_trk_seg[2]], invalid_marker_th);
+  const emtf_theta_t& theta_value_2_1 = details::choose_value_if(curr_trk_seg_v_from_ph[2], emtf_theta2[curr_trk_seg[2]], invalid_marker_th);
+  const emtf_theta_t& theta_value_3_0 = details::choose_value_if(curr_trk_seg_v_from_ph[3], emtf_theta1[curr_trk_seg[3]], invalid_marker_th);
+  const emtf_theta_t& theta_value_3_1 = details::choose_value_if(curr_trk_seg_v_from_ph[3], emtf_theta2[curr_trk_seg[3]], invalid_marker_th);
+  const emtf_theta_t& theta_value_4_0 = details::choose_value_if(curr_trk_seg_v_from_ph[4], emtf_theta1[curr_trk_seg[4]], invalid_marker_th);
+  const emtf_theta_t& theta_value_4_1 = details::choose_value_if(curr_trk_seg_v_from_ph[4], emtf_theta2[curr_trk_seg[4]], invalid_marker_th);
+  const emtf_theta_t& theta_value_5_0 = details::choose_value_if(curr_trk_seg_v_from_ph[5], emtf_theta1[curr_trk_seg[5]], invalid_marker_th);
+  const emtf_theta_t& theta_value_6_0 = details::choose_value_if(curr_trk_seg_v_from_ph[6], emtf_theta1[curr_trk_seg[6]], invalid_marker_th);
+  const emtf_theta_t& theta_value_7_0 = details::choose_value_if(curr_trk_seg_v_from_ph[7], emtf_theta1[curr_trk_seg[7]], invalid_marker_th);
+  const emtf_theta_t& theta_value_8_0 = details::choose_value_if(curr_trk_seg_v_from_ph[8], emtf_theta1[curr_trk_seg[8]], invalid_marker_th);
+  const emtf_theta_t& theta_value_9_0 = details::choose_value_if(curr_trk_seg_v_from_ph[9], emtf_theta1[curr_trk_seg[9]], invalid_marker_th);
+  const emtf_theta_t& theta_value_10_0 = details::choose_value_if(curr_trk_seg_v_from_ph[10], emtf_theta1[curr_trk_seg[10]], invalid_marker_th);
+  const emtf_theta_t& theta_value_11_0 = details::choose_value_if(curr_trk_seg_v_from_ph[11], emtf_theta1[curr_trk_seg[11]], invalid_marker_th);
 
   theta_values[0] = theta_value_2_0;  // ME2 theta 1
   theta_values[1] = theta_value_3_0;  // ME3 theta 1
@@ -420,7 +462,7 @@ void trkbuilding_match_th_op(
   trkbuilding_reduce_median_theta_op(theta_values_s1, theta_median_tmp_1);
 
   theta_median = (theta_median_tmp_0 != invalid_marker_th) ? theta_median_tmp_0 : theta_median_tmp_1;
-  emtf_assert(theta_median != invalid_marker_th);
+  //emtf_assert(theta_median != invalid_marker_th);
 
   //std::cout << "[DEBUG] theta_values: [";
   //for (unsigned i = 0; i < num_theta_values; i++) {
@@ -576,36 +618,14 @@ void trkbuilding_op(
   emtf_theta_t theta_median = 0;
 
   // Find phi_median, select best segment indices (closest to phi_median)
-
-  // Loop over sites manually
-  {
-    trkbuilding_match_ph_op<m_site_0_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[0], curr_trk_seg_v_from_ph[0]);
-    trkbuilding_match_ph_op<m_site_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[1], curr_trk_seg_v_from_ph[1]);
-    trkbuilding_match_ph_op<m_site_2_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[2], curr_trk_seg_v_from_ph[2]);
-    trkbuilding_match_ph_op<m_site_3_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[3], curr_trk_seg_v_from_ph[3]);
-    trkbuilding_match_ph_op<m_site_4_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[4], curr_trk_seg_v_from_ph[4]);
-    trkbuilding_match_ph_op<m_site_5_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[5], curr_trk_seg_v_from_ph[5]);
-    trkbuilding_match_ph_op<m_site_6_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[6], curr_trk_seg_v_from_ph[6]);
-    trkbuilding_match_ph_op<m_site_7_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[7], curr_trk_seg_v_from_ph[7]);
-    trkbuilding_match_ph_op<m_site_8_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[8], curr_trk_seg_v_from_ph[8]);
-    trkbuilding_match_ph_op<m_site_9_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[9], curr_trk_seg_v_from_ph[9]);
-    trkbuilding_match_ph_op<m_site_10_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[10], curr_trk_seg_v_from_ph[10]);
-    trkbuilding_match_ph_op<m_site_11_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, curr_trk_seg[11], curr_trk_seg_v_from_ph[11]);
-  }
-
-  // Set phi_median
-  {
-    constexpr int bits_to_shift = emtf_img_col_factor_log2;
-    const emtf_phi_t col_patt = curr_trk_col + static_cast<trk_col_t>(details::chamber_img_joined_col_start);
-    phi_median = (col_patt << bits_to_shift) + (1u << (bits_to_shift - 1));
-  }
+  trkbuilding_match_ph_op(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, phi_median, curr_trk_seg, curr_trk_seg_v_from_ph);
 
   // Find theta_median, select best theta values (closest to theta_median)
   trkbuilding_match_th_op(emtf_theta1, emtf_theta2, curr_trk_seg, curr_trk_seg_v_from_ph, theta_median, emtf_theta_best, curr_trk_seg_v_from_th);
 
   // Set segment valid flag and track valid flag
   details::pack_boolean_values(curr_trk_seg_v_from_th, curr_trk_seg_v);
-  curr_trk_valid = (bool) curr_trk_seg_v;  // or-reduced
+  curr_trk_valid = (bool) curr_trk_seg_v;  // OR reduced
 
   // Extract features
   trkbuilding_extract_features_op(emtf_phi, emtf_bend, emtf_qual1, emtf_qual2, emtf_time, phi_median, theta_median, emtf_theta_best, curr_trk_seg, curr_trk_seg_v, curr_trk_feat);
