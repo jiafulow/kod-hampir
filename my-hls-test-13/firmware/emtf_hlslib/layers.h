@@ -316,22 +316,17 @@ struct select_pattern_fused_col_patch_type {
 
 template <typename Category>
 struct select_pattern_preactivation_type {
-  typedef ap_uint<dio_row_accum_t::width> type;
-};
-
-template <typename Category>
-struct select_pattern_fused_preactivation_type {
-  typedef ap_uint<pooling_config::fusion_factor * dio_row_accum_t::width> type;
+  typedef dio_row_accum_t type;
 };
 
 template <typename Category>
 struct select_pattern_activation_type {
-  typedef ap_uint<trk_qual_t::width> type;
+  typedef trk_qual_t type;
 };
 
 template <typename Category>
-struct select_pattern_fused_activation_type {
-  typedef ap_uint<pooling_config::fusion_factor * trk_qual_t::width> type;
+struct select_pattern_packed_activation_type {
+  typedef make_repeat<trk_qual_t, num_emtf_patterns>::type type;
 };
 
 // Getter ops

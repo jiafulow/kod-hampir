@@ -73,6 +73,13 @@ struct make_concat {};
 template <int M, int N> struct make_concat<ap_int<M>, ap_int<N> > { typedef ap_int<M+N> type; };
 template <int M, int N> struct make_concat<ap_uint<M>, ap_uint<N> > { typedef ap_uint<M+N> type; };
 
+// Make repeated ap datatype
+template <typename T, int U>
+struct make_repeat {};
+
+template <int N, int U> struct make_repeat<ap_int<N>, U> { typedef ap_int<N*U> type; };
+template <int N, int U> struct make_repeat<ap_uint<N>, U> { typedef ap_uint<N*U> type; };
+
 // Find max allowed value (for ap_uint<N>)
 template <typename T>
 struct find_ap_int_max_allowed {};

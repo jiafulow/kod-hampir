@@ -37,9 +37,9 @@ void pooling_activate_op(const T_IN& in0, T_OUT& out) {
 
 // Function to find max activation, keeping pattern number
 template <typename T_IN, typename T_OUT>
-void pooling_reduce_argmax_op(const T_IN in0[num_emtf_patterns], T_OUT& out) {
-  static_assert(is_same<T_IN, trk_qual_t>::value, "T_IN type check failed");
-  static_assert(is_same<T_OUT, pooling_out_t>::value, "T_OUT type check failed");
+void pooling_reduce_argmax_op(const T_IN& in0, T_OUT& out) {
+  static_assert(is_same<T_IN, make_repeat<trk_qual_t, num_emtf_patterns>::type>::value, "T_IN type check failed");
+  static_assert(is_same<T_OUT, make_concat<trk_patt_t, trk_qual_t>::type>::value, "T_OUT type check failed");
 
 #pragma HLS PIPELINE II=pooling_config::reduction_target_ii
 
@@ -48,7 +48,7 @@ void pooling_reduce_argmax_op(const T_IN in0[num_emtf_patterns], T_OUT& out) {
 //#pragma HLS INLINE
 
   typedef trk_patt_t idx_t;  // encodes 0..6
-  typedef T_IN data_t;
+  typedef trk_qual_t data_t;
   typedef details::argsort_pair<idx_t, data_t> pair_t;
 
   // Binary tree structure (N must be an even number)
@@ -67,14 +67,14 @@ void pooling_reduce_argmax_op(const T_IN in0[num_emtf_patterns], T_OUT& out) {
   // Note that in0[0] is inserted twice to round up to 8
   {
     unsigned int node_index = (num_nodes - 1);
-    nodes[node_index--] = pair_t(idx_t(6), in0[6]);
-    nodes[node_index--] = pair_t(idx_t(5), in0[5]);
-    nodes[node_index--] = pair_t(idx_t(4), in0[4]);
-    nodes[node_index--] = pair_t(idx_t(3), in0[3]);
-    nodes[node_index--] = pair_t(idx_t(2), in0[2]);
-    nodes[node_index--] = pair_t(idx_t(1), in0[1]);
-    nodes[node_index--] = pair_t(idx_t(0), in0[0]);
-    nodes[node_index--] = pair_t(idx_t(0), in0[0]);
+    nodes[node_index--] = pair_t(idx_t(6), in0.range(((6 + 1) * data_t::width) - 1, (6 * data_t::width)));
+    nodes[node_index--] = pair_t(idx_t(5), in0.range(((5 + 1) * data_t::width) - 1, (5 * data_t::width)));
+    nodes[node_index--] = pair_t(idx_t(4), in0.range(((4 + 1) * data_t::width) - 1, (4 * data_t::width)));
+    nodes[node_index--] = pair_t(idx_t(3), in0.range(((3 + 1) * data_t::width) - 1, (3 * data_t::width)));
+    nodes[node_index--] = pair_t(idx_t(2), in0.range(((2 + 1) * data_t::width) - 1, (2 * data_t::width)));
+    nodes[node_index--] = pair_t(idx_t(1), in0.range(((1 + 1) * data_t::width) - 1, (1 * data_t::width)));
+    nodes[node_index--] = pair_t(idx_t(0), in0.range(((0 + 1) * data_t::width) - 1, (0 * data_t::width)));
+    nodes[node_index--] = pair_t(idx_t(0), in0.range(((0 + 1) * data_t::width) - 1, (0 * data_t::width)));
   }
 
   // Binary-tree reduce
@@ -94,7 +94,8 @@ void pooling_reduce_argmax_op(const T_IN in0[num_emtf_patterns], T_OUT& out) {
 }
 
 // _____________________________________________________________________________
-// Apply the patterns at a particular column
+// Apply the patterns at a particular column, and then apply activation.
+// The column-wise operations are fused together.
 
 template <typename Zone>
 void pooling_fused_col_1_op(
@@ -106,7 +107,7 @@ void pooling_fused_col_1_op(
     const typename details::select_pattern_fused_col_patch_type<Zone, 5>::type& patch_row_5,
     const typename details::select_pattern_fused_col_patch_type<Zone, 6>::type& patch_row_6,
     const typename details::select_pattern_fused_col_patch_type<Zone, 7>::type& patch_row_7,
-    typename details::select_pattern_fused_activation_type<Zone>::type activations[num_emtf_patterns]
+    typename details::select_pattern_packed_activation_type<Zone>::type activations[pooling_config::fusion_factor]
 ) {
 
 #pragma HLS PIPELINE II=pooling_config::target_ii
@@ -117,14 +118,13 @@ void pooling_fused_col_1_op(
 
   typedef typename details::select_pattern_preactivation_type<Zone>::type preactivation_t;
   typedef typename details::select_pattern_activation_type<Zone>::type activation_t;
+  const unsigned int fusion_factor = pooling_config::fusion_factor;
 
   int pattern_col_start_table[num_emtf_patterns * num_emtf_img_rows];
   details::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(pattern_col_start_table, details::get_pattern_col_start_op<Zone>());
 
   int pattern_col_stop_table[num_emtf_patterns * num_emtf_img_rows];
   details::init_2d_table_op<num_emtf_patterns, num_emtf_img_rows>(pattern_col_stop_table, details::get_pattern_col_stop_op<Zone>());
-
-  const int fusion_factor = pooling_config::fusion_factor;
 
   // Loop over patterns
   LOOP_PATT_1: for (unsigned patt = 0; patt < num_emtf_patterns; patt++) {
@@ -153,14 +153,15 @@ void pooling_fused_col_1_op(
       activation_t activation = 0;  // init as zero
       pooling_activate_op<Zone>(preactivation, activation);
 
-      activations[patt].range(((col + 1) * activation_t::width) - 1, (col * activation_t::width)) = activation;
+      // Output
+      activations[col].range(((patt + 1) * activation_t::width) - 1, (patt * activation_t::width)) = activation;
     }  // end loop over columns
   }  // end loop over patterns
 }
 
 template <typename Zone>
 void pooling_fused_col_2_op(
-    const typename details::select_pattern_fused_activation_type<Zone>::type activations[num_emtf_patterns],
+    const typename details::select_pattern_packed_activation_type<Zone>::type activations[pooling_config::fusion_factor],
     pooling_out_t pooling_out_fused_col_j[pooling_config::fusion_factor]
 ) {
 
@@ -170,29 +171,15 @@ void pooling_fused_col_2_op(
 
 #pragma HLS INLINE
 
-  typedef typename details::select_pattern_activation_type<Zone>::type activation_t;
-
-  const int fusion_factor = pooling_config::fusion_factor;
+  const unsigned int fusion_factor = pooling_config::fusion_factor;
 
   // Loop over columns
   LOOP_COL_2: for (unsigned col = 0; col < fusion_factor; col++) {
 
 #pragma HLS UNROLL
 
-    activation_t activations_col_j[num_emtf_patterns];
-
-#pragma HLS ARRAY_PARTITION variable=activations_col_j complete dim=0
-
-    // Loop over patterns
-    LOOP_PATT_2: for (unsigned patt = 0; patt < num_emtf_patterns; patt++) {
-
-#pragma HLS UNROLL
-
-      activations_col_j[patt] = activations[patt].range(((col + 1) * activation_t::width) - 1, (col * activation_t::width));
-    }  // end loop over patterns
-
     // Find max activation
-    pooling_reduce_argmax_op(activations_col_j, pooling_out_fused_col_j[col]);
+    pooling_reduce_argmax_op(activations[col], pooling_out_fused_col_j[col]);
   }  // end loop over columns
 }
 
@@ -215,7 +202,10 @@ void pooling_fused_col_op(
 
 #pragma HLS INLINE
 
-  typename details::select_pattern_fused_activation_type<Zone>::type activations[num_emtf_patterns];
+  typedef typename details::select_pattern_packed_activation_type<Zone>::type packed_activation_t;
+  const unsigned int fusion_factor = pooling_config::fusion_factor;
+
+  packed_activation_t activations[fusion_factor];
 
 #pragma HLS ARRAY_PARTITION variable=activations complete dim=0
 
@@ -267,6 +257,7 @@ void pooling_op(
   typedef typename details::select_pattern_col_padded_type<Zone, 6>::type padded_row_6_t;
   typedef typename details::select_pattern_col_padded_type<Zone, 7>::type padded_row_7_t;
 
+  // Add padding
   const padded_row_0_t padded_row_0 = (padding_row_0_t(0), pooling_in[0], padding_row_0_t(0));
   const padded_row_1_t padded_row_1 = (padding_row_1_t(0), pooling_in[1], padding_row_1_t(0));
   const padded_row_2_t padded_row_2 = (padding_row_2_t(0), pooling_in[2], padding_row_2_t(0));
@@ -276,7 +267,7 @@ void pooling_op(
   const padded_row_6_t padded_row_6 = (padding_row_6_t(0), pooling_in[6], padding_row_6_t(0));
   const padded_row_7_t padded_row_7 = (padding_row_7_t(0), pooling_in[7], padding_row_7_t(0));
 
-  const int fusion_factor = pooling_config::fusion_factor;
+  const unsigned int fusion_factor = pooling_config::fusion_factor;
 
   // Loop over columns with certain step size
   LOOP_COL_0: for (unsigned col = 0; col < num_emtf_img_cols; col += fusion_factor) {
