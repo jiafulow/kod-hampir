@@ -7,7 +7,7 @@ namespace emtf {
 // Perform loop over chambers and all the segments in the chambers.
 // Fill the chamber image for each chamber, then join all the chamber images.
 
-template <typename Zone, typename Timezone, typename Row>
+template <typename Zone, typename Timezone, typename Row, typename SecondRow=Row>
 void zoning_row_op(
     const emtf_phi_t emtf_phi[model_config::n_in],
     const seg_zones_t seg_zones[model_config::n_in],
@@ -27,8 +27,12 @@ void zoning_row_op(
   const int the_zone = details::zone_traits<Zone>::value;
   const int the_tzone = details::timezone_traits<Timezone>::value;
 
+  // Make lookup tables
   int chamber_id_table[N];
   details::init_table_op<N>(chamber_id_table, details::get_chamber_id_op<Row>());
+
+  int second_chamber_id_table[N];
+  details::init_table_op<N>(second_chamber_id_table, details::get_chamber_id_op<SecondRow>());
 
   int chamber_ph_init_table[N];
   details::init_table_op<N>(chamber_ph_init_table, details::get_chamber_ph_init_op<chamber_category>());
@@ -47,12 +51,12 @@ void zoning_row_op(
 
 #pragma HLS UNROLL
 
-    //std::cout << "[DEBUG] z " << ZONE << " r " << ROW << " chamber: " << chambers[i] << " ph_init: " << chamber_ph_init_table[i] << std::endl;
+    //std::cout << "[DEBUG] z " << details::zone_traits<Zone>::value << " chamber: " << chamber_id_table[i] << " ph_init: " << chamber_ph_init_table[i] << " ph_cover: " << chamber_ph_cover_table[i] << std::endl;
 
     chamber_img_t chamber_img = 0;  // init as zero
 
     // Loop over segments
-    LOOP_J: for (unsigned j = 0; j < num_emtf_segments; j++) {
+    LOOP_J_1: for (unsigned j = 0; j < num_emtf_segments; j++) {
 
 #pragma HLS UNROLL
 
@@ -71,42 +75,77 @@ void zoning_row_op(
         constexpr int bits_to_shift = emtf_img_col_factor_log2;
         const trk_col_t offset = chamber_ph_init_table[i];
         const trk_col_t col = (emtf_phi[iseg] >> bits_to_shift) - offset;
-        emtf_assert((emtf_phi[iseg] >> bits_to_shift) >= chamber_ph_init_table[i]);
+        emtf_assert((emtf_phi[iseg] >> bits_to_shift) >= offset);
         emtf_assert(col < chamber_img_t::width);
-
-        //std::cout << "[DEBUG] chamber: " << chambers[i] << " segment: " << j << " emtf_phi: " << emtf_phi[iseg] << " col: " << col << " offset: " << offset << std::endl;
+        //std::cout << "[DEBUG] chamber: " << chamber_id_table[i] << " segment: " << j << " emtf_phi: " << emtf_phi[iseg] << " col: " << col << " offset: " << offset << std::endl;
 
         chamber_img.set(col, 1);  // set bit to 1
       }
     }  // end loop over segments
+
+    chamber_img_t second_chamber_img = 0;  // init as zero
+
+    if (!is_same<Row, SecondRow>::value) {  // enable if Row and SecondRow are different
+
+      // Loop over segments
+      LOOP_J_2: for (unsigned j = 0; j < num_emtf_segments; j++) {
+
+#pragma HLS UNROLL
+
+        const trk_seg_t iseg = (second_chamber_id_table[i] * num_emtf_segments) + j;
+        emtf_assert(second_chamber_id_table[i] < num_emtf_chambers);
+        emtf_assert(iseg < (num_emtf_chambers * num_emtf_segments));
+
+        // Fill the chamber image. A pixel at (row, col) is set to 1 if a segment is present.
+        // Use condition: (valid && is_same_zone && is_same_timezone)
+        if (
+            (seg_valid[iseg] == 1) and \
+            (seg_zones[iseg][(num_emtf_zones - 1) - the_zone] == 1) and \
+            (seg_tzones[iseg][(num_emtf_timezones - 1) - the_tzone] == 1)
+        ) {
+          // Truncate last 4 bits (i.e. divide by 16), subtract offset
+          constexpr int bits_to_shift = emtf_img_col_factor_log2;
+          const trk_col_t offset = chamber_ph_init_table[i];
+          const trk_col_t col = (emtf_phi[iseg] >> bits_to_shift) - offset;
+          emtf_assert((emtf_phi[iseg] >> bits_to_shift) >= offset);
+          emtf_assert(col < chamber_img_t::width);
+          //std::cout << "[DEBUG] chamber: " << second_chamber_id_table[i] << " segment: " << j << " emtf_phi: " << emtf_phi[iseg] << " col: " << col << " offset: " << offset << std::endl;
+
+          second_chamber_img.set(col, 1);  // set bit to 1
+        }
+      }  // end loop over segments
+    }  // end if
 
     // Join chamber images
     const trk_col_t col_start_rhs = 0;
     const trk_col_t col_stop_rhs = (chamber_ph_cover_table[i] - chamber_ph_init_table[i]) - 1;
     const trk_col_t col_start_lhs = chamber_ph_init_table[i];
     const trk_col_t col_stop_lhs = col_start_lhs + col_stop_rhs - col_start_rhs;
-
+    emtf_assert((col_stop_lhs - col_start_lhs) == (col_stop_rhs - col_start_rhs));
     //std::cout << "[DEBUG] start_l: " << col_start_lhs << " stop_l: " << col_stop_lhs << " start_r: " << col_start_rhs << " stop_r: " << col_stop_rhs << std::endl;
 
     // OR combined
-    emtf_assert((col_stop_lhs - col_start_lhs) == (col_stop_rhs - col_start_rhs));
-    chamber_img_joined.range(col_stop_lhs, col_start_lhs) = (
-        chamber_img_joined.range(col_stop_lhs, col_start_lhs) | chamber_img.range(col_stop_rhs, col_start_rhs)
-    );
+    const auto& tmp_read_before_write = chamber_img_joined.range(col_stop_lhs, col_start_lhs);  // avoid dependency
+    if (!is_same<Row, SecondRow>::value) {  // enable if Row and SecondRow are different
+      chamber_img_joined.range(col_stop_lhs, col_start_lhs) = (
+          tmp_read_before_write | chamber_img.range(col_stop_rhs, col_start_rhs) | second_chamber_img.range(col_stop_rhs, col_start_rhs)
+      );
+    } else {  // else if Row and SecondRow are identical
+      chamber_img_joined.range(col_stop_lhs, col_start_lhs) = (
+          tmp_read_before_write | chamber_img.range(col_stop_rhs, col_start_rhs)
+      );
+    }  // end else
   }  // end loop over chambers
-
-  zoning_out_row_i = 0;  // init as zero
 
   // Adjust the size of chamber_img_joined
   const trk_col_t col_start_rhs = details::chamber_img_joined_col_start;
   const trk_col_t col_stop_rhs = details::chamber_img_joined_col_stop;
   const trk_col_t col_start_lhs = 0;
   const trk_col_t col_stop_lhs = (zoning_out_t::width - 1);
-
+  emtf_assert((col_stop_lhs - col_start_lhs) == (col_stop_rhs - col_start_rhs));
   //std::cout << "[DEBUG] start_l: " << col_start_lhs << " stop_l: " << col_stop_lhs << " start_r: " << col_start_rhs << " stop_r: " << col_stop_rhs << std::endl;
 
-  // Take selected columns of chamber_img_joined
-  emtf_assert((col_stop_lhs - col_start_lhs) == (col_stop_rhs - col_start_rhs));
+  // Take selected columns
   zoning_out_row_i = chamber_img_joined.range(col_stop_rhs, col_start_rhs);
 }
 
@@ -129,9 +168,6 @@ void zoning_op(
 
 #pragma HLS INLINE
 
-  zoning_out_t zoning_out_row_7_0;
-  zoning_out_t zoning_out_row_7_1;
-
   // Loop over the rows manually
   zoning_row_op<Zone, Timezone, m_zone_0_row_0_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[0]);
   zoning_row_op<Zone, Timezone, m_zone_0_row_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[1]);
@@ -140,11 +176,7 @@ void zoning_op(
   zoning_row_op<Zone, Timezone, m_zone_0_row_4_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[4]);
   zoning_row_op<Zone, Timezone, m_zone_0_row_5_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[5]);
   zoning_row_op<Zone, Timezone, m_zone_0_row_6_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[6]);
-  zoning_row_op<Zone, Timezone, m_zone_0_row_7_0_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out_row_7_0);
-  zoning_row_op<Zone, Timezone, m_zone_0_row_7_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out_row_7_1);
-
-  // Combine certain rows
-  zoning_out[7] = (zoning_out_row_7_0 | zoning_out_row_7_1);
+  zoning_row_op<Zone, Timezone, m_zone_0_row_7_0_tag, m_zone_0_row_7_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[7]);
 }
 
 // Only enabled for Zone 1
@@ -163,26 +195,15 @@ void zoning_op(
 
 #pragma HLS INLINE
 
-  zoning_out_t zoning_out_row_2_0;
-  zoning_out_t zoning_out_row_2_1;
-  zoning_out_t zoning_out_row_7_0;
-  zoning_out_t zoning_out_row_7_1;
-
   // Loop over the rows manually
   zoning_row_op<Zone, Timezone, m_zone_1_row_0_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[0]);
   zoning_row_op<Zone, Timezone, m_zone_1_row_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[1]);
-  zoning_row_op<Zone, Timezone, m_zone_1_row_2_0_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out_row_2_0);
-  zoning_row_op<Zone, Timezone, m_zone_1_row_2_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out_row_2_1);
+  zoning_row_op<Zone, Timezone, m_zone_1_row_2_0_tag, m_zone_1_row_2_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[2]);
   zoning_row_op<Zone, Timezone, m_zone_1_row_3_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[3]);
   zoning_row_op<Zone, Timezone, m_zone_1_row_4_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[4]);
   zoning_row_op<Zone, Timezone, m_zone_1_row_5_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[5]);
   zoning_row_op<Zone, Timezone, m_zone_1_row_6_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[6]);
-  zoning_row_op<Zone, Timezone, m_zone_1_row_7_0_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out_row_7_0);
-  zoning_row_op<Zone, Timezone, m_zone_1_row_7_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out_row_7_1);
-
-  // Combine certain rows
-  zoning_out[2] = (zoning_out_row_2_0 | zoning_out_row_2_1);
-  zoning_out[7] = (zoning_out_row_7_0 | zoning_out_row_7_1);
+  zoning_row_op<Zone, Timezone, m_zone_1_row_7_0_tag, m_zone_1_row_7_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[7]);
 }
 
 // Only enabled for Zone 2
