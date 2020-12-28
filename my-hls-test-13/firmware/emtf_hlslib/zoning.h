@@ -26,13 +26,14 @@ void zoning_row_op(
   const unsigned int N = details::num_chambers_traits<chamber_category>::value;
   const int the_zone = details::zone_traits<Zone>::value;
   const int the_tzone = details::timezone_traits<Timezone>::value;
+  emtf_assert(N == 4 or N == 7 or N == 11);
 
   // Make lookup tables
   int chamber_id_table[N];
   details::init_table_op<N>(chamber_id_table, details::get_chamber_id_op<Row>());
 
-  int second_chamber_id_table[N];
-  details::init_table_op<N>(second_chamber_id_table, details::get_chamber_id_op<SecondRow>());
+  int chamber_id_table_2nd[N];
+  details::init_table_op<N>(chamber_id_table_2nd, details::get_chamber_id_op<SecondRow>());
 
   int chamber_ph_init_table[N];
   details::init_table_op<N>(chamber_ph_init_table, details::get_chamber_ph_init_op<chamber_category>());
@@ -44,16 +45,20 @@ void zoning_row_op(
   typedef ap_uint<details::chamber_img_bw> chamber_img_t;
   typedef ap_uint<details::chamber_img_joined_bw> chamber_img_joined_t;
 
-  chamber_img_joined_t chamber_img_joined = 0;  // init as zero
+  chamber_img_t chamber_images[N];
+  chamber_img_t chamber_images_2nd[N];
+
+#pragma HLS ARRAY_PARTITION variable=chamber_images complete dim=0
+#pragma HLS ARRAY_PARTITION variable=chamber_images_2nd complete dim=0
 
   // Loop over chambers
-  LOOP_I: for (unsigned i = 0; i < N; i++) {
+  LOOP_I_1: for (unsigned i = 0; i < N; i++) {
 
 #pragma HLS UNROLL
 
     //std::cout << "[DEBUG] z " << details::zone_traits<Zone>::value << " chamber: " << chamber_id_table[i] << " ph_init: " << chamber_ph_init_table[i] << " ph_cover: " << chamber_ph_cover_table[i] << std::endl;
 
-    chamber_img_t chamber_img = 0;  // init as zero
+    chamber_images[i] = 0;  // init as zero
 
     // Loop over segments
     LOOP_J_1: for (unsigned j = 0; j < num_emtf_segments; j++) {
@@ -79,11 +84,11 @@ void zoning_row_op(
         emtf_assert(col < chamber_img_t::width);
         //std::cout << "[DEBUG] chamber: " << chamber_id_table[i] << " segment: " << j << " emtf_phi: " << emtf_phi[iseg] << " col: " << col << " offset: " << offset << std::endl;
 
-        chamber_img.set(col, 1);  // set bit to 1
+        chamber_images[i][col] = 1;  // set bit to 1
       }
     }  // end loop over segments
 
-    chamber_img_t second_chamber_img = 0;  // init as zero
+    chamber_images_2nd[i] = 0;  // init as zero
 
     if (!is_same<Row, SecondRow>::value) {  // enable if Row and SecondRow are different
 
@@ -92,8 +97,8 @@ void zoning_row_op(
 
 #pragma HLS UNROLL
 
-        const trk_seg_t iseg = (second_chamber_id_table[i] * num_emtf_segments) + j;
-        emtf_assert(second_chamber_id_table[i] < num_emtf_chambers);
+        const trk_seg_t iseg = (chamber_id_table_2nd[i] * num_emtf_segments) + j;
+        emtf_assert(chamber_id_table_2nd[i] < num_emtf_chambers);
         emtf_assert(iseg < (num_emtf_chambers * num_emtf_segments));
 
         // Fill the chamber image. A pixel at (row, col) is set to 1 if a segment is present.
@@ -109,43 +114,65 @@ void zoning_row_op(
           const trk_col_t col = (emtf_phi[iseg] >> bits_to_shift) - offset;
           emtf_assert((emtf_phi[iseg] >> bits_to_shift) >= offset);
           emtf_assert(col < chamber_img_t::width);
-          //std::cout << "[DEBUG] chamber: " << second_chamber_id_table[i] << " segment: " << j << " emtf_phi: " << emtf_phi[iseg] << " col: " << col << " offset: " << offset << std::endl;
+          //std::cout << "[DEBUG] chamber: " << chamber_id_table_2nd[i] << " segment: " << j << " emtf_phi: " << emtf_phi[iseg] << " col: " << col << " offset: " << offset << std::endl;
 
-          second_chamber_img.set(col, 1);  // set bit to 1
+          chamber_images_2nd[i][col] = 1;  // set bit to 1
         }
       }  // end loop over segments
     }  // end if
+  }  // end loop over chambers
 
-    // Join chamber images
-    const trk_col_t col_start_rhs = 0;
-    const trk_col_t col_stop_rhs = (chamber_ph_cover_table[i] - chamber_ph_init_table[i]) - 1;
-    const trk_col_t col_start_lhs = chamber_ph_init_table[i];
-    const trk_col_t col_stop_lhs = col_start_lhs + col_stop_rhs - col_start_rhs;
+  chamber_img_joined_t chamber_img_joined;
+
+  // Loop over chambers
+  LOOP_I_2: for (unsigned i = 0; i < N; i++) {
+
+#pragma HLS UNROLL
+
+    const int col_start_rhs = 0;
+    const int col_stop_rhs = (chamber_ph_cover_table[i] - chamber_ph_init_table[i]) - 1;
+    const int col_start_lhs = chamber_ph_init_table[i];
+    const int col_stop_lhs = col_start_lhs + col_stop_rhs - col_start_rhs;
     emtf_assert((col_stop_lhs - col_start_lhs) == (col_stop_rhs - col_start_rhs));
     //std::cout << "[DEBUG] start_l: " << col_start_lhs << " stop_l: " << col_stop_lhs << " start_r: " << col_start_rhs << " stop_r: " << col_stop_rhs << std::endl;
 
     // OR combined
-    const auto& tmp_read_before_write = chamber_img_joined.range(col_stop_lhs, col_start_lhs);  // avoid dependency
     if (!is_same<Row, SecondRow>::value) {  // enable if Row and SecondRow are different
-      chamber_img_joined.range(col_stop_lhs, col_start_lhs) = (
-          tmp_read_before_write | chamber_img.range(col_stop_rhs, col_start_rhs) | second_chamber_img.range(col_stop_rhs, col_start_rhs)
-      );
+      if (i == 0) {
+        chamber_img_joined = 0;  // init as zero
+        chamber_img_joined.range(col_stop_lhs, col_start_lhs) = (
+            chamber_images[i].range(col_stop_rhs, col_start_rhs) | chamber_images_2nd[i].range(col_stop_rhs, col_start_rhs)
+        );
+      } else {
+        const auto& tmp_read_before_write = chamber_img_joined.range(col_stop_lhs, col_start_lhs);  // avoid dependency
+        chamber_img_joined.range(col_stop_lhs, col_start_lhs) = (
+            tmp_read_before_write | chamber_images[i].range(col_stop_rhs, col_start_rhs) | chamber_images_2nd[i].range(col_stop_rhs, col_start_rhs)
+        );
+      }
     } else {  // else if Row and SecondRow are identical
-      chamber_img_joined.range(col_stop_lhs, col_start_lhs) = (
-          tmp_read_before_write | chamber_img.range(col_stop_rhs, col_start_rhs)
-      );
+      if (i == 0) {
+        chamber_img_joined = 0;  // init as zero
+        chamber_img_joined.range(col_stop_lhs, col_start_lhs) = (
+            chamber_images[i].range(col_stop_rhs, col_start_rhs)
+        );
+      } else {
+        const auto& tmp_read_before_write = chamber_img_joined.range(col_stop_lhs, col_start_lhs);  // avoid dependency
+        chamber_img_joined.range(col_stop_lhs, col_start_lhs) = (
+            tmp_read_before_write | chamber_images[i].range(col_stop_rhs, col_start_rhs)
+        );
+      }
     }  // end else
   }  // end loop over chambers
 
   // Adjust the size of chamber_img_joined
-  const trk_col_t col_start_rhs = details::chamber_img_joined_col_start;
-  const trk_col_t col_stop_rhs = details::chamber_img_joined_col_stop;
-  const trk_col_t col_start_lhs = 0;
-  const trk_col_t col_stop_lhs = (zoning_out_t::width - 1);
+  constexpr int col_start_rhs = details::chamber_img_joined_col_start;
+  constexpr int col_stop_rhs = details::chamber_img_joined_col_stop;
+  constexpr int col_start_lhs = 0;
+  constexpr int col_stop_lhs = (zoning_out_t::width - 1);
   emtf_assert((col_stop_lhs - col_start_lhs) == (col_stop_rhs - col_start_rhs));
   //std::cout << "[DEBUG] start_l: " << col_start_lhs << " stop_l: " << col_stop_lhs << " start_r: " << col_start_rhs << " stop_r: " << col_stop_rhs << std::endl;
 
-  // Take selected columns
+  // Take selected columns of chamber_img_joined
   zoning_out_row_i = chamber_img_joined.range(col_stop_rhs, col_start_rhs);
 }
 
