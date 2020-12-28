@@ -28,14 +28,16 @@ struct zoning_config {
   static const unsigned int n_in = 0;
   static const unsigned int n_out = num_emtf_img_rows;
   static const int target_ii = model_config::target_ii;
+  static const int target_lat = 0;
 };
 
 struct pooling_config {
   static const unsigned int n_in = zoning_config::n_out;
   static const unsigned int n_out = num_emtf_img_cols;
   static const int target_ii = model_config::target_ii;
+  static const int target_lat = 5;
 
-  // Used in the column loop
+  // Fusion of column-wise operations
   static const int fusion_factor = 8;
 
   // Specific target ii

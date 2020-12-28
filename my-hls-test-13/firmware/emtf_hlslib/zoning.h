@@ -3,6 +3,149 @@
 
 namespace emtf {
 
+template <typename T_IN, typename T_OUT>
+void zoning_join_10deg_chamber_images_op(const T_IN in0[details::num_chambers_10deg], T_OUT& out) {
+  static_assert(is_same<T_IN, ap_uint<details::chamber_img_bw> >::value, "T_IN type check failed");
+  static_assert(is_same<T_OUT, ap_uint<details::chamber_img_joined_bw> >::value, "T_OUT type check failed");
+
+#pragma HLS PIPELINE II=zoning_config::target_ii
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE
+
+  // There are 14 edges that define 13 regions
+  constexpr int col_start_f = 0;
+
+  constexpr int col_start_0 = details::chamber_ph_init_10deg[6];
+  constexpr int col_start_1 = details::chamber_ph_init_10deg[0];
+  constexpr int col_start_3 = details::chamber_ph_init_10deg[1];
+  constexpr int col_start_5 = details::chamber_ph_init_10deg[2];
+  constexpr int col_start_7 = details::chamber_ph_init_10deg[3];
+  constexpr int col_start_9 = details::chamber_ph_init_10deg[4];
+  constexpr int col_start_11 = details::chamber_ph_init_10deg[5];
+
+  constexpr int col_start_2 = details::chamber_ph_cover_10deg[6];
+  constexpr int col_start_4 = details::chamber_ph_cover_10deg[0];
+  constexpr int col_start_6 = details::chamber_ph_cover_10deg[1];
+  constexpr int col_start_8 = details::chamber_ph_cover_10deg[2];
+  constexpr int col_start_10 = details::chamber_ph_cover_10deg[3];
+  constexpr int col_start_12 = details::chamber_ph_cover_10deg[4];
+  constexpr int col_start_13 = details::chamber_ph_cover_10deg[5];
+
+  // There are 13 regions that alternate between non-overlapping and overlapping
+  out.range(col_start_0 - 1, col_start_f) = 0;
+  out.range(col_start_1 - 1, col_start_0) = (in0[6].range(col_start_1 - col_start_0 - 1, col_start_0 - col_start_0));
+  out.range(col_start_2 - 1, col_start_1) = (in0[6].range(col_start_2 - col_start_0 - 1, col_start_1 - col_start_0) | in0[0].range(col_start_2 - col_start_1 - 1, col_start_1 - col_start_1));
+  out.range(col_start_3 - 1, col_start_2) = (in0[0].range(col_start_3 - col_start_1 - 1, col_start_2 - col_start_1));
+  out.range(col_start_4 - 1, col_start_3) = (in0[0].range(col_start_4 - col_start_1 - 1, col_start_3 - col_start_1) | in0[1].range(col_start_4 - col_start_3 - 1, col_start_3 - col_start_3));
+  out.range(col_start_5 - 1, col_start_4) = (in0[1].range(col_start_5 - col_start_3 - 1, col_start_4 - col_start_3));
+  out.range(col_start_6 - 1, col_start_5) = (in0[1].range(col_start_6 - col_start_3 - 1, col_start_5 - col_start_3) | in0[2].range(col_start_6 - col_start_5 - 1, col_start_5 - col_start_5));
+  out.range(col_start_7 - 1, col_start_6) = (in0[2].range(col_start_7 - col_start_5 - 1, col_start_6 - col_start_5));
+  out.range(col_start_8 - 1, col_start_7) = (in0[2].range(col_start_8 - col_start_5 - 1, col_start_7 - col_start_5) | in0[3].range(col_start_8 - col_start_7 - 1, col_start_7 - col_start_7));
+  out.range(col_start_9 - 1, col_start_8) = (in0[3].range(col_start_9 - col_start_7 - 1, col_start_8 - col_start_7));
+  out.range(col_start_10 - 1, col_start_9) = (in0[3].range(col_start_10 - col_start_7 - 1, col_start_9 - col_start_7) | in0[4].range(col_start_10 - col_start_9 - 1, col_start_9 - col_start_9));
+  out.range(col_start_11 - 1, col_start_10) = (in0[4].range(col_start_11 - col_start_9 - 1, col_start_10 - col_start_9));
+  out.range(col_start_12 - 1, col_start_11) = (in0[4].range(col_start_12 - col_start_9 - 1, col_start_11 - col_start_9) | in0[5].range(col_start_12 - col_start_11 - 1, col_start_11 - col_start_11));
+  out.range(col_start_13 - 1, col_start_12) = (in0[5].range(col_start_13 - col_start_11 - 1, col_start_12 - col_start_11));
+}
+
+template <typename T_IN, typename T_OUT>
+void zoning_join_20deg_chamber_images_op(const T_IN in0[details::num_chambers_20deg], T_OUT& out) {
+  static_assert(is_same<T_IN, ap_uint<details::chamber_img_bw> >::value, "T_IN type check failed");
+  static_assert(is_same<T_OUT, ap_uint<details::chamber_img_joined_bw> >::value, "T_OUT type check failed");
+
+#pragma HLS PIPELINE II=zoning_config::target_ii
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE
+
+  // There are 8 edges that define 7 regions
+  constexpr int col_start_f = 0;
+
+  constexpr int col_start_0 = details::chamber_ph_init_20deg[3];
+  constexpr int col_start_1 = details::chamber_ph_init_20deg[0];
+  constexpr int col_start_3 = details::chamber_ph_init_20deg[1];
+  constexpr int col_start_5 = details::chamber_ph_init_20deg[2];
+
+  constexpr int col_start_2 = details::chamber_ph_cover_20deg[3];
+  constexpr int col_start_4 = details::chamber_ph_cover_20deg[0];
+  constexpr int col_start_6 = details::chamber_ph_cover_20deg[1];
+  constexpr int col_start_7 = details::chamber_ph_cover_20deg[2];
+
+  // There are 7 regions that alternate between non-overlapping and overlapping
+  emtf_assert(col_start_0 == col_start_f);
+  out.range(col_start_1 - 1, col_start_0) = (in0[3].range(col_start_1 - col_start_0 - 1, col_start_0 - col_start_0));
+  out.range(col_start_2 - 1, col_start_1) = (in0[3].range(col_start_2 - col_start_0 - 1, col_start_1 - col_start_0) | in0[0].range(col_start_2 - col_start_1 - 1, col_start_1 - col_start_1));
+  out.range(col_start_3 - 1, col_start_2) = (in0[0].range(col_start_3 - col_start_1 - 1, col_start_2 - col_start_1));
+  out.range(col_start_4 - 1, col_start_3) = (in0[0].range(col_start_4 - col_start_1 - 1, col_start_3 - col_start_1) | in0[1].range(col_start_4 - col_start_3 - 1, col_start_3 - col_start_3));
+  out.range(col_start_5 - 1, col_start_4) = (in0[1].range(col_start_5 - col_start_3 - 1, col_start_4 - col_start_3));
+  out.range(col_start_6 - 1, col_start_5) = (in0[1].range(col_start_6 - col_start_3 - 1, col_start_5 - col_start_3) | in0[2].range(col_start_6 - col_start_5 - 1, col_start_5 - col_start_5));
+  out.range(col_start_7 - 1, col_start_6) = (in0[2].range(col_start_7 - col_start_5 - 1, col_start_6 - col_start_5));
+}
+
+template <typename T_IN, typename T_OUT>
+void zoning_join_20deg_ext_chamber_images_op(const T_IN in0[details::num_chambers_20deg_ext], T_OUT& out) {
+  static_assert(is_same<T_IN, ap_uint<details::chamber_img_bw> >::value, "T_IN type check failed");
+  static_assert(is_same<T_OUT, ap_uint<details::chamber_img_joined_bw> >::value, "T_OUT type check failed");
+
+#pragma HLS PIPELINE II=zoning_config::target_ii
+
+#pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS INLINE
+
+  // There are 14 edges that define 13 regions
+  constexpr int col_start_f = 0;
+
+  constexpr int col_start_0 = details::chamber_ph_init_10deg[6];
+  constexpr int col_start_1 = details::chamber_ph_init_10deg[0];
+  constexpr int col_start_3 = details::chamber_ph_init_10deg[1];
+  constexpr int col_start_5 = details::chamber_ph_init_10deg[2];
+  constexpr int col_start_7 = details::chamber_ph_init_10deg[3];
+  constexpr int col_start_9 = details::chamber_ph_init_10deg[4];
+  constexpr int col_start_11 = details::chamber_ph_init_10deg[5];
+
+  constexpr int col_start_2 = details::chamber_ph_cover_10deg[6];
+  constexpr int col_start_4 = details::chamber_ph_cover_10deg[0];
+  constexpr int col_start_6 = details::chamber_ph_cover_10deg[1];
+  constexpr int col_start_8 = details::chamber_ph_cover_10deg[2];
+  constexpr int col_start_10 = details::chamber_ph_cover_10deg[3];
+  constexpr int col_start_12 = details::chamber_ph_cover_10deg[4];
+  constexpr int col_start_13 = details::chamber_ph_cover_10deg[5];
+
+  // There are 13 regions that alternate between non-overlapping and overlapping
+  // Note that col_start_0 is different for 10deg vs 20 deg chambers
+  out.range(col_start_0 - 1, col_start_f) = (in0[0+3].range(col_start_0 - 1, col_start_f));
+  out.range(col_start_1 - 1, col_start_0) = (in0[0+3].range(col_start_1 - col_start_f - 1, col_start_0 - col_start_f) |
+                                             in0[4+6].range(col_start_1 - col_start_0 - 1, col_start_0 - col_start_0));
+  out.range(col_start_2 - 1, col_start_1) = (in0[0+3].range(col_start_2 - col_start_f - 1, col_start_1 - col_start_f) | in0[0+0].range(col_start_2 - col_start_1 - 1, col_start_1 - col_start_1) |
+                                             in0[4+6].range(col_start_2 - col_start_0 - 1, col_start_1 - col_start_0) | in0[4+0].range(col_start_2 - col_start_1 - 1, col_start_1 - col_start_1));
+  out.range(col_start_3 - 1, col_start_2) = (in0[0+0].range(col_start_3 - col_start_1 - 1, col_start_2 - col_start_1) |
+                                             in0[4+0].range(col_start_3 - col_start_1 - 1, col_start_2 - col_start_1));
+  out.range(col_start_4 - 1, col_start_3) = (in0[0+0].range(col_start_4 - col_start_1 - 1, col_start_3 - col_start_1) |
+                                             in0[4+0].range(col_start_4 - col_start_1 - 1, col_start_3 - col_start_1) | in0[4+1].range(col_start_4 - col_start_3 - 1, col_start_3 - col_start_3));
+  out.range(col_start_5 - 1, col_start_4) = (in0[0+0].range(col_start_5 - col_start_1 - 1, col_start_4 - col_start_1) |
+                                             in0[4+1].range(col_start_5 - col_start_3 - 1, col_start_4 - col_start_3));
+  out.range(col_start_6 - 1, col_start_5) = (in0[0+0].range(col_start_6 - col_start_1 - 1, col_start_5 - col_start_1) | in0[0+1].range(col_start_6 - col_start_5 - 1, col_start_5 - col_start_5) |
+                                             in0[4+1].range(col_start_6 - col_start_3 - 1, col_start_5 - col_start_3) | in0[4+2].range(col_start_6 - col_start_5 - 1, col_start_5 - col_start_5));
+  out.range(col_start_7 - 1, col_start_6) = (in0[0+1].range(col_start_7 - col_start_5 - 1, col_start_6 - col_start_5) |
+                                             in0[4+2].range(col_start_7 - col_start_5 - 1, col_start_6 - col_start_5));
+  out.range(col_start_8 - 1, col_start_7) = (in0[0+1].range(col_start_8 - col_start_5 - 1, col_start_7 - col_start_5) |
+                                             in0[4+2].range(col_start_8 - col_start_5 - 1, col_start_7 - col_start_5) | in0[4+3].range(col_start_8 - col_start_7 - 1, col_start_7 - col_start_7));
+  out.range(col_start_9 - 1, col_start_8) = (in0[0+1].range(col_start_9 - col_start_5 - 1, col_start_8 - col_start_5) |
+                                             in0[4+3].range(col_start_9 - col_start_7 - 1, col_start_8 - col_start_7));
+  out.range(col_start_10 - 1, col_start_9) = (in0[0+1].range(col_start_10 - col_start_5 - 1, col_start_9 - col_start_5) | in0[0+2].range(col_start_10 - col_start_9 - 1, col_start_9 - col_start_9) |
+                                              in0[4+3].range(col_start_10 - col_start_7 - 1, col_start_9 - col_start_7) | in0[4+4].range(col_start_10 - col_start_9 - 1, col_start_9 - col_start_9));
+  out.range(col_start_11 - 1, col_start_10) = (in0[0+2].range(col_start_11 - col_start_9 - 1, col_start_10 - col_start_9) |
+                                               in0[4+4].range(col_start_11 - col_start_9 - 1, col_start_10 - col_start_9));
+  out.range(col_start_12 - 1, col_start_11) = (in0[0+2].range(col_start_12 - col_start_9 - 1, col_start_11 - col_start_9) |
+                                               in0[4+4].range(col_start_12 - col_start_9 - 1, col_start_11 - col_start_9) | in0[4+5].range(col_start_12 - col_start_11 - 1, col_start_11 - col_start_11));
+  out.range(col_start_13 - 1, col_start_12) = (in0[0+2].range(col_start_13 - col_start_9 - 1, col_start_12 - col_start_9) |
+                                               in0[4+5].range(col_start_13 - col_start_11 - 1, col_start_12 - col_start_11));
+}
+
 // _____________________________________________________________________________
 // Perform loop over chambers and all the segments in the chambers.
 // Fill the chamber image for each chamber, then join all the chamber images.
@@ -38,8 +181,8 @@ void zoning_row_op(
   int chamber_ph_init_table[N];
   details::init_table_op<N>(chamber_ph_init_table, details::get_chamber_ph_init_op<chamber_category>());
 
-  int chamber_ph_cover_table[N];
-  details::init_table_op<N>(chamber_ph_cover_table, details::get_chamber_ph_cover_op<chamber_category>());
+  //int chamber_ph_cover_table[N];
+  //details::init_table_op<N>(chamber_ph_cover_table, details::get_chamber_ph_cover_op<chamber_category>());
 
   // single-chamber image and N-chamber image
   typedef ap_uint<details::chamber_img_bw> chamber_img_t;
@@ -88,9 +231,9 @@ void zoning_row_op(
       }
     }  // end loop over segments
 
-    chamber_images_2nd[i] = 0;  // init as zero
-
     if (!is_same<Row, SecondRow>::value) {  // enable if Row and SecondRow are different
+
+      chamber_images_2nd[i] = 0;  // init as zero
 
       // Loop over segments
       LOOP_J_2: for (unsigned j = 0; j < num_emtf_segments; j++) {
@@ -122,65 +265,43 @@ void zoning_row_op(
     }  // end if
   }  // end loop over chambers
 
+  // Join chamber images. Adjust the image size before output.
+  constexpr int col_start_joined = details::chamber_img_joined_col_start;
+  constexpr int col_stop_joined = details::chamber_img_joined_col_stop;
+
   chamber_img_joined_t chamber_img_joined;
+  chamber_img_joined_t chamber_img_joined_2nd;
 
-  // Loop over chambers
-  LOOP_I_2: for (unsigned i = 0; i < N; i++) {
+  if (!is_same<Row, SecondRow>::value) {  // enable if Row and SecondRow are different
+    if (is_same<chamber_category, m_10deg_chamber_tag>::value) {
+      zoning_join_10deg_chamber_images_op(chamber_images, chamber_img_joined);
+      zoning_join_10deg_chamber_images_op(chamber_images_2nd, chamber_img_joined_2nd);
+    } else if (is_same<chamber_category, m_20deg_chamber_tag>::value) {
+      zoning_join_20deg_chamber_images_op(chamber_images, chamber_img_joined);
+      zoning_join_20deg_chamber_images_op(chamber_images_2nd, chamber_img_joined_2nd);
+    } else if (is_same<chamber_category, m_20deg_ext_chamber_tag>::value) {
+      zoning_join_20deg_ext_chamber_images_op(chamber_images, chamber_img_joined);
+      zoning_join_20deg_ext_chamber_images_op(chamber_images_2nd, chamber_img_joined_2nd);
+    }
+    zoning_out_row_i = (chamber_img_joined.range(col_stop_joined, col_start_joined) |
+                        chamber_img_joined_2nd.range(col_stop_joined, col_start_joined));
 
-#pragma HLS UNROLL
-
-    const int col_start_rhs = 0;
-    const int col_stop_rhs = (chamber_ph_cover_table[i] - chamber_ph_init_table[i]) - 1;
-    const int col_start_lhs = chamber_ph_init_table[i];
-    const int col_stop_lhs = col_start_lhs + col_stop_rhs - col_start_rhs;
-    emtf_assert((col_stop_lhs - col_start_lhs) == (col_stop_rhs - col_start_rhs));
-    //std::cout << "[DEBUG] start_l: " << col_start_lhs << " stop_l: " << col_stop_lhs << " start_r: " << col_start_rhs << " stop_r: " << col_stop_rhs << std::endl;
-
-    // OR combined
-    if (!is_same<Row, SecondRow>::value) {  // enable if Row and SecondRow are different
-      if (i == 0) {
-        chamber_img_joined = 0;  // init as zero
-        chamber_img_joined.range(col_stop_lhs, col_start_lhs) = (
-            chamber_images[i].range(col_stop_rhs, col_start_rhs) | chamber_images_2nd[i].range(col_stop_rhs, col_start_rhs)
-        );
-      } else {
-        const auto& tmp_read_before_write = chamber_img_joined.range(col_stop_lhs, col_start_lhs);  // avoid dependency
-        chamber_img_joined.range(col_stop_lhs, col_start_lhs) = (
-            tmp_read_before_write | chamber_images[i].range(col_stop_rhs, col_start_rhs) | chamber_images_2nd[i].range(col_stop_rhs, col_start_rhs)
-        );
-      }
-    } else {  // else if Row and SecondRow are identical
-      if (i == 0) {
-        chamber_img_joined = 0;  // init as zero
-        chamber_img_joined.range(col_stop_lhs, col_start_lhs) = (
-            chamber_images[i].range(col_stop_rhs, col_start_rhs)
-        );
-      } else {
-        const auto& tmp_read_before_write = chamber_img_joined.range(col_stop_lhs, col_start_lhs);  // avoid dependency
-        chamber_img_joined.range(col_stop_lhs, col_start_lhs) = (
-            tmp_read_before_write | chamber_images[i].range(col_stop_rhs, col_start_rhs)
-        );
-      }
-    }  // end else
-  }  // end loop over chambers
-
-  // Adjust the size of chamber_img_joined
-  constexpr int col_start_rhs = details::chamber_img_joined_col_start;
-  constexpr int col_stop_rhs = details::chamber_img_joined_col_stop;
-  constexpr int col_start_lhs = 0;
-  constexpr int col_stop_lhs = (zoning_out_t::width - 1);
-  emtf_assert((col_stop_lhs - col_start_lhs) == (col_stop_rhs - col_start_rhs));
-  //std::cout << "[DEBUG] start_l: " << col_start_lhs << " stop_l: " << col_stop_lhs << " start_r: " << col_start_rhs << " stop_r: " << col_stop_rhs << std::endl;
-
-  // Take selected columns of chamber_img_joined
-  zoning_out_row_i = chamber_img_joined.range(col_stop_rhs, col_start_rhs);
+  } else {  // enable if Row and Second are identical
+    if (is_same<chamber_category, m_10deg_chamber_tag>::value) {
+      zoning_join_10deg_chamber_images_op(chamber_images, chamber_img_joined);
+    } else if (is_same<chamber_category, m_20deg_chamber_tag>::value) {
+      zoning_join_20deg_chamber_images_op(chamber_images, chamber_img_joined);
+    } else if (is_same<chamber_category, m_20deg_ext_chamber_tag>::value) {
+      zoning_join_20deg_ext_chamber_images_op(chamber_images, chamber_img_joined);
+    }
+    zoning_out_row_i = chamber_img_joined.range(col_stop_joined, col_start_joined);
+  }  // end if-else
 }
 
 // _____________________________________________________________________________
 // Zoning op
 
-// Only enabled for Zone 0
-template <typename Zone, typename Timezone, typename enable_if<is_same<Zone, m_zone_0_tag>::value, bool>::type = true>
+template <typename Zone, typename Timezone>
 void zoning_op(
     const emtf_phi_t emtf_phi[model_config::n_in],
     const seg_zones_t seg_zones[model_config::n_in],
@@ -196,68 +317,36 @@ void zoning_op(
 #pragma HLS INLINE
 
   // Loop over the rows manually
-  zoning_row_op<Zone, Timezone, m_zone_0_row_0_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[0]);
-  zoning_row_op<Zone, Timezone, m_zone_0_row_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[1]);
-  zoning_row_op<Zone, Timezone, m_zone_0_row_2_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[2]);
-  zoning_row_op<Zone, Timezone, m_zone_0_row_3_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[3]);
-  zoning_row_op<Zone, Timezone, m_zone_0_row_4_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[4]);
-  zoning_row_op<Zone, Timezone, m_zone_0_row_5_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[5]);
-  zoning_row_op<Zone, Timezone, m_zone_0_row_6_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[6]);
-  zoning_row_op<Zone, Timezone, m_zone_0_row_7_0_tag, m_zone_0_row_7_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[7]);
-}
+  if (is_same<Zone, m_zone_0_tag>::value) {  // enable if Zone 0
+    zoning_row_op<Zone, Timezone, m_zone_0_row_0_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[0]);
+    zoning_row_op<Zone, Timezone, m_zone_0_row_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[1]);
+    zoning_row_op<Zone, Timezone, m_zone_0_row_2_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[2]);
+    zoning_row_op<Zone, Timezone, m_zone_0_row_3_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[3]);
+    zoning_row_op<Zone, Timezone, m_zone_0_row_4_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[4]);
+    zoning_row_op<Zone, Timezone, m_zone_0_row_5_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[5]);
+    zoning_row_op<Zone, Timezone, m_zone_0_row_6_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[6]);
+    zoning_row_op<Zone, Timezone, m_zone_0_row_7_0_tag, m_zone_0_row_7_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[7]);
 
-// Only enabled for Zone 1
-template <typename Zone, typename Timezone, typename enable_if<is_same<Zone, m_zone_1_tag>::value, bool>::type = true>
-void zoning_op(
-    const emtf_phi_t emtf_phi[model_config::n_in],
-    const seg_zones_t seg_zones[model_config::n_in],
-    const seg_tzones_t seg_tzones[model_config::n_in],
-    const seg_valid_t seg_valid[model_config::n_in],
-    zoning_out_t zoning_out[zoning_config::n_out]
-) {
+  } else if (is_same<Zone, m_zone_1_tag>::value) {  // enable if Zone 1
+    zoning_row_op<Zone, Timezone, m_zone_1_row_0_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[0]);
+    zoning_row_op<Zone, Timezone, m_zone_1_row_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[1]);
+    zoning_row_op<Zone, Timezone, m_zone_1_row_2_0_tag, m_zone_1_row_2_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[2]);
+    zoning_row_op<Zone, Timezone, m_zone_1_row_3_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[3]);
+    zoning_row_op<Zone, Timezone, m_zone_1_row_4_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[4]);
+    zoning_row_op<Zone, Timezone, m_zone_1_row_5_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[5]);
+    zoning_row_op<Zone, Timezone, m_zone_1_row_6_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[6]);
+    zoning_row_op<Zone, Timezone, m_zone_1_row_7_0_tag, m_zone_1_row_7_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[7]);
 
-#pragma HLS PIPELINE II=zoning_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
-#pragma HLS INLINE
-
-  // Loop over the rows manually
-  zoning_row_op<Zone, Timezone, m_zone_1_row_0_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[0]);
-  zoning_row_op<Zone, Timezone, m_zone_1_row_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[1]);
-  zoning_row_op<Zone, Timezone, m_zone_1_row_2_0_tag, m_zone_1_row_2_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[2]);
-  zoning_row_op<Zone, Timezone, m_zone_1_row_3_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[3]);
-  zoning_row_op<Zone, Timezone, m_zone_1_row_4_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[4]);
-  zoning_row_op<Zone, Timezone, m_zone_1_row_5_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[5]);
-  zoning_row_op<Zone, Timezone, m_zone_1_row_6_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[6]);
-  zoning_row_op<Zone, Timezone, m_zone_1_row_7_0_tag, m_zone_1_row_7_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[7]);
-}
-
-// Only enabled for Zone 2
-template <typename Zone, typename Timezone, typename enable_if<is_same<Zone, m_zone_2_tag>::value, bool>::type = true>
-void zoning_op(
-    const emtf_phi_t emtf_phi[model_config::n_in],
-    const seg_zones_t seg_zones[model_config::n_in],
-    const seg_tzones_t seg_tzones[model_config::n_in],
-    const seg_valid_t seg_valid[model_config::n_in],
-    zoning_out_t zoning_out[zoning_config::n_out]
-) {
-
-#pragma HLS PIPELINE II=zoning_config::target_ii
-
-#pragma HLS INTERFACE ap_ctrl_none port=return
-
-#pragma HLS INLINE
-
-  // Loop over the rows manually
-  zoning_row_op<Zone, Timezone, m_zone_2_row_0_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[0]);
-  zoning_row_op<Zone, Timezone, m_zone_2_row_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[1]);
-  zoning_row_op<Zone, Timezone, m_zone_2_row_2_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[2]);
-  zoning_row_op<Zone, Timezone, m_zone_2_row_3_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[3]);
-  zoning_row_op<Zone, Timezone, m_zone_2_row_4_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[4]);
-  zoning_row_op<Zone, Timezone, m_zone_2_row_5_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[5]);
-  zoning_row_op<Zone, Timezone, m_zone_2_row_6_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[6]);
-  zoning_row_op<Zone, Timezone, m_zone_2_row_7_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[7]);
+  } else if (is_same<Zone, m_zone_2_tag>::value) {  // enable if Zone 2
+    zoning_row_op<Zone, Timezone, m_zone_2_row_0_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[0]);
+    zoning_row_op<Zone, Timezone, m_zone_2_row_1_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[1]);
+    zoning_row_op<Zone, Timezone, m_zone_2_row_2_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[2]);
+    zoning_row_op<Zone, Timezone, m_zone_2_row_3_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[3]);
+    zoning_row_op<Zone, Timezone, m_zone_2_row_4_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[4]);
+    zoning_row_op<Zone, Timezone, m_zone_2_row_5_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[5]);
+    zoning_row_op<Zone, Timezone, m_zone_2_row_6_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[6]);
+    zoning_row_op<Zone, Timezone, m_zone_2_row_7_tag>(emtf_phi, seg_zones, seg_tzones, seg_valid, zoning_out[7]);
+  }
 }
 
 // _____________________________________________________________________________
@@ -275,6 +364,8 @@ void zoning_layer(
 #pragma HLS PIPELINE II=zoning_config::target_ii
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS LATENCY max=zoning_config::target_lat
 
   // Check assumptions
   static_assert(zoning_config::n_out == num_emtf_img_rows, "zoning_config::n_out check failed");

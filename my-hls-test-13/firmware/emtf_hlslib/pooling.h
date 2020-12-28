@@ -4,7 +4,7 @@
 namespace emtf {
 
 // Function to apply activation
-template <typename Zone, typename T_IN, typename T_OUT>
+template <typename Category, typename T_IN, typename T_OUT>
 void pooling_activate_op(const T_IN& in0, T_OUT& out) {
   static_assert(is_same<T_IN, dio_row_accum_t>::value, "T_IN type check failed");
   static_assert(is_same<T_OUT, trk_qual_t>::value, "T_OUT type check failed");
@@ -26,7 +26,7 @@ void pooling_activate_op(const T_IN& in0, T_OUT& out) {
 #endif
 
   if (!initialized) {
-    details::init_table_op<N>(lookup_table, details::get_pattern_activation_op<Zone>());
+    details::init_table_op<N>(lookup_table, details::get_pattern_activation_op<Category>());
     initialized = true;
   }
 
@@ -300,6 +300,8 @@ void pooling_layer(
 #pragma HLS PIPELINE II=pooling_config::target_ii
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
+
+#pragma HLS LATENCY max=pooling_config::target_lat
 
   // Check assumptions
   static_assert(pooling_config::n_in == num_emtf_img_rows, "pooling_config::n_in check failed");
