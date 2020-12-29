@@ -61,7 +61,7 @@ void trkbuilding_reduce_argmin_ph_diff_op(
       const unsigned int node_index = (num_nodes_io - 1) - i;
       const unsigned int child_l_index = (2 * node_index) + 1;
       const unsigned int child_r_index = (2 * node_index) + 2;
-      emtf_assert((child_l_index < num_nodes) && (child_r_index < num_nodes));
+      emtf_assert((child_l_index < num_nodes) and (child_r_index < num_nodes));
       nodes[node_index] = (nodes[child_l_index] <= nodes[child_r_index]) ? nodes[child_l_index] : nodes[child_r_index];
     }
   }  // end loop region
@@ -82,7 +82,7 @@ void trkbuilding_select_phi_median_op(const T_IN& in0, T_OUT& out) {
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
-//#pragma HLS INLINE
+#pragma HLS INLINE
 
   constexpr int bits_to_shift = emtf_img_col_factor_log2;
   const trk_col_t col = in0 + static_cast<trk_col_t>(details::chamber_img_joined_col_start);
@@ -332,16 +332,23 @@ void trkbuilding_match_ph_site_op(
   // area 0: 0 - 165
   // area 1: 75 - 240
   // area 2: 150 - 315
-  // edges: 0, 120, 195, 315
-  const int area_margin = 45;  // 12 deg
-  const bool vld_area_0 = (col_patt < static_cast<trk_col_t>(details::chamber_ph_init_20deg[0] + area_margin));
-  const bool vld_area_1 = (col_patt < static_cast<trk_col_t>(details::chamber_ph_init_20deg[1] + area_margin));
-  const bool vld_area_2 = (col_patt < static_cast<trk_col_t>(details::chamber_ph_init_20deg[2] + area_margin + area_margin));
-  emtf_assert((details::chamber_ph_init_20deg[2] + area_margin + area_margin) == details::chamber_ph_cover_20deg[2]);
+  // use edges: 0, 120, 195, 315
+  const int area_margin = (details::chamber_img_bw / 2);  // 45
+  const trk_col_t col_start_area_0 = details::chamber_ph_init_20deg[0] + area_margin;  // 120
+  const trk_col_t col_start_area_1 = details::chamber_ph_init_20deg[1] + area_margin;  // 195
+  const trk_col_t col_start_area_2 = details::chamber_ph_init_20deg[2] + area_margin + area_margin;  // 315
+  const int area_step_size = (N / (num_emtf_img_areas + 1));
+  emtf_assert(area_step_size == 2 or area_step_size == 4 or area_step_size == 6);
 
-  const int area = vld_area_0 ? 0 : (vld_area_1 ? 1 : (vld_area_2 ? 2 : num_emtf_img_areas));
-  const int area_start = area * (N / (num_emtf_img_areas + 1));
-  emtf_assert(area != num_emtf_img_areas);
+  typedef ap_uint<details::ceil_log2<num_emtf_img_areas>::value> area_t;
+  typedef ap_uint<details::ceil_log2<N>::value> area_start_t;
+
+  const bool vld_area_0 = (col_patt < col_start_area_0);
+  const bool vld_area_1 = (col_patt < col_start_area_1);
+  const bool vld_area_2 = (col_patt < col_start_area_2);
+  const area_t area = vld_area_0 ? 0 : (vld_area_1 ? 1 : (vld_area_2 ? 2 : num_emtf_img_areas));
+  const area_start_t area_start = area * area_step_size;
+  emtf_assert(area < num_emtf_img_areas);
 
   // Select min activation
   trkbuilding_reduce_argmin_ph_diff_op(
@@ -629,8 +636,8 @@ void trkbuilding_op(
 #pragma HLS ARRAY_PARTITION variable=curr_trk_seg_v_from_th complete dim=0
 #pragma HLS ARRAY_PARTITION variable=emtf_theta_best complete dim=0
 
-  emtf_phi_t phi_median = 0;
-  emtf_theta_t theta_median = 0;
+  emtf_phi_t phi_median = 0;  // init as zero
+  emtf_theta_t theta_median = 0;  // init as zero
 
   // Find phi_median, select best segment indices (closest to phi_median)
   trkbuilding_match_ph_op(emtf_phi, seg_zones, seg_tzones, seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_tzone, phi_median, curr_trk_seg, curr_trk_seg_v_from_ph);
@@ -664,17 +671,17 @@ void trkbuilding_layer(
     const seg_dl_t      seg_dl         [model_config::n_in],
     const seg_bx_t      seg_bx         [model_config::n_in],
     const seg_valid_t   seg_valid      [model_config::n_in],
-    const trk_qual_t    trk_qual       [trkbuilding_config::n_in],
-    const trk_patt_t    trk_patt       [trkbuilding_config::n_in],
-    const trk_col_t     trk_col        [trkbuilding_config::n_in],
-    const trk_zone_t    trk_zone       [trkbuilding_config::n_in],
-    trk_seg_t           trk_seg        [trkbuilding_config::n_out * num_emtf_sites],
-    trk_seg_v_t         trk_seg_v      [trkbuilding_config::n_out],
-    trk_feat_t          trk_feat       [trkbuilding_config::n_out * num_emtf_features],
-    trk_valid_t         trk_valid      [trkbuilding_config::n_out]
+    const trk_qual_t&   curr_trk_qual  ,
+    const trk_patt_t&   curr_trk_patt  ,
+    const trk_col_t&    curr_trk_col   ,
+    const trk_zone_t&   curr_trk_zone  ,
+    trk_seg_t           curr_trk_seg   [num_emtf_sites],
+    trk_seg_v_t&        curr_trk_seg_v ,
+    trk_feat_t          curr_trk_feat  [num_emtf_features],
+    trk_valid_t&        curr_trk_valid
 ) {
 
-#pragma HLS PIPELINE II=trkbuilding_config::layer_target_ii
+#pragma HLS PIPELINE II=trkbuilding_config::target_ii
 
 #pragma HLS INTERFACE ap_ctrl_none port=return
 
@@ -687,23 +694,12 @@ void trkbuilding_layer(
 
   typedef m_timezone_0_tag Timezone;  // default timezone
 
-  // Loop over tracks
-  LOOP_TRK: for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) {
-
-#pragma HLS UNROLL factor=trkbuilding_config::unroll_factor
-
-#pragma HLS ALLOCATION instances=trkbuilding_select_phi_median_op limit=trkbuilding_config::unroll_factor function
-
-    auto curr_trk_seg = stl_next(trk_seg, itrk * num_emtf_sites);
-    auto curr_trk_feat = stl_next(trk_feat, itrk * num_emtf_features);
-
-    trkbuilding_op<Zone, Timezone>(
-        emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2,
-        emtf_time, seg_zones, seg_tzones, seg_fr, seg_dl, seg_bx,
-        seg_valid, trk_qual[itrk], trk_patt[itrk], trk_col[itrk], trk_zone[itrk], curr_trk_seg,
-        trk_seg_v[itrk], curr_trk_feat, trk_valid[itrk]
-    );
-  }  // end loop over tracks
+  trkbuilding_op<Zone, Timezone>(
+      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2,
+      emtf_time, seg_zones, seg_tzones, seg_fr, seg_dl, seg_bx,
+      seg_valid, curr_trk_qual, curr_trk_patt, curr_trk_col, curr_trk_zone, curr_trk_seg,
+      curr_trk_seg_v, curr_trk_feat, curr_trk_valid
+  );
 }
 
 }  // namespace emtf

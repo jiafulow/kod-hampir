@@ -83,10 +83,7 @@ struct zonemerging_config {
 struct trkbuilding_config {
   static const unsigned int n_in = zonemerging_config::n_out;
   static const unsigned int n_out = n_in;
-  static const int layer_target_ii = model_config::target_ii;
   static const int target_ii = 1;
-  static const int reuse_factor = layer_target_ii / target_ii;
-  static const int unroll_factor = n_in / reuse_factor;
 };
 
 struct duperemoval_config {

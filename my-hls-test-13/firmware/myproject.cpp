@@ -152,29 +152,6 @@ void myproject(
 #pragma HLS ARRAY_PARTITION variable=trk_col complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_zone complete dim=0
 
-  constexpr int in1_0_bits_lo = 0;
-  constexpr int in1_0_bits_hi = (in1_0_bits_lo + trk_qual_t::width - 1);
-  constexpr int in1_1_bits_lo = (in1_0_bits_hi + 1);
-  constexpr int in1_1_bits_hi = (in1_1_bits_lo + trk_patt_t::width - 1);
-  constexpr int in1_2_bits_lo = (in1_1_bits_hi + 1);
-  constexpr int in1_2_bits_hi = (in1_2_bits_lo + trk_col_t::width - 1);
-  constexpr int in1_3_bits_lo = (in1_2_bits_hi + 1);
-  constexpr int in1_3_bits_hi = (in1_3_bits_lo + trk_zone_t::width - 1);
-
-  // Loop over in1
-  LOOP_IN1: for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) {
-
-#pragma HLS UNROLL
-
-    trk_qual[itrk] = zonemerging_0_out[itrk].range(in1_0_bits_hi, in1_0_bits_lo);
-    trk_patt[itrk] = zonemerging_0_out[itrk].range(in1_1_bits_hi, in1_1_bits_lo);
-    trk_col[itrk]  = zonemerging_0_out[itrk].range(in1_2_bits_hi, in1_2_bits_lo);
-    trk_zone[itrk] = zonemerging_0_out[itrk].range(in1_3_bits_hi, in1_3_bits_lo);
-  }  // end loop over in1
-
-  // This macro is defined in emtf_hlslib/helper.h
-  PRINT_TOP_FN_ARRAYS_IN1
-
   // Intermediate arrays (for layers 5..6)
   trk_seg_t   trk_seg      [trkbuilding_config::n_out * num_emtf_sites];
   trk_seg_v_t trk_seg_v    [trkbuilding_config::n_out];
@@ -190,14 +167,51 @@ void myproject(
 #pragma HLS ARRAY_PARTITION variable=trk_feat_rm complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_valid_rm complete dim=0
 
-  // Layer 5 - track building
+  LOOP_REGION: {
 
-  trkbuilding_layer<m_zone_any_tag>(
-      emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2,
-      emtf_time, seg_zones, seg_tzones, seg_fr, seg_dl, seg_bx,
-      seg_valid, trk_qual, trk_patt, trk_col, trk_zone, trk_seg,
-      trk_seg_v, trk_feat, trk_valid
-  );
+#pragma HLS LOOP_MERGE
+
+    // Loop over in1
+    LOOP_IN1: for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) {
+
+#pragma HLS UNROLL
+
+      constexpr int in1_0_bits_lo = 0;
+      constexpr int in1_0_bits_hi = (in1_0_bits_lo + trk_qual_t::width - 1);
+      constexpr int in1_1_bits_lo = (in1_0_bits_hi + 1);
+      constexpr int in1_1_bits_hi = (in1_1_bits_lo + trk_patt_t::width - 1);
+      constexpr int in1_2_bits_lo = (in1_1_bits_hi + 1);
+      constexpr int in1_2_bits_hi = (in1_2_bits_lo + trk_col_t::width - 1);
+      constexpr int in1_3_bits_lo = (in1_2_bits_hi + 1);
+      constexpr int in1_3_bits_hi = (in1_3_bits_lo + trk_zone_t::width - 1);
+
+      trk_qual[itrk] = zonemerging_0_out[itrk].range(in1_0_bits_hi, in1_0_bits_lo);
+      trk_patt[itrk] = zonemerging_0_out[itrk].range(in1_1_bits_hi, in1_1_bits_lo);
+      trk_col[itrk]  = zonemerging_0_out[itrk].range(in1_2_bits_hi, in1_2_bits_lo);
+      trk_zone[itrk] = zonemerging_0_out[itrk].range(in1_3_bits_hi, in1_3_bits_lo);
+    }  // end loop over in1
+
+    // Loop over tracks
+    LOOP_TRK: for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) {
+
+#pragma HLS UNROLL
+
+      auto curr_trk_seg = stl_next(trk_seg, itrk * num_emtf_sites);
+      auto curr_trk_feat = stl_next(trk_feat, itrk * num_emtf_features);
+
+      // Layer 5 - track building
+
+      trkbuilding_layer<m_zone_any_tag>(
+          emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2,
+          emtf_time, seg_zones, seg_tzones, seg_fr, seg_dl, seg_bx,
+          seg_valid, trk_qual[itrk], trk_patt[itrk], trk_col[itrk], trk_zone[itrk], curr_trk_seg,
+          trk_seg_v[itrk], curr_trk_feat, trk_valid[itrk]
+      );
+    }  // end loop over tracks
+  }  // end loop region
+
+  // This macro is defined in emtf_hlslib/helper.h
+  PRINT_TOP_FN_ARRAYS_IN1
 
   // Layer 6 - dupe removal
 
