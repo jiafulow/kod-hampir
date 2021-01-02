@@ -83,7 +83,9 @@ struct zonemerging_config {
 struct trkbuilding_config {
   static const unsigned int n_in = zonemerging_config::n_out;
   static const unsigned int n_out = n_in;
+  static const int layer_target_ii = model_config::target_ii;
   static const int target_ii = 1;
+  static const int target_lat = 9;
 };
 
 struct duperemoval_config {
