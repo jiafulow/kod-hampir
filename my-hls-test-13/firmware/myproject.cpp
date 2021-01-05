@@ -141,40 +141,6 @@ void myproject(
       zonesorting_0_out, zonesorting_1_out, zonesorting_2_out, zonemerging_0_out
   );
 
-  // Unpack from in1 (a.k.a. zonemerging_0_out)
-  trk_qual_t trk_qual [trkbuilding_config::n_in];
-  trk_patt_t trk_patt [trkbuilding_config::n_in];
-  trk_col_t  trk_col  [trkbuilding_config::n_in];
-  trk_zone_t trk_zone [trkbuilding_config::n_in];
-
-#pragma HLS ARRAY_PARTITION variable=trk_qual complete dim=0
-#pragma HLS ARRAY_PARTITION variable=trk_patt complete dim=0
-#pragma HLS ARRAY_PARTITION variable=trk_col complete dim=0
-#pragma HLS ARRAY_PARTITION variable=trk_zone complete dim=0
-
-  // Loop over in1
-  LOOP_IN1: for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) {
-
-#pragma HLS UNROLL
-
-    constexpr int in1_0_bits_lo = 0;
-    constexpr int in1_0_bits_hi = (in1_0_bits_lo + trk_qual_t::width - 1);
-    constexpr int in1_1_bits_lo = (in1_0_bits_hi + 1);
-    constexpr int in1_1_bits_hi = (in1_1_bits_lo + trk_patt_t::width - 1);
-    constexpr int in1_2_bits_lo = (in1_1_bits_hi + 1);
-    constexpr int in1_2_bits_hi = (in1_2_bits_lo + trk_col_t::width - 1);
-    constexpr int in1_3_bits_lo = (in1_2_bits_hi + 1);
-    constexpr int in1_3_bits_hi = (in1_3_bits_lo + trk_zone_t::width - 1);
-
-    trk_qual[itrk] = zonemerging_0_out[itrk].range(in1_0_bits_hi, in1_0_bits_lo);
-    trk_patt[itrk] = zonemerging_0_out[itrk].range(in1_1_bits_hi, in1_1_bits_lo);
-    trk_col[itrk]  = zonemerging_0_out[itrk].range(in1_2_bits_hi, in1_2_bits_lo);
-    trk_zone[itrk] = zonemerging_0_out[itrk].range(in1_3_bits_hi, in1_3_bits_lo);
-  }  // end loop over in1
-
-  // This macro is defined in emtf_hlslib/helper.h
-  PRINT_TOP_FN_ARRAYS_IN1
-
   // Intermediate arrays (for layers 5..6)
   trk_seg_t   trk_seg      [trkbuilding_config::n_out * num_emtf_sites];
   trk_seg_v_t trk_seg_v    [trkbuilding_config::n_out];
@@ -195,8 +161,7 @@ void myproject(
   trkbuilding_layer<m_zone_any_tag>(
       emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2,
       emtf_time, seg_zones, seg_tzones, seg_fr, seg_dl, seg_bx,
-      seg_valid, trk_qual, trk_patt, trk_col, trk_zone, trk_seg,
-      trk_seg_v, trk_feat, trk_valid
+      seg_valid, zonemerging_0_out, trk_seg, trk_seg_v, trk_feat, trk_valid
   );
 
   // Layer 6 - dupe removal

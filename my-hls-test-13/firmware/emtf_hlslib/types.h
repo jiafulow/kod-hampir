@@ -181,6 +181,7 @@ typedef suppression_out_t                               zonesorting_in_t;
 typedef make_concat<trk_col_t, zonesorting_in_t>::type  zonesorting_out_t;
 typedef zonesorting_out_t                               zonemerging_in_t;
 typedef make_concat<trk_zone_t, zonemerging_in_t>::type zonemerging_out_t;
+typedef zonemerging_out_t                               trkbuilding_in_t;
 
 }  // namespace emtf
 

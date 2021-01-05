@@ -588,27 +588,24 @@ void trkbuilding_extract_features_op(
 
 template <typename Zone, typename Timezone>
 void trkbuilding_op(
-    const emtf_phi_t    emtf_phi       [model_config::n_in],
-    const emtf_bend_t   emtf_bend      [model_config::n_in],
-    const emtf_theta1_t emtf_theta1    [model_config::n_in],
-    const emtf_theta2_t emtf_theta2    [model_config::n_in],
-    const emtf_qual1_t  emtf_qual1     [model_config::n_in],
-    const emtf_qual2_t  emtf_qual2     [model_config::n_in],
-    const emtf_time_t   emtf_time      [model_config::n_in],
-    const seg_zones_t   seg_zones      [model_config::n_in],
-    const seg_tzones_t  seg_tzones     [model_config::n_in],
-    const seg_fr_t      seg_fr         [model_config::n_in],
-    const seg_dl_t      seg_dl         [model_config::n_in],
-    const seg_bx_t      seg_bx         [model_config::n_in],
-    const seg_valid_t   seg_valid      [model_config::n_in],
-    const trk_qual_t&   curr_trk_qual  ,
-    const trk_patt_t&   curr_trk_patt  ,
-    const trk_col_t&    curr_trk_col   ,
-    const trk_zone_t&   curr_trk_zone  ,
-    trk_seg_t           curr_trk_seg   [num_emtf_sites],
-    trk_seg_v_t&        curr_trk_seg_v ,
-    trk_feat_t          curr_trk_feat  [num_emtf_features],
-    trk_valid_t&        curr_trk_valid
+    const emtf_phi_t        emtf_phi       [model_config::n_in],
+    const emtf_bend_t       emtf_bend      [model_config::n_in],
+    const emtf_theta1_t     emtf_theta1    [model_config::n_in],
+    const emtf_theta2_t     emtf_theta2    [model_config::n_in],
+    const emtf_qual1_t      emtf_qual1     [model_config::n_in],
+    const emtf_qual2_t      emtf_qual2     [model_config::n_in],
+    const emtf_time_t       emtf_time      [model_config::n_in],
+    const seg_zones_t       seg_zones      [model_config::n_in],
+    const seg_tzones_t      seg_tzones     [model_config::n_in],
+    const seg_fr_t          seg_fr         [model_config::n_in],
+    const seg_dl_t          seg_dl         [model_config::n_in],
+    const seg_bx_t          seg_bx         [model_config::n_in],
+    const seg_valid_t       seg_valid      [model_config::n_in],
+    const trkbuilding_in_t& curr_trk_in    ,
+    trk_seg_t               curr_trk_seg   [num_emtf_sites],
+    trk_seg_v_t&            curr_trk_seg_v ,
+    trk_feat_t              curr_trk_feat  [num_emtf_features],
+    trk_valid_t&            curr_trk_valid
 ) {
 
 #pragma HLS PIPELINE II=trkbuilding_config::target_ii
@@ -619,8 +616,22 @@ void trkbuilding_op(
 
   typedef emtf_theta1_t emtf_theta_t;
 
-  const trk_tzone_t curr_trk_tzone = details::timezone_traits<Timezone>::value;
+  // Unpack from curr_trk_in (a.k.a. trkbuilding_in[itrk])
+  constexpr int bits_lo_0 = 0;
+  constexpr int bits_lo_1 = bits_lo_0 + trk_qual_t::width;
+  constexpr int bits_lo_2 = bits_lo_1 + trk_patt_t::width;
+  constexpr int bits_lo_3 = bits_lo_2 + trk_col_t::width;
+  constexpr int bits_lo_4 = bits_lo_3 + trk_zone_t::width;
 
+  const trk_qual_t  curr_trk_qual  = curr_trk_in.range(bits_lo_1 - 1, bits_lo_0);
+  const trk_patt_t  curr_trk_patt  = curr_trk_in.range(bits_lo_2 - 1, bits_lo_1);
+  const trk_col_t   curr_trk_col   = curr_trk_in.range(bits_lo_3 - 1, bits_lo_2);
+  const trk_zone_t  curr_trk_zone  = curr_trk_in.range(bits_lo_4 - 1, bits_lo_3);
+  const trk_tzone_t curr_trk_tzone = details::timezone_traits<Timezone>::value;  // dummy
+
+  //std::cout << "[DEBUG] " << curr_trk_qual << " " << curr_trk_patt << " " << curr_trk_col << " " << curr_trk_zone << " " << curr_trk_tzone << std::endl;
+
+  // Intermediate arrays
   bool_t curr_trk_seg_v_from_ph[num_emtf_sites];
   bool_t curr_trk_seg_v_from_th[num_emtf_sites];
   emtf_theta_t emtf_theta_best[num_emtf_sites];
@@ -652,27 +663,24 @@ void trkbuilding_op(
 
 template <typename Zone>
 void trkbuilding_layer(
-    const emtf_phi_t    emtf_phi       [model_config::n_in],
-    const emtf_bend_t   emtf_bend      [model_config::n_in],
-    const emtf_theta1_t emtf_theta1    [model_config::n_in],
-    const emtf_theta2_t emtf_theta2    [model_config::n_in],
-    const emtf_qual1_t  emtf_qual1     [model_config::n_in],
-    const emtf_qual2_t  emtf_qual2     [model_config::n_in],
-    const emtf_time_t   emtf_time      [model_config::n_in],
-    const seg_zones_t   seg_zones      [model_config::n_in],
-    const seg_tzones_t  seg_tzones     [model_config::n_in],
-    const seg_fr_t      seg_fr         [model_config::n_in],
-    const seg_dl_t      seg_dl         [model_config::n_in],
-    const seg_bx_t      seg_bx         [model_config::n_in],
-    const seg_valid_t   seg_valid      [model_config::n_in],
-    const trk_qual_t    trk_qual       [trkbuilding_config::n_in],
-    const trk_patt_t    trk_patt       [trkbuilding_config::n_in],
-    const trk_col_t     trk_col        [trkbuilding_config::n_in],
-    const trk_zone_t    trk_zone       [trkbuilding_config::n_in],
-    trk_seg_t           trk_seg        [trkbuilding_config::n_out * num_emtf_sites],
-    trk_seg_v_t         trk_seg_v      [trkbuilding_config::n_out],
-    trk_feat_t          trk_feat       [trkbuilding_config::n_out * num_emtf_features],
-    trk_valid_t         trk_valid      [trkbuilding_config::n_out]
+    const emtf_phi_t        emtf_phi       [model_config::n_in],
+    const emtf_bend_t       emtf_bend      [model_config::n_in],
+    const emtf_theta1_t     emtf_theta1    [model_config::n_in],
+    const emtf_theta2_t     emtf_theta2    [model_config::n_in],
+    const emtf_qual1_t      emtf_qual1     [model_config::n_in],
+    const emtf_qual2_t      emtf_qual2     [model_config::n_in],
+    const emtf_time_t       emtf_time      [model_config::n_in],
+    const seg_zones_t       seg_zones      [model_config::n_in],
+    const seg_tzones_t      seg_tzones     [model_config::n_in],
+    const seg_fr_t          seg_fr         [model_config::n_in],
+    const seg_dl_t          seg_dl         [model_config::n_in],
+    const seg_bx_t          seg_bx         [model_config::n_in],
+    const seg_valid_t       seg_valid      [model_config::n_in],
+    const trkbuilding_in_t  trkbuilding_in [trkbuilding_config::n_in],
+    trk_seg_t               trk_seg        [trkbuilding_config::n_out * num_emtf_sites],
+    trk_seg_v_t             trk_seg_v      [trkbuilding_config::n_out],
+    trk_feat_t              trk_feat       [trkbuilding_config::n_out * num_emtf_features],
+    trk_valid_t             trk_valid      [trkbuilding_config::n_out]
 ) {
 
 #pragma HLS PIPELINE II=trkbuilding_config::layer_target_ii
@@ -701,8 +709,7 @@ void trkbuilding_layer(
     trkbuilding_op<Zone, Timezone>(
         emtf_phi, emtf_bend, emtf_theta1, emtf_theta2, emtf_qual1, emtf_qual2,
         emtf_time, seg_zones, seg_tzones, seg_fr, seg_dl, seg_bx,
-        seg_valid, trk_qual[itrk], trk_patt[itrk], trk_col[itrk], trk_zone[itrk], curr_trk_seg,
-        trk_seg_v[itrk], curr_trk_feat, trk_valid[itrk]
+        seg_valid, trkbuilding_in[itrk], curr_trk_seg, trk_seg_v[itrk], curr_trk_feat, trk_valid[itrk]
     );
   }  // end loop over tracks
 }

@@ -33,21 +33,6 @@
 #endif
 
 #if !defined(__SYNTHESIS__) && !defined(NDEBUG)
-#define PRINT_TOP_FN_ARRAYS_IN1 \
-    std::cout << "Printing 'in1' arrays:" << std::endl; \
-    for (unsigned itrk = 0; itrk < trkbuilding_config::n_in; itrk++) { \
-      std::cout << itrk << " " \
-                << trk_qual[itrk] << " " \
-                << trk_patt[itrk] << " " \
-                << trk_col[itrk] << " " \
-                << trk_zone[itrk] << " " \
-                << std::endl; \
-    }
-#else
-#define PRINT_TOP_FN_ARRAYS_IN1
-#endif
-
-#if !defined(__SYNTHESIS__) && !defined(NDEBUG)
 #define PRINT_TOP_FN_ARRAYS_OTHER \
     std::cout << "Printing 'seg_valid' non-zero indices:" << std::endl; \
     for (unsigned iseg = 0; iseg < model_config::n_in; iseg++) { \
