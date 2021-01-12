@@ -283,7 +283,7 @@ void pooling_op(
         padded_row_5.range(col + (fusion_factor - 1) + (padding_row_5_t::width * 2), col),
         padded_row_6.range(col + (fusion_factor - 1) + (padding_row_6_t::width * 2), col),
         padded_row_7.range(col + (fusion_factor - 1) + (padding_row_7_t::width * 2), col),
-        stl_next(pooling_out, col)
+        &(pooling_out[col])
     );
   }  // end loop over columns
 }

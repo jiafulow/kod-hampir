@@ -32,10 +32,10 @@ void duperemoval_preprocess_op(
 
 #pragma HLS UNROLL
 
-    auto trk_seg_rhs = stl_next(trk_seg, itrk * num_emtf_sites);
+    auto trk_seg_rhs = &(trk_seg[itrk * num_emtf_sites]);
     const trk_seg_v_t& vld_rhs = trk_seg_v[itrk];
 
-    auto trk_seg_lhs = stl_next(trk_seg_rm, itrk * num_emtf_sites_rm);
+    auto trk_seg_lhs = &(trk_seg_rm[itrk * num_emtf_sites_rm]);
     trk_seg_v_t& vld_lhs = trk_seg_v_rm[itrk];
 
     trk_seg_lhs[0] = vld_rhs[0] ? trk_seg_rhs[0] : (vld_rhs[9] ? trk_seg_rhs[9] : (vld_rhs[1] ? trk_seg_rhs[1] : trk_seg_rhs[5]));
@@ -161,16 +161,14 @@ void duperemoval_set_features_op(
         if (vld_j) {
           // Copy to output.
           details::copy_n_values<num_emtf_features>(
-              stl_next(trk_feat, j * num_emtf_features),
-              stl_next(trk_feat_rm, i * num_emtf_features)
+              &(trk_feat[j * num_emtf_features]), &(trk_feat_rm[i * num_emtf_features])
           );
         }
       }  // end j loop
     } else {
       // Invalid track. Fill with zero.
       details::fill_n_values<num_emtf_features>(
-          stl_next(trk_feat_rm, i * num_emtf_features),
-          static_cast<trk_feat_t>(0)
+          &(trk_feat_rm[i * num_emtf_features]), static_cast<trk_feat_t>(0)
       );
     }
   }  // end i loop

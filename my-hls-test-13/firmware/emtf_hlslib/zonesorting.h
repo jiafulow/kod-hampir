@@ -247,11 +247,11 @@ void zonesorting_preprocess_stage_op(const T_IN in0[N_IN], T_OUT out0[N_OUT0], T
 #pragma HLS UNROLL
 
     if ((i/2) < N_OUT0) {
-      zonesorting_preprocess_eight_op(i, stl_next(in0, i), stl_next(out0, i/2));
+      zonesorting_preprocess_eight_op(i, &(in0[i]), &(out0[i/2]));
     } else {
       // Special case for the last 16 cols
-      zonesorting_preprocess_eight_op(i, stl_next(in0, i), stl_next(out1, (i/2) - N_OUT0));
       emtf_assert(((i/2) - N_OUT0) < N_OUT1);
+      zonesorting_preprocess_eight_op(i, &(in0[i]), &(out1[(i/2) - N_OUT0]));
     }
   }
 }
@@ -274,7 +274,7 @@ void zonesorting_merge_stage_op(const T_IN in0[N_IN], T_OUT out[N_OUT]) {
 
 #pragma HLS UNROLL
 
-    zonesorting_merge_eight_op(stl_next(in0, i), stl_next(out, i/2));
+    zonesorting_merge_eight_op(&(in0[i]), &(out[i/2]));
   }
 }
 
@@ -296,7 +296,7 @@ void zonesorting_merge_stage_op(const T_IN in0[N_IN], T_OUT out[N_OUT], m_inline
 
 #pragma HLS UNROLL
 
-    zonesorting_merge_eight_op(stl_next(in0, i), stl_next(out, i/2));
+    zonesorting_merge_eight_op(&(in0[i]), &(out[i/2]));
   }
 }
 
@@ -351,7 +351,7 @@ void zonesorting_op(
   // Take care of the special case for the last 16 cols.
   const int n_skipped_stage_0 = zonesorting_config::n_skipped_stage_0;
   zonesorting_preprocess_stage_op<zonesorting_config::n_in, n_stage_0, n_skipped_stage_0>(
-      zonesorting_in, stage_0_out, stl_next(stage_3_out, n_skipped_stage_0)
+      zonesorting_in, stage_0_out, &(stage_3_out[n_skipped_stage_0])
   );
 
   // Merge each pair of blocks.

@@ -35,7 +35,6 @@ enum struct TrackDataType {
   trk_seg   = 5,
   trk_seg_v = 6,
   trk_feat  = 7,
-  trk_valid = 8
 };
 
 // Bit width
@@ -63,7 +62,6 @@ template <> struct track_data_bw_traits<TrackDataType::trk_tzone> { static const
 template <> struct track_data_bw_traits<TrackDataType::trk_seg>   { static const int value = 8; };
 template <> struct track_data_bw_traits<TrackDataType::trk_seg_v> { static const int value = 12; };
 template <> struct track_data_bw_traits<TrackDataType::trk_feat>  { static const int value = 13; };
-template <> struct track_data_bw_traits<TrackDataType::trk_valid> { static const int value = 1; };
 
 // Is signed
 template <SegmentDataType T> struct segment_data_sg_traits {};
@@ -90,7 +88,6 @@ template <> struct track_data_sg_traits<TrackDataType::trk_tzone> { static const
 template <> struct track_data_sg_traits<TrackDataType::trk_seg>   { static const bool value = 0; };
 template <> struct track_data_sg_traits<TrackDataType::trk_seg_v> { static const bool value = 0; };
 template <> struct track_data_sg_traits<TrackDataType::trk_feat>  { static const bool value = 1; };
-template <> struct track_data_sg_traits<TrackDataType::trk_valid> { static const bool value = 0; };
 
 // Use bw and sign traits to select the ap datatype
 template <SegmentDataType T> struct select_segment_datatype {
@@ -133,7 +130,6 @@ DEFINE_TRACK_DATATYPE(trk_tzone)
 DEFINE_TRACK_DATATYPE(trk_seg)
 DEFINE_TRACK_DATATYPE(trk_seg_v)
 DEFINE_TRACK_DATATYPE(trk_feat)
-DEFINE_TRACK_DATATYPE(trk_valid)
 #undef DEFINE_TRACK_DATATYPE
 
 // _____________________________________________________________________________
@@ -182,6 +178,9 @@ typedef make_concat<trk_col_t, zonesorting_in_t>::type  zonesorting_out_t;
 typedef zonesorting_out_t                               zonemerging_in_t;
 typedef make_concat<trk_zone_t, zonemerging_in_t>::type zonemerging_out_t;
 typedef zonemerging_out_t                               trkbuilding_in_t;
+
+// Misc
+typedef bool_t trk_valid_t;
 
 }  // namespace emtf
 
