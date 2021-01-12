@@ -43,8 +43,8 @@ template <> struct segment_data_bw_traits<SegmentDataType::emtf_phi>    { static
 template <> struct segment_data_bw_traits<SegmentDataType::emtf_bend>   { static const int value = 10; };
 template <> struct segment_data_bw_traits<SegmentDataType::emtf_theta1> { static const int value = 8; };
 template <> struct segment_data_bw_traits<SegmentDataType::emtf_theta2> { static const int value = 8; };
-template <> struct segment_data_bw_traits<SegmentDataType::emtf_qual1>  { static const int value = 6; };
-template <> struct segment_data_bw_traits<SegmentDataType::emtf_qual2>  { static const int value = 6; };
+template <> struct segment_data_bw_traits<SegmentDataType::emtf_qual1>  { static const int value = 4; };
+template <> struct segment_data_bw_traits<SegmentDataType::emtf_qual2>  { static const int value = 4; };
 template <> struct segment_data_bw_traits<SegmentDataType::emtf_time>   { static const int value = 6; };
 template <> struct segment_data_bw_traits<SegmentDataType::seg_zones>   { static const int value = 3; };
 template <> struct segment_data_bw_traits<SegmentDataType::seg_tzones>  { static const int value = 3; };
@@ -69,8 +69,8 @@ template <> struct segment_data_sg_traits<SegmentDataType::emtf_phi>    { static
 template <> struct segment_data_sg_traits<SegmentDataType::emtf_bend>   { static const bool value = 1; };
 template <> struct segment_data_sg_traits<SegmentDataType::emtf_theta1> { static const bool value = 0; };
 template <> struct segment_data_sg_traits<SegmentDataType::emtf_theta2> { static const bool value = 0; };
-template <> struct segment_data_sg_traits<SegmentDataType::emtf_qual1>  { static const bool value = 1; };
-template <> struct segment_data_sg_traits<SegmentDataType::emtf_qual2>  { static const bool value = 1; };
+template <> struct segment_data_sg_traits<SegmentDataType::emtf_qual1>  { static const bool value = 0; };
+template <> struct segment_data_sg_traits<SegmentDataType::emtf_qual2>  { static const bool value = 0; };
 template <> struct segment_data_sg_traits<SegmentDataType::emtf_time>   { static const bool value = 1; };
 template <> struct segment_data_sg_traits<SegmentDataType::seg_zones>   { static const bool value = 0; };
 template <> struct segment_data_sg_traits<SegmentDataType::seg_tzones>  { static const bool value = 0; };

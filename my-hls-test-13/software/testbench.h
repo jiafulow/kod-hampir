@@ -28,10 +28,10 @@ struct EventType {
 };
 typedef std::vector<EventType::type> Event;
 
-// Tracks contains 36 integer values.
+// Tracks contains 40 integer values.
 struct TracksType {
   typedef int type;
-  static const unsigned int len = 36;
+  static const unsigned int len = 40;
 };
 typedef std::array<TracksType::type, TracksType::len> Tracks;
 

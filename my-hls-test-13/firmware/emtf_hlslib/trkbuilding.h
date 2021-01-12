@@ -514,9 +514,11 @@ void trkbuilding_extract_features_op(
     const emtf_phi_t& phi_median,
     const emtf_theta1_t& theta_median,
     const emtf_theta1_t emtf_theta_best[num_emtf_sites],
+    const trk_qual_t& curr_trk_qual,
     const trk_seg_t curr_trk_seg[num_emtf_sites],
     const trk_seg_v_t& curr_trk_seg_v,
-    trk_feat_t curr_trk_feat[num_emtf_features]
+    trk_feat_t curr_trk_feat[num_emtf_features],
+    const trk_valid_t& curr_trk_valid
 ) {
 
 #pragma HLS PIPELINE II=trkbuilding_config::target_ii
@@ -525,7 +527,7 @@ void trkbuilding_extract_features_op(
 
 #pragma HLS INLINE
 
-  // Table showing the 36 features sent to NN
+  // Table showing the first 36 features sent to NN
   //
   // feat       | ME1/1 | ME1/2 |  ME2  |  ME3  |  ME4  |  RE1  |  RE2  |  RE3  |  RE4  | GE1/1 | GE2/1 |  ME0
   // -----------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------
@@ -534,6 +536,13 @@ void trkbuilding_extract_features_op(
   // emtf_bend  |   *   |   *   |   *   |   *   |   *   |       |       |       |       |       |       |   *
   // emtf_qual  |   *   |   *   |   *   |   *   |   *   |       |       |       |       |       |       |   *
   // emtf_time  |       |       |       |       |       |       |       |       |       |       |       |
+  //
+  // 4 additional features are: phi_median, theta_median, trk_qual, trk_bx
+
+  // Set img center phi
+  emtf_phi_t phi_img_center;
+  const trk_col_t col_img_center = num_emtf_img_cols / 2;
+  trkbuilding_select_phi_median_op(col_img_center, phi_img_center);
 
   int k = 0;
 
@@ -580,6 +589,12 @@ void trkbuilding_extract_features_op(
   curr_trk_feat[k++] = details::take_value_if(curr_trk_seg_v[3], emtf_qual1[curr_trk_seg[3]]);
   curr_trk_feat[k++] = details::take_value_if(curr_trk_seg_v[4], emtf_qual1[curr_trk_seg[4]]);
   curr_trk_feat[k++] = details::take_value_if(curr_trk_seg_v[11], emtf_qual1[curr_trk_seg[11]]);
+
+  // additional features
+  curr_trk_feat[k++] = details::take_value_if(curr_trk_valid, details::calc_signed_diff(phi_median, phi_img_center));
+  curr_trk_feat[k++] = details::take_value_if(curr_trk_valid, theta_median);
+  curr_trk_feat[k++] = details::take_value_if(curr_trk_valid, curr_trk_qual);
+  curr_trk_feat[k++] = 0;
   emtf_assert(k == num_emtf_features);
 }
 
@@ -655,7 +670,7 @@ void trkbuilding_op(
   curr_trk_valid = (bool) curr_trk_seg_v;  // OR reduced
 
   // Extract features
-  trkbuilding_extract_features_op(emtf_phi, emtf_bend, emtf_qual1, emtf_qual2, emtf_time, phi_median, theta_median, emtf_theta_best, curr_trk_seg, curr_trk_seg_v, curr_trk_feat);
+  trkbuilding_extract_features_op(emtf_phi, emtf_bend, emtf_qual1, emtf_qual2, emtf_time, phi_median, theta_median, emtf_theta_best, curr_trk_qual, curr_trk_seg, curr_trk_seg_v, curr_trk_feat, curr_trk_valid);
 }
 
 // _____________________________________________________________________________
@@ -693,7 +708,7 @@ void trkbuilding_layer(
   static_assert(trkbuilding_config::n_in == num_emtf_tracks, "trkbuilding_config::n_in check failed");
   static_assert(trkbuilding_config::n_out == num_emtf_tracks, "trkbuilding_config::n_out check failed");
   static_assert(num_emtf_sites == 12, "num_emtf_sites must be 12");
-  static_assert(num_emtf_features == 36, "num_emtf_features must be 36");
+  static_assert(num_emtf_features == 40, "num_emtf_features must be 40");
   static_assert(num_emtf_img_areas == 3, "num_emtf_areas must be 3");
 
   typedef m_timezone_0_tag Timezone;  // default timezone

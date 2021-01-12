@@ -41,7 +41,7 @@ constexpr int num_emtf_variables = 13;  // per segment
 
 constexpr int num_emtf_tracks = 4;      // per sector
 constexpr int num_emtf_patterns = 7;    // per zone
-constexpr int num_emtf_features = 36;   // per track
+constexpr int num_emtf_features = 40;   // per track
 constexpr int num_emtf_sites = 12;      // per track
 constexpr int num_emtf_sites_rm = 5;    // per track
 
