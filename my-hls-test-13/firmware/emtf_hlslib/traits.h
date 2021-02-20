@@ -3,6 +3,7 @@
 
 // Xilinx HLS
 #include "ap_int.h"
+#include "ap_fixed.h"
 
 namespace emtf {
 
@@ -21,6 +22,15 @@ struct enable_if {};
 template <typename T>
 struct enable_if<true, T> { typedef T type; };
 
+template <bool B, typename T, typename F>
+struct conditional {};
+
+template <typename T, typename F>
+struct conditional<true, T, F> { typedef T type; };
+
+template <typename T, typename F>
+struct conditional<false, T, F> { typedef F type; };
+
 template <typename T, typename U>
 struct is_same : false_type {};
 
@@ -34,11 +44,15 @@ struct is_ap_int_type : false_type {};
 template <int N> struct is_ap_int_type<ap_int<N> > : true_type {};  // toggle to true
 template <int N> struct is_ap_int_type<ap_uint<N> > : true_type {};
 
+template <typename T>
+struct is_ap_fixed_type : false_type {};
+
+template <int W, int I> struct is_ap_fixed_type<ap_fixed<W, I> > : true_type {};  // toggle to true
+template <int W, int I> struct is_ap_fixed_type<ap_ufixed<W, I> > : true_type {};
+
 // Make ap datatype - ap_int<N> or ap_uint<N>
 template <int N, bool S>
-struct make_ap_int_type { typedef ap_int<N> type; };  // signed
-
-template <int N> struct make_ap_int_type<N, false> { typedef ap_uint<N> type; };  // unsigned
+struct make_ap_int_type { typedef typename conditional<S, ap_int<N>, ap_uint<N> >::type type; };
 
 // Make signed ap datatype
 template <typename T>

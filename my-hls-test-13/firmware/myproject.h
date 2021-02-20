@@ -3,7 +3,7 @@
 
 // Xilinx HLS
 #include "ap_int.h"
-//#include "ap_fixed.h"
+#include "ap_fixed.h"
 //#include "hls_stream.h"
 
 // EMTF HLS

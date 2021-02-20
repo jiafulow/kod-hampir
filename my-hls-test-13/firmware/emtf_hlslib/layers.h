@@ -5,6 +5,7 @@
 #include "common.h"
 #include "traits.h"
 #include "layer_constants.h"
+#include "nnet_weights.h"
 
 namespace emtf {
 
@@ -88,8 +89,16 @@ struct trkbuilding_config {
   static const int target_lat = 9;
 };
 
-struct duperemoval_config {
+struct nnet_config {
   static const unsigned int n_in = trkbuilding_config::n_out;
+  static const unsigned int n_out = n_in;
+  static const int layer_target_ii = model_config::target_ii;
+  static const int target_ii = 1;
+  static const int target_lat = 100;
+};
+
+struct duperemoval_config {
+  static const unsigned int n_in = nnet_config::n_out;
   static const unsigned int n_out = n_in;
   static const int target_ii = model_config::target_ii;
 };

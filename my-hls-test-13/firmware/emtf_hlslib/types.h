@@ -35,6 +35,12 @@ enum struct TrackDataType {
   trk_seg   = 5,
   trk_seg_v = 6,
   trk_feat  = 7,
+  trk_invpt = 8,
+  trk_phi   = 9,
+  trk_eta   = 10,
+  trk_d0    = 11,
+  trk_z0    = 12,
+  trk_beta  = 13
 };
 
 // Bit width
@@ -62,6 +68,12 @@ template <> struct track_data_bw_traits<TrackDataType::trk_tzone> { static const
 template <> struct track_data_bw_traits<TrackDataType::trk_seg>   { static const int value = 8; };
 template <> struct track_data_bw_traits<TrackDataType::trk_seg_v> { static const int value = 12; };
 template <> struct track_data_bw_traits<TrackDataType::trk_feat>  { static const int value = 13; };
+template <> struct track_data_bw_traits<TrackDataType::trk_invpt> { static const int value = 11; };
+template <> struct track_data_bw_traits<TrackDataType::trk_phi>   { static const int value = 11; };
+template <> struct track_data_bw_traits<TrackDataType::trk_eta>   { static const int value = 11; };
+template <> struct track_data_bw_traits<TrackDataType::trk_d0>    { static const int value = 11; };
+template <> struct track_data_bw_traits<TrackDataType::trk_z0>    { static const int value = 11; };
+template <> struct track_data_bw_traits<TrackDataType::trk_beta>  { static const int value = 11; };
 
 // Is signed
 template <SegmentDataType T> struct segment_data_sg_traits {};
@@ -88,6 +100,12 @@ template <> struct track_data_sg_traits<TrackDataType::trk_tzone> { static const
 template <> struct track_data_sg_traits<TrackDataType::trk_seg>   { static const bool value = 0; };
 template <> struct track_data_sg_traits<TrackDataType::trk_seg_v> { static const bool value = 0; };
 template <> struct track_data_sg_traits<TrackDataType::trk_feat>  { static const bool value = 1; };
+template <> struct track_data_sg_traits<TrackDataType::trk_invpt> { static const bool value = 1; };
+template <> struct track_data_sg_traits<TrackDataType::trk_phi>   { static const bool value = 1; };
+template <> struct track_data_sg_traits<TrackDataType::trk_eta>   { static const bool value = 1; };
+template <> struct track_data_sg_traits<TrackDataType::trk_d0>    { static const bool value = 1; };
+template <> struct track_data_sg_traits<TrackDataType::trk_z0>    { static const bool value = 1; };
+template <> struct track_data_sg_traits<TrackDataType::trk_beta>  { static const bool value = 1; };
 
 // Use bw and sign traits to select the ap datatype
 template <SegmentDataType T> struct select_segment_datatype {
@@ -130,6 +148,12 @@ DEFINE_TRACK_DATATYPE(trk_tzone)
 DEFINE_TRACK_DATATYPE(trk_seg)
 DEFINE_TRACK_DATATYPE(trk_seg_v)
 DEFINE_TRACK_DATATYPE(trk_feat)
+DEFINE_TRACK_DATATYPE(trk_invpt)
+DEFINE_TRACK_DATATYPE(trk_phi)
+DEFINE_TRACK_DATATYPE(trk_eta)
+DEFINE_TRACK_DATATYPE(trk_d0)
+DEFINE_TRACK_DATATYPE(trk_z0)
+DEFINE_TRACK_DATATYPE(trk_beta)
 #undef DEFINE_TRACK_DATATYPE
 
 // _____________________________________________________________________________

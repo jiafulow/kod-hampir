@@ -141,11 +141,17 @@ void myproject(
       zonesorting_0_out, zonesorting_1_out, zonesorting_2_out, zonemerging_0_out
   );
 
-  // Intermediate arrays (for layers 5..6)
+  // Intermediate arrays (for layers 5..7)
   trk_seg_t   trk_seg      [trkbuilding_config::n_out * num_emtf_sites];
   trk_seg_v_t trk_seg_v    [trkbuilding_config::n_out];
   trk_feat_t  trk_feat     [trkbuilding_config::n_out * num_emtf_features];
   trk_valid_t trk_valid    [trkbuilding_config::n_out];
+  trk_invpt_t trk_invpt    [nnet_config::n_out];
+  trk_phi_t   trk_phi      [nnet_config::n_out];
+  trk_eta_t   trk_eta      [nnet_config::n_out];
+  trk_d0_t    trk_d0       [nnet_config::n_out];
+  trk_z0_t    trk_z0       [nnet_config::n_out];
+  trk_beta_t  trk_beta     [nnet_config::n_out];
   trk_feat_t  trk_feat_rm  [duperemoval_config::n_out * num_emtf_features];
   trk_valid_t trk_valid_rm [duperemoval_config::n_out];
 
@@ -153,6 +159,12 @@ void myproject(
 #pragma HLS ARRAY_PARTITION variable=trk_seg_v complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_feat complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_valid complete dim=0
+#pragma HLS ARRAY_PARTITION variable=trk_invpt complete dim=0
+#pragma HLS ARRAY_PARTITION variable=trk_phi complete dim=0
+#pragma HLS ARRAY_PARTITION variable=trk_eta complete dim=0
+#pragma HLS ARRAY_PARTITION variable=trk_d0 complete dim=0
+#pragma HLS ARRAY_PARTITION variable=trk_z0 complete dim=0
+#pragma HLS ARRAY_PARTITION variable=trk_beta complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_feat_rm complete dim=0
 #pragma HLS ARRAY_PARTITION variable=trk_valid_rm complete dim=0
 
@@ -164,7 +176,13 @@ void myproject(
       seg_valid, zonemerging_0_out, trk_seg, trk_seg_v, trk_feat, trk_valid
   );
 
-  // Layer 6 - dupe removal
+  // Layer 6 - neural network
+
+  nnet_layer<m_zone_any_tag>(
+      trk_feat, trk_valid, trk_invpt, trk_phi, trk_eta, trk_d0, trk_z0, trk_beta
+  );
+
+  // Layer 7 - dupe removal
 
   duperemoval_layer<m_zone_any_tag>(
       trk_seg, trk_seg_v, trk_feat, trk_valid, trk_feat_rm, trk_valid_rm
