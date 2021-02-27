@@ -18,38 +18,45 @@
 
 int main()
 {
-  ofstream result;
-  din1_t in1 = 0.25;
-  din2_t in2 = 2.125;
-  dout_t output;
+  //ofstream result;
+  //din1_t in1 = 0.25;
+  //din2_t in2 = 2.125;
+  //dout_t output;
   int retval=0;
 
-  result.open("result.dat");
-  // Persistent manipulators
-  result << right << fixed << setbase(10) << setprecision(15);
+  //result.open("result.dat");
+  //// Persistent manipulators
+  //result << right << fixed << setbase(10) << setprecision(15);
 
-  for (int i = 0; i <= 250; i++)
-  {
-    output = cpp_ap_fixed(in1,in2);
+  //for (int i = 0; i <= 250; i++)
+  //{
+  //  output = cpp_ap_fixed(in1,in2);
+  //
+  //  result << setw(10) << i;
+  //  result << setw(20) << in1;
+  //  result << setw(20) << in2;
+  //  result << setw(20) << output;
+  //  result << endl;
+  //
+  //  in1 = in1 + din1_t(0.25);
+  //  in2 = in2 - din2_t(0.125);
+  //}
+  //result.close();
 
-    result << setw(10) << i;
-    result << setw(20) << in1;
-    result << setw(20) << in2;
-    result << setw(20) << output;
-    result << endl;
+  //// Compare the results file with the golden results
+  //retval = system("diff --brief -w result.dat result.golden.dat");
+  //if (retval != 0) {
+  //  printf("Test failed !!!\n");
+  //  retval=1;
+  //} else {
+  //  printf("Test passed !\n");
+  //}
 
-    in1 = in1 + din1_t(0.25);
-    in2 = in2 - din2_t(0.125);
-  }
-  result.close();
-
-  // Compare the results file with the golden results
-  retval = system("diff --brief -w result.dat result.golden.dat");
-  if (retval != 0) {
-    printf("Test failed !!!\n");
-    retval=1;
-  } else {
-    printf("Test passed !\n");
+  for (int i = 0; i < (1<<din0_t::width); i++) {
+    din0_t in0 = -1.0 * (1<<(din0_t::iwidth - 1)) + (1.0 / (1<<(din0_t::width - din0_t::iwidth))) * i;
+    auto out = cpp_ap_fixed(in0);
+    std::cout << std::setprecision(8) << in0 << " " << out << std::endl;
+    //std::cout << double(in0) * (1<<(din0_t::width - din0_t::iwidth)) << " " << double(out) * (1<<(dout_t::width - dout_t::iwidth)) << std::endl;
   }
 
   // Return 0 if the test passes

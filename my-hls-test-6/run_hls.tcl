@@ -17,10 +17,10 @@
 open_project -reset proj_cpp_ap_fixed
 
 # Add design files
-add_files cpp_ap_fixed.cpp
+add_files cpp_ap_fixed.cpp -cflags "-std=c++11"
 # Add test bench & files
-add_files -tb cpp_ap_fixed_test.cpp
-add_files -tb result.golden.dat
+add_files -tb cpp_ap_fixed_test.cpp -cflags "-std=c++11"
+#add_files -tb result.golden.dat
 
 # Set the top-level function
 set_top cpp_ap_fixed
@@ -55,7 +55,7 @@ if {$hls_exec == 1} {
   export_design
 } else {
   # Default is to exit after setup
-  csynth_design
+  #csynth_design
 }
 
 exit
