@@ -175,6 +175,13 @@ struct m_site_9_tag : m_zone_any_tag {};
 struct m_site_10_tag : m_zone_any_tag {};
 struct m_site_11_tag : m_zone_any_tag {};
 
+// NN layer
+struct m_nnet_0_layer_0_tag {};
+struct m_nnet_0_layer_1_tag {};
+struct m_nnet_0_layer_2_tag {};
+struct m_nnet_0_layer_3_tag {};
+struct m_nnet_0_layer_4_tag {};
+
 // HLS directives
 struct m_inline_directive {};
 
@@ -338,6 +345,51 @@ template <typename Category>
 struct select_pattern_packed_activation_type {
   typedef make_repeat<trk_qual_t, num_emtf_patterns>::type type;
 };
+
+template <typename Category>
+struct nnet_num_inbound_nodes_traits {};
+
+template <> struct nnet_num_inbound_nodes_traits<m_nnet_0_layer_0_tag> { static const int value = details::num_nodes_nnet_0_layer_0; };
+template <> struct nnet_num_inbound_nodes_traits<m_nnet_0_layer_1_tag> { static const int value = details::num_nodes_nnet_0_layer_0; };
+template <> struct nnet_num_inbound_nodes_traits<m_nnet_0_layer_2_tag> { static const int value = details::num_nodes_nnet_0_layer_1; };
+template <> struct nnet_num_inbound_nodes_traits<m_nnet_0_layer_3_tag> { static const int value = details::num_nodes_nnet_0_layer_2; };
+template <> struct nnet_num_inbound_nodes_traits<m_nnet_0_layer_4_tag> { static const int value = details::num_nodes_nnet_0_layer_3; };
+
+template <typename Category>
+struct nnet_num_outbound_nodes_traits {};
+
+template <> struct nnet_num_outbound_nodes_traits<m_nnet_0_layer_0_tag> { static const int value = details::num_nodes_nnet_0_layer_0; };
+template <> struct nnet_num_outbound_nodes_traits<m_nnet_0_layer_1_tag> { static const int value = details::num_nodes_nnet_0_layer_1; };
+template <> struct nnet_num_outbound_nodes_traits<m_nnet_0_layer_2_tag> { static const int value = details::num_nodes_nnet_0_layer_2; };
+template <> struct nnet_num_outbound_nodes_traits<m_nnet_0_layer_3_tag> { static const int value = details::num_nodes_nnet_0_layer_3; };
+template <> struct nnet_num_outbound_nodes_traits<m_nnet_0_layer_4_tag> { static const int value = details::num_nodes_nnet_0_layer_4; };
+
+template <typename Category>
+struct select_nnet_weight_type {};
+
+template <> struct select_nnet_weight_type<m_nnet_0_layer_0_tag> { typedef ap_fixed<11,1> type; };
+template <> struct select_nnet_weight_type<m_nnet_0_layer_1_tag> { typedef ap_fixed<11,4> type; };
+template <> struct select_nnet_weight_type<m_nnet_0_layer_2_tag> { typedef ap_fixed<11,4> type; };
+template <> struct select_nnet_weight_type<m_nnet_0_layer_3_tag> { typedef ap_fixed<11,3> type; };
+template <> struct select_nnet_weight_type<m_nnet_0_layer_4_tag> { typedef ap_fixed<11,-3> type; };
+
+template <typename Category>
+struct select_nnet_preactivation_type {};
+
+template <> struct select_nnet_preactivation_type<m_nnet_0_layer_0_tag> { typedef ap_fixed<12,4> type; };
+template <> struct select_nnet_preactivation_type<m_nnet_0_layer_1_tag> { typedef ap_fixed<12,4> type; };
+template <> struct select_nnet_preactivation_type<m_nnet_0_layer_2_tag> { typedef ap_fixed<12,4> type; };
+template <> struct select_nnet_preactivation_type<m_nnet_0_layer_3_tag> { typedef ap_fixed<12,4> type; };
+template <> struct select_nnet_preactivation_type<m_nnet_0_layer_4_tag> { typedef ap_fixed<12,4> type; };
+
+template <typename Category>
+struct select_nnet_activation_type {};
+
+template <> struct select_nnet_activation_type<m_nnet_0_layer_0_tag> { typedef ap_fixed<12,4> type; };
+template <> struct select_nnet_activation_type<m_nnet_0_layer_1_tag> { typedef ap_fixed<12,1> type; };
+template <> struct select_nnet_activation_type<m_nnet_0_layer_2_tag> { typedef ap_fixed<12,1> type; };
+template <> struct select_nnet_activation_type<m_nnet_0_layer_3_tag> { typedef ap_fixed<12,1> type; };
+template <> struct select_nnet_activation_type<m_nnet_0_layer_4_tag> { typedef ap_fixed<11,1> type; };
 
 // Getter ops
 template <typename Category>
@@ -565,6 +617,24 @@ struct get_site_pattern_col_pad_op {
   }
 };
 
+template <typename Category>
+struct get_nnet_weights_op {};
+
+template <> struct get_nnet_weights_op<m_nnet_0_layer_0_tag> { inline int operator ()(int i) const { return weights_nnet_0_layer_0[i]; } };
+template <> struct get_nnet_weights_op<m_nnet_0_layer_1_tag> { inline int operator ()(int i) const { return weights_nnet_0_layer_1[i]; } };
+template <> struct get_nnet_weights_op<m_nnet_0_layer_2_tag> { inline int operator ()(int i) const { return weights_nnet_0_layer_2[i]; } };
+template <> struct get_nnet_weights_op<m_nnet_0_layer_3_tag> { inline int operator ()(int i) const { return weights_nnet_0_layer_3[i]; } };
+template <> struct get_nnet_weights_op<m_nnet_0_layer_4_tag> { inline int operator ()(int i) const { return weights_nnet_0_layer_4[i]; } };
+
+template <typename Category>
+struct get_nnet_biases_op {};
+
+template <> struct get_nnet_biases_op<m_nnet_0_layer_0_tag> { inline int operator ()(int i) const { return biases_nnet_0_layer_0[i]; } };
+template <> struct get_nnet_biases_op<m_nnet_0_layer_1_tag> { inline int operator ()(int i) const { return biases_nnet_0_layer_1[i]; } };
+template <> struct get_nnet_biases_op<m_nnet_0_layer_2_tag> { inline int operator ()(int i) const { return biases_nnet_0_layer_2[i]; } };
+template <> struct get_nnet_biases_op<m_nnet_0_layer_3_tag> { inline int operator ()(int i) const { return biases_nnet_0_layer_3[i]; } };
+template <> struct get_nnet_biases_op<m_nnet_0_layer_4_tag> { inline int operator ()(int i) const { return biases_nnet_0_layer_4[i]; } };
+
 // Helper classes to calculate floor(log2(N)) and ceil(log2(N))
 // floor_log2<0>::value == 0; ceil_log2<0> == 0;
 // floor_log2<1>::value == 0; ceil_log2<1> == 1;
@@ -735,6 +805,15 @@ void init_2d_table_op(T* arr, U op) {
     for (unsigned j = 0; j < N; j++) {
       arr[(i * N) + j] = op(i, j);
     }
+  }
+}
+
+// Helper function to init a lookup table while casting to ap_fixed<AP_W, AP_I>
+template <unsigned int N, int AP_W, int AP_I, typename U>
+void init_nnet_weights_op(ap_fixed<AP_W, AP_I>* arr, U op) {
+  for (unsigned i = 0; i < N; i++) {
+    ap_int<AP_W> w = op(i);
+    arr[i].range() = w.range();
   }
 }
 
