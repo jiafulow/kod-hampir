@@ -16,6 +16,43 @@
 
 #include "cpp_ap_fixed.h"
 
+double my_relu(double x) {
+  return x > 0. ? x : 0.;
+}
+
+double my_hard_tanh(double x) {
+  double r = x + (
+      (my_relu(x - 0.5) * -0.5) +
+      (my_relu(x - 1.0) * -0.25) +
+      (my_relu(x - 1.5) * -0.125) +
+      (my_relu(x - 2.0) * -0.0625) +
+      (my_relu(x - 2.5) * -0.03125) +
+      (my_relu(-x - 0.5) * 0.5) +
+      (my_relu(-x - 1.0) * 0.25) +
+      (my_relu(-x - 1.5) * 0.125) +
+      (my_relu(-x - 2.0) * 0.0625) +
+      (my_relu(-x - 2.5) * 0.03125)
+  );
+  return r;
+}
+
+double my_clip(double x, double min_val, double max_val) {
+  x = x > min_val ? x : min_val;
+  return x < max_val ? x : max_val;
+}
+
+double my_quant_hard_tanh(double x) {
+  constexpr int AP_W = dout_t::width;
+  constexpr int AP_I = dout_t::iwidth;
+  constexpr int AP_F = AP_W - AP_I;
+  double abs_x = std::abs(x);
+  double r = x > 0 ? my_hard_tanh(abs_x) : -my_hard_tanh(abs_x);
+  double limit = (std::pow(2, AP_W-1) - 1.) / std::pow(2, AP_F);
+  r = my_clip(r, -limit, limit);
+  double q = 1. / std::pow(2, AP_F);
+  return std::round(r / q) * q;
+}
+
 int main()
 {
   //ofstream result;
@@ -53,10 +90,18 @@ int main()
   //}
 
   for (int i = 0; i < (1<<din0_t::width); i++) {
-    din0_t in0 = -1.0 * (1<<(din0_t::iwidth - 1)) + (1.0 / (1<<(din0_t::width - din0_t::iwidth))) * i;
+    double in0_f = -1.0 * (1<<(din0_t::iwidth - 1)) + (1.0 / (1<<(din0_t::width - din0_t::iwidth))) * i;
+    din0_t in0 = in0_f;
     auto out = cpp_ap_fixed(in0);
     std::cout << std::setprecision(8) << in0 << " " << out << std::endl;
-    //std::cout << double(in0) * (1<<(din0_t::width - din0_t::iwidth)) << " " << double(out) * (1<<(dout_t::width - dout_t::iwidth)) << std::endl;
+    //std::cout << double(in0) * (1<<(din0_t::width - din0_t::iwidth)) << " "
+    //    << double(out) * (1<<(dout_t::width - dout_t::iwidth)) << " "
+    //    << my_quant_hard_tanh(double(in0)) * (1<<(dout_t::width - dout_t::iwidth)) << " "
+    //    << std::endl;
+    assert(
+        static_cast<int>(double(out) * (1<<(dout_t::width - dout_t::iwidth))) ==
+        static_cast<int>(my_quant_hard_tanh(in0_f) * (1<<(dout_t::width - dout_t::iwidth)))
+    );
   }
 
   // Return 0 if the test passes
