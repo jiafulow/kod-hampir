@@ -9,10 +9,16 @@
 // EMTF HLS
 #include "emtf_hlslib.h"
 
+// Defines
+typedef emtf::model_in_t top_in_t;
+typedef emtf::model_out_t top_out_t;
+constexpr int TOP_N_IN = emtf::model_config::n_in;
+constexpr int TOP_N_OUT = emtf::model_config::n_out;
+
 // Top-level function prototype
 void myproject(
-    const emtf::model_in_t in0[emtf::model_config::n_in],
-    emtf::model_out_t out[emtf::model_config::n_out]
+    const top_in_t in0[TOP_N_IN],
+    top_out_t out[TOP_N_OUT]
 );
 
 #endif  // __MYPROJECT_H__ not defined

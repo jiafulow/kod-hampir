@@ -4,15 +4,15 @@ using namespace emtf;
 
 // Top-level function implementation
 void myproject(
-    const emtf::model_in_t in0[emtf::model_config::n_in],
-    emtf::model_out_t out[emtf::model_config::n_out]
+    const top_in_t in0[TOP_N_IN],
+    top_out_t out[TOP_N_OUT]
 ) {
 
 #pragma HLS PIPELINE II=model_config::target_ii
 
 #pragma HLS INTERFACE ap_vld port=in0
 #pragma HLS INTERFACE ap_vld port=out
-#pragma HLS INTERFACE ap_ctrl_none port=return
+//#pragma HLS INTERFACE ap_ctrl_none port=return
 
 #pragma HLS ARRAY_RESHAPE variable=in0 complete dim=0
 #pragma HLS ARRAY_PARTITION variable=out complete dim=0

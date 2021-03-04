@@ -23,8 +23,8 @@ int main(int argc, char **argv) {
   std::string clr_error = "\033[1;31m";  // red
   std::string clr_reset = "\033[0m";     // no format
 
-  std::vector<int> event_list = {0};
-  //std::vector<int> event_list = {
+  std::initializer_list<int> event_list = {0};
+  //std::initializer_list<int> event_list = {
   //    0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
   //    10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
   //    20, 21, 22, 23, 24, 25, 26, 27, 28, 29
@@ -49,9 +49,9 @@ int main(int argc, char **argv) {
     const FPGAEvent fw_evt(evt);
     const FPGAResult fw_res(res);
 
-    // Prepare input and output
-    emtf::model_in_t in0[emtf::model_config::n_in];
-    emtf::model_out_t out[emtf::model_config::n_out];
+    // Initialize input and output
+    top_in_t in0[TOP_N_IN];
+    top_out_t out[TOP_N_OUT];
     copy_array(fw_evt.data, in0);
     init_array_as_zeros(out);
 
@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
       std::cout << std::endl;
       std::cout << "Mismatches: " << err << std::endl;
     }
-  }
+  }  // end loop over events
 
   // Return 0 only if the results are correct
   return err;
