@@ -68,12 +68,12 @@ template <> struct track_data_bw_traits<TrackDataType::trk_tzone> { static const
 template <> struct track_data_bw_traits<TrackDataType::trk_seg>   { static const int value = 8; };
 template <> struct track_data_bw_traits<TrackDataType::trk_seg_v> { static const int value = 12; };
 template <> struct track_data_bw_traits<TrackDataType::trk_feat>  { static const int value = 13; };
-template <> struct track_data_bw_traits<TrackDataType::trk_invpt> { static const int value = 11; };
-template <> struct track_data_bw_traits<TrackDataType::trk_phi>   { static const int value = 11; };
-template <> struct track_data_bw_traits<TrackDataType::trk_eta>   { static const int value = 11; };
-template <> struct track_data_bw_traits<TrackDataType::trk_d0>    { static const int value = 11; };
-template <> struct track_data_bw_traits<TrackDataType::trk_z0>    { static const int value = 11; };
-template <> struct track_data_bw_traits<TrackDataType::trk_beta>  { static const int value = 11; };
+template <> struct track_data_bw_traits<TrackDataType::trk_invpt> { static const int value = 14; };
+template <> struct track_data_bw_traits<TrackDataType::trk_phi>   { static const int value = 14; };
+template <> struct track_data_bw_traits<TrackDataType::trk_eta>   { static const int value = 14; };
+template <> struct track_data_bw_traits<TrackDataType::trk_d0>    { static const int value = 14; };
+template <> struct track_data_bw_traits<TrackDataType::trk_z0>    { static const int value = 14; };
+template <> struct track_data_bw_traits<TrackDataType::trk_beta>  { static const int value = 14; };
 
 // Is signed
 template <SegmentDataType T> struct segment_data_sg_traits {};
@@ -190,6 +190,7 @@ typedef ap_uint<6>                 dio_th_diff_t;  // bw: ceil(log2(14 / 0.28515
 typedef ap_uint<5>                 dio_ph_idx_t;   // bw: ceil(log2(site_num_segments)) = ceil(log2(24))
 typedef ap_uint<2>                 dio_ph_area_t;  // bw: ceil(log2(num_emtf_areas)) = ceil(log2(3))
 typedef dio_trk_accum_t            dio_survivor_t;
+typedef ap_fixed<14,1>             dio_hard_tanh_t;  // fixed-point output of hard_tanh()
 
 // These appear in the layer interfaces
 typedef dio_col_accum_t                                 zoning_out_t;

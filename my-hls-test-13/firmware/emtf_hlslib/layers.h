@@ -94,7 +94,7 @@ struct nnet_config {
   static const unsigned int n_out = n_in;
   static const int layer_target_ii = model_config::target_ii;
   static const int target_ii = 1;
-  static const int target_lat = 100;
+  static const int target_lat = 40;
 };
 
 struct duperemoval_config {
@@ -371,25 +371,26 @@ template <> struct select_nnet_weight_type<m_nnet_0_layer_0_tag> { typedef ap_fi
 template <> struct select_nnet_weight_type<m_nnet_0_layer_1_tag> { typedef ap_fixed<11,4> type; };
 template <> struct select_nnet_weight_type<m_nnet_0_layer_2_tag> { typedef ap_fixed<11,4> type; };
 template <> struct select_nnet_weight_type<m_nnet_0_layer_3_tag> { typedef ap_fixed<11,3> type; };
-template <> struct select_nnet_weight_type<m_nnet_0_layer_4_tag> { typedef ap_fixed<11,-3> type; };
+template <> struct select_nnet_weight_type<m_nnet_0_layer_4_tag> { typedef ap_fixed<11,3> type; };
 
 template <typename Category>
 struct select_nnet_preactivation_type {};
 
-template <> struct select_nnet_preactivation_type<m_nnet_0_layer_0_tag> { typedef ap_fixed<12,4> type; };
-template <> struct select_nnet_preactivation_type<m_nnet_0_layer_1_tag> { typedef ap_fixed<12,4> type; };
-template <> struct select_nnet_preactivation_type<m_nnet_0_layer_2_tag> { typedef ap_fixed<12,4> type; };
-template <> struct select_nnet_preactivation_type<m_nnet_0_layer_3_tag> { typedef ap_fixed<12,4> type; };
-template <> struct select_nnet_preactivation_type<m_nnet_0_layer_4_tag> { typedef ap_fixed<12,4> type; };
+template <> struct select_nnet_preactivation_type<m_nnet_0_layer_0_tag> { typedef ap_fixed<14,4> type; };
+template <> struct select_nnet_preactivation_type<m_nnet_0_layer_1_tag> { typedef ap_fixed<14,4> type; };
+template <> struct select_nnet_preactivation_type<m_nnet_0_layer_2_tag> { typedef ap_fixed<14,4> type; };
+template <> struct select_nnet_preactivation_type<m_nnet_0_layer_3_tag> { typedef ap_fixed<14,4> type; };
+template <> struct select_nnet_preactivation_type<m_nnet_0_layer_4_tag> { typedef ap_fixed<14,4> type; };
 
 template <typename Category>
 struct select_nnet_activation_type {};
 
-template <> struct select_nnet_activation_type<m_nnet_0_layer_0_tag> { typedef ap_fixed<12,4> type; };
-template <> struct select_nnet_activation_type<m_nnet_0_layer_1_tag> { typedef ap_fixed<12,1> type; };
-template <> struct select_nnet_activation_type<m_nnet_0_layer_2_tag> { typedef ap_fixed<12,1> type; };
-template <> struct select_nnet_activation_type<m_nnet_0_layer_3_tag> { typedef ap_fixed<12,1> type; };
-template <> struct select_nnet_activation_type<m_nnet_0_layer_4_tag> { typedef ap_fixed<11,1> type; };
+template <> struct select_nnet_activation_type<m_nnet_0_layer_0_tag> { typedef ap_fixed<14,4> type; };
+template <> struct select_nnet_activation_type<m_nnet_0_layer_1_tag> { typedef ap_fixed<14,1> type; };
+template <> struct select_nnet_activation_type<m_nnet_0_layer_2_tag> { typedef ap_fixed<14,1> type; };
+template <> struct select_nnet_activation_type<m_nnet_0_layer_3_tag> { typedef ap_fixed<14,1> type; };
+// 2^6 is needed to bring the output node to the right scale
+template <> struct select_nnet_activation_type<m_nnet_0_layer_4_tag> { typedef ap_fixed<14,1+6> type; };
 
 // Getter ops
 template <typename Category>
