@@ -3,7 +3,10 @@
 set PROJ "myproject_prj"
 set SOLN "solution1"
 set XPART xc7vx690tffg1927-2
+#set XPART xcvu9p-flga2104-2l-e
+#set XPART xcvu13p-fsga2577-1-e
 set CLKP 160MHz
+#set CLKP 240MHz
 set CFLAGS "-std=c++11"
 set CSIMFLAGS "-Wall -Wextra -Wno-ignored-attributes -Wno-unused-parameter -Wno-unused-variable -Wno-unused-label"
 set CSIM 1
@@ -44,28 +47,29 @@ config_schedule -relax_ii_for_timing
 
 # ########################################################
 # Execute
+
+# Run C Simulation
 if {$CSIM == 1} {
-  # Run C Simulation
   csim_design
 }
 
+# Run C Synthesis
 if {$CSYNTH == 1} {
-  # Run C Synthesis
   csynth_design
 }
 
+# Run C/RTL Co-simulation
 if {$COSIM == 1} {
-  # Run C/RTL Co-simulation
-  cosim_design
+  cosim_design -trace_level all
 }
 
+# Run RTL Synthesis
 if {$VIVADO_SYN == 1} {
-  # Run RTL Synthesis
   export_design -flow syn -rtl verilog
 }
 
+# Run RTL Synthesis and Implementation
 if {$VIVADO_IMPL == 1} {
-  # Run RTL Synthesis and Implementation
   export_design -flow impl -rtl verilog
 }
 
